@@ -9,8 +9,9 @@ import {
   Image,
   ScrollView,
   RefreshControl,
-  Dimensions,
   ActivityIndicator,
+  useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,10 +20,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/theme';
 import { MOCK_PRODUCTS, CATEGORIES } from '../../src/services/mockData';
 import { fetchCatalogProducts } from '../../src/services/calodataApi';
+import { useAppData } from '../../src/contexts/AppDataContext';
 import type { Product } from '../../src/types';
-
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - SPACING.lg * 2 - SPACING.md) / 2;
+import { LAYOUT } from '../../src/constants/layout';
 
 function formatViews(views: number): string {
   if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M`;
@@ -36,6 +36,14 @@ function formatPrice(price: number): string {
 
 export default function CatalogScreen() {
   const params = useLocalSearchParams<{ category?: string; q?: string }>();
+  const { width: windowWidth } = useWindowDimensions();
+  const contentWidth =
+    Platform.OS === 'web'
+      ? Math.min(windowWidth - 24, LAYOUT.maxContentWidth)
+      : windowWidth;
+  const cardWidth = Math.max(140, (contentWidth - SPACING.lg * 2 - SPACING.md) / 2);
+  const { isSelling } = useAppData();
+
   const [selectedCategory, setSelectedCategory] = useState(params.category ?? 'todos');
   const [searchQuery, setSearchQuery] = useState(params.q ?? '');
   const [refreshing, setRefreshing] = useState(false);
@@ -83,18 +91,28 @@ export default function CatalogScreen() {
   const renderProductCard = useCallback(
     ({ item, index }: { item: Product; index: number }) => {
       const highlighted = index % 4 === 0;
+      const selling = isSelling(item.id);
       return (
         <TouchableOpacity
-          style={[styles.card, highlighted && styles.cardHighlight]}
+          style={[
+            styles.card,
+            { width: cardWidth },
+            highlighted && styles.cardHighlight,
+          ]}
           activeOpacity={0.85}
           onPress={() => router.push(`/product/${item.id}`)}
         >
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: item.image }} style={styles.productImage} />
+          <View style={[styles.imageContainer, { height: cardWidth * 0.85 }]}>
+            <Image source={{ uri: item.image }} style={styles.productImage} resizeMode="cover" />
             {item.isViral && (
               <View style={styles.viralBadge}>
                 <Ionicons name="flame" size={10} color="#FFF" />
                 <Text style={styles.viralBadgeText}>Viral</Text>
+              </View>
+            )}
+            {selling && (
+              <View style={styles.sellingBadge}>
+                <Text style={styles.sellingBadgeText}>Vendendo</Text>
               </View>
             )}
           </View>
@@ -111,11 +129,7 @@ export default function CatalogScreen() {
             </Text>
 
             <View style={styles.ratingRow}>
-              <Ionicons
-                name="star"
-                size={12}
-                color={highlighted ? COLORS.gold : COLORS.gold}
-              />
+              <Ionicons name="star" size={12} color={COLORS.gold} />
               <Text style={[styles.ratingText, highlighted && styles.textOnDarkMuted]}>
                 {item.rating}
               </Text>
@@ -146,7 +160,7 @@ export default function CatalogScreen() {
         </TouchableOpacity>
       );
     },
-    [],
+    [cardWidth, isSelling],
   );
 
   return (
@@ -163,6 +177,7 @@ export default function CatalogScreen() {
             placeholderTextColor={COLORS.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            returnKeyType="search"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -174,6 +189,7 @@ export default function CatalogScreen() {
         <View style={styles.sourceRow}>
           <Ionicons name="logo-tiktok" size={14} color={COLORS.accent} />
           <Text style={styles.sourceText}>{sourceLabel}</Text>
+          <Text style={styles.countText}> · {filteredProducts.length} itens</Text>
         </View>
       </View>
 
@@ -251,6 +267,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   header: {
     paddingHorizontal: SPACING.lg,
@@ -277,6 +296,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
     height: 48,
     gap: SPACING.sm,
+    width: '100%',
     ...SHADOWS.small,
   },
   searchInput: {
@@ -284,17 +304,24 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     fontFamily: FONTS.regular,
     color: COLORS.text,
+    outlineStyle: 'none' as unknown as undefined,
   },
   sourceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginTop: SPACING.md,
+    flexWrap: 'wrap',
   },
   sourceText: {
     fontSize: FONTS.sizes.sm,
     fontFamily: FONTS.medium,
     color: COLORS.accent,
+  },
+  countText: {
+    fontSize: FONTS.sizes.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textMuted,
   },
   categoriesWrapper: {
     paddingBottom: SPACING.md,
@@ -325,15 +352,15 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   listContent: {
-    padding: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
     paddingBottom: 120,
   },
   columnWrapper: {
     justifyContent: 'space-between',
     marginBottom: SPACING.md,
+    gap: SPACING.md,
   },
   card: {
-    width: CARD_WIDTH,
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xxl,
     overflow: 'hidden',
@@ -344,13 +371,12 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: CARD_WIDTH * 0.85,
     position: 'relative',
+    backgroundColor: COLORS.borderLight,
   },
   productImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   viralBadge: {
     position: 'absolute',
@@ -366,6 +392,20 @@ const styles = StyleSheet.create({
   },
   viralBadgeText: {
     fontSize: FONTS.sizes.xs,
+    fontFamily: FONTS.bold,
+    color: '#FFF',
+  },
+  sellingBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    backgroundColor: COLORS.success,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+  },
+  sellingBadgeText: {
+    fontSize: 10,
     fontFamily: FONTS.bold,
     color: '#FFF',
   },
@@ -397,6 +437,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     marginBottom: SPACING.xs,
+    flexWrap: 'wrap',
   },
   ratingText: {
     fontSize: FONTS.sizes.xs,

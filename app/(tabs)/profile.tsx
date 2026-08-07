@@ -6,14 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/theme';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { CATEGORIES, MOCK_RANKING } from '../../src/services/mockData';
+import { useAppData } from '../../src/contexts/AppDataContext';
+import { CATEGORIES, MOCK_RANKING, MOCK_PRODUCTS } from '../../src/services/mockData';
+import { confirmDialog, showAlert } from '../../src/utils/dialog';
 
 function getInitials(name: string) {
   return name
@@ -30,6 +31,7 @@ function xpForNextLevel(level: number) {
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
+  const { sellingIds } = useAppData();
   const router = useRouter();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
@@ -41,19 +43,17 @@ export default function ProfileScreen() {
     ['beleza', 'saude', 'fisico', 'digital'].includes(c.id),
   );
   const teamPreview = MOCK_RANKING.slice(0, 5);
+  const sellingProducts = MOCK_PRODUCTS.filter((p) => sellingIds.includes(p.id));
 
-  const handleSignOut = () => {
-    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Sair',
-        style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
+  const handleSignOut = async () => {
+    const ok = await confirmDialog(
+      'Sair da conta',
+      'Tem certeza que deseja sair?',
+      'Sair',
+    );
+    if (!ok) return;
+    await signOut();
+    router.replace('/(auth)/login');
   };
 
   return (
@@ -187,6 +187,30 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        <Text style={[styles.sectionTitle, { marginTop: SPACING.xxl }]}>
+          Produtos que estou vendendo
+        </Text>
+        {sellingProducts.length === 0 ? (
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push('/(tabs)/catalog')}
+          >
+            <Text style={styles.cardLabel}>Nenhum produto ativo</Text>
+            <Text style={styles.cardValue}>Toque para abrir o catálogo</Text>
+          </TouchableOpacity>
+        ) : (
+          sellingProducts.map((p) => (
+            <TouchableOpacity
+              key={p.id}
+              style={styles.card}
+              onPress={() => router.push(`/product/${p.id}`)}
+            >
+              <Text style={styles.cardValue}>{p.name}</Text>
+              <Text style={styles.cardLabel}>{p.commission}% comissão · Envio direto</Text>
+            </TouchableOpacity>
+          ))
+        )}
+
         <View style={styles.card}>
           <View style={styles.cardRow}>
             <Ionicons name="notifications-outline" size={20} color={COLORS.accent} />
@@ -195,12 +219,35 @@ export default function ProfileScreen() {
             </Text>
             <Switch
               value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
+              onValueChange={(value) => {
+                setNotificationsEnabled(value);
+                showAlert(
+                  value ? 'Notificações ligadas' : 'Notificações desligadas',
+                  value
+                    ? 'Você receberá alertas de ranking e produtos virais.'
+                    : 'Os alertas ficam pausados neste aparelho.',
+                );
+              }}
               trackColor={{ false: COLORS.border, true: COLORS.accent }}
               thumbColor={COLORS.surface}
             />
           </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() =>
+            showAlert(
+              'Sobre o App',
+              'Liberdade Academy — comunidade exclusiva, catálogo viral e ranking. Versão 1.0.0.',
+            )
+          }
+        >
+          <View style={styles.cardRow}>
+            <Ionicons name="information-circle-outline" size={20} color={COLORS.accent} />
+            <Text style={[styles.cardValue, { marginLeft: SPACING.md }]}>Sobre o App</Text>
+          </View>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.signOut} onPress={handleSignOut} activeOpacity={0.85}>
           <Ionicons name="log-out-outline" size={20} color="#FFF" />

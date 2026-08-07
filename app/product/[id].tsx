@@ -7,12 +7,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Share,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/theme';
 import { MOCK_PRODUCTS } from '../../src/services/mockData';
+import { useAppData } from '../../src/contexts/AppDataContext';
+import { showAlert } from '../../src/utils/dialog';
 
 function formatPrice(price: number) {
   return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -26,15 +29,35 @@ function formatViews(views: number) {
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { toggleSelling, isSelling } = useAppData();
   const product = useMemo(
     () => MOCK_PRODUCTS.find((p) => p.id === id) ?? MOCK_PRODUCTS[0],
     [id],
   );
+  const selling = isSelling(product.id);
 
   const onShare = async () => {
-    await Share.share({
-      message: `Confira ${product.name} por ${formatPrice(product.price)} — Liberdade Academy`,
-    });
+    const message = `Confira ${product.name} por ${formatPrice(product.price)} — Liberdade Academy`;
+    try {
+      if (Platform.OS === 'web' && navigator.clipboard) {
+        await navigator.clipboard.writeText(message);
+        showAlert('Link copiado', 'Texto do produto copiado para a área de transferência.');
+        return;
+      }
+      await Share.share({ message });
+    } catch {
+      showAlert('Compartilhar', message);
+    }
+  };
+
+  const onSell = () => {
+    const nowSelling = toggleSelling(product.id);
+    showAlert(
+      nowSelling ? 'Produto ativado!' : 'Produto removido',
+      nowSelling
+        ? `${product.name} entrou na sua lista de vendas. O fornecedor envia direto ao cliente.`
+        : `${product.name} saiu da sua lista de vendas.`,
+    );
   };
 
   return (
@@ -102,9 +125,15 @@ export default function ProductDetailScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.cta} activeOpacity={0.85}>
-          <Text style={styles.ctaText}>Quero vender este produto</Text>
-          <Ionicons name="arrow-forward" size={18} color="#FFF" />
+        <TouchableOpacity
+          style={[styles.cta, selling && styles.ctaActive]}
+          activeOpacity={0.85}
+          onPress={onSell}
+        >
+          <Text style={styles.ctaText}>
+            {selling ? 'Parar de vender' : 'Quero vender este produto'}
+          </Text>
+          <Ionicons name={selling ? 'checkmark-circle' : 'arrow-forward'} size={18} color="#FFF" />
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -256,6 +285,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     ...SHADOWS.medium,
+  },
+  ctaActive: {
+    backgroundColor: COLORS.success,
   },
   ctaText: {
     color: '#FFF',

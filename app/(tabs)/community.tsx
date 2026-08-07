@@ -7,14 +7,21 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
+  Modal,
+  TextInput,
+  Pressable,
+  Share,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/theme';
-import { MOCK_POSTS } from '../../src/services/mockData';
+import { useAppData } from '../../src/contexts/AppDataContext';
 import type { CommunityPost } from '../../src/types';
+import { showAlert } from '../../src/utils/dialog';
 
 const CATEGORY_FILTERS = [
   { id: 'todos', label: 'Todos', color: COLORS.accent },
@@ -68,12 +75,13 @@ function formatCount(n: number): string {
   return n.toString();
 }
 
-interface PostCardProps {
+function PostCard({
+  post,
+  onToggleLike,
+}: {
   post: CommunityPost;
   onToggleLike: (id: string) => void;
-}
-
-function PostCard({ post, onToggleLike }: PostCardProps) {
+}) {
   const categoryStyle = CATEGORY_STYLES[post.category];
   const avatarColor = getAvatarColor(post.author.name);
 
@@ -121,12 +129,24 @@ function PostCard({ post, onToggleLike }: PostCardProps) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          activeOpacity={0.7}
+          onPress={() =>
+            showAlert('Comentários', 'Em breve você poderá comentar nos posts da comunidade.')
+          }
+        >
           <Ionicons name="chatbubble-outline" size={19} color={COLORS.textSecondary} />
           <Text style={styles.actionText}>{formatCount(post.comments)}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          activeOpacity={0.7}
+          onPress={() =>
+            Share.share({ message: `${post.author.name}: ${post.content}` }).catch(() => undefined)
+          }
+        >
           <Ionicons name="share-social-outline" size={20} color={COLORS.textSecondary} />
         </TouchableOpacity>
       </View>
@@ -135,39 +155,34 @@ function PostCard({ post, onToggleLike }: PostCardProps) {
 }
 
 export default function CommunityScreen() {
+  const { posts, addPost, toggleLike } = useAppData();
   const [activeFilter, setActiveFilter] = useState('todos');
-  const [posts, setPosts] = useState<CommunityPost[]>(MOCK_POSTS);
   const [refreshing, setRefreshing] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [draftCategory, setDraftCategory] =
+    useState<CommunityPost['category']>('dica');
 
   const filteredPosts =
     activeFilter === 'todos'
       ? posts
       : posts.filter((p) => p.category === activeFilter);
 
-  const handleToggleLike = useCallback((postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
-          : p,
-      ),
-    );
-  }, []);
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => {
-      setPosts(MOCK_POSTS);
-      setRefreshing(false);
-    }, 1200);
+    setTimeout(() => setRefreshing(false), 700);
   }, []);
 
-  const renderPost = useCallback(
-    ({ item }: { item: CommunityPost }) => (
-      <PostCard post={item} onToggleLike={handleToggleLike} />
-    ),
-    [handleToggleLike],
-  );
+  const publish = () => {
+    if (!draft.trim()) {
+      showAlert('Atenção', 'Escreva algo antes de publicar.');
+      return;
+    }
+    addPost(draft, draftCategory);
+    setDraft('');
+    setComposerOpen(false);
+    showAlert('Publicado!', 'Seu post já está na comunidade.');
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -178,7 +193,11 @@ export default function CommunityScreen() {
         style={styles.header}
       >
         <Text style={styles.headerTitle}>Comunidade</Text>
-        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          activeOpacity={0.7}
+          onPress={() => setComposerOpen(true)}
+        >
           <Ionicons name="add" size={26} color={COLORS.textLight} />
         </TouchableOpacity>
       </LinearGradient>
@@ -194,19 +213,11 @@ export default function CommunityScreen() {
             return (
               <TouchableOpacity
                 key={filter.id}
-                style={[
-                  styles.filterChip,
-                  isActive && { backgroundColor: filter.color },
-                ]}
+                style={[styles.filterChip, isActive && { backgroundColor: filter.color }]}
                 onPress={() => setActiveFilter(filter.id)}
                 activeOpacity={0.7}
               >
-                <Text
-                  style={[
-                    styles.filterText,
-                    isActive && styles.filterTextActive,
-                  ]}
-                >
+                <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
                   {filter.label}
                 </Text>
               </TouchableOpacity>
@@ -217,7 +228,7 @@ export default function CommunityScreen() {
 
       <FlatList
         data={filteredPosts}
-        renderItem={renderPost}
+        renderItem={({ item }) => <PostCard post={item} onToggleLike={toggleLike} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.feedContainer}
         showsVerticalScrollIndicator={false}
@@ -233,23 +244,77 @@ export default function CommunityScreen() {
           <View style={styles.emptyState}>
             <Ionicons name="chatbubbles-outline" size={56} color={COLORS.textMuted} />
             <Text style={styles.emptyTitle}>Nenhum post encontrado</Text>
-            <Text style={styles.emptySubtitle}>
-              Seja o primeiro a compartilhar nesta categoria!
-            </Text>
+            <TouchableOpacity style={styles.emptyCta} onPress={() => setComposerOpen(true)}>
+              <Text style={styles.emptyCtaText}>Criar primeiro post</Text>
+            </TouchableOpacity>
           </View>
         }
       />
 
-      <TouchableOpacity style={styles.fab} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.85}
+        onPress={() => setComposerOpen(true)}
+      >
         <LinearGradient
           colors={[COLORS.accent, COLORS.primary]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.fabGradient}
         >
-          <Ionicons name="add" size={28} color={COLORS.textLight} />
+          <Ionicons name="create" size={24} color={COLORS.textLight} />
         </LinearGradient>
       </TouchableOpacity>
+
+      <Modal visible={composerOpen} transparent animationType="slide" onRequestClose={() => setComposerOpen(false)}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <Pressable style={{ flex: 1 }} onPress={() => setComposerOpen(false)} />
+          <View style={styles.composer}>
+            <Text style={styles.composerTitle}>Nova publicação</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.composerCats}>
+              {(['dica', 'resultado', 'duvida', 'motivacao'] as const).map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[
+                    styles.composerCat,
+                    draftCategory === cat && { backgroundColor: CATEGORY_STYLES[cat].color },
+                  ]}
+                  onPress={() => setDraftCategory(cat)}
+                >
+                  <Text
+                    style={[
+                      styles.composerCatText,
+                      draftCategory === cat && { color: '#FFF' },
+                    ]}
+                  >
+                    {CATEGORY_STYLES[cat].label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TextInput
+              style={styles.composerInput}
+              placeholder="Compartilhe uma dica, resultado ou dúvida..."
+              placeholderTextColor={COLORS.textMuted}
+              multiline
+              value={draft}
+              onChangeText={setDraft}
+              maxLength={500}
+            />
+            <View style={styles.composerActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setComposerOpen(false)}>
+                <Text style={styles.cancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.publishBtn} onPress={publish}>
+                <Text style={styles.publishText}>Publicar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -258,8 +323,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    width: '100%',
+    overflow: 'hidden',
   },
-
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -270,9 +336,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FONTS.sizes.xxl,
-    fontWeight: '700',
+    fontFamily: FONTS.bold,
     color: COLORS.textLight,
-    letterSpacing: 0.3,
   },
   headerButton: {
     width: 40,
@@ -282,7 +347,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   filtersContainer: {
     backgroundColor: COLORS.surface,
     paddingVertical: SPACING.md,
@@ -303,25 +367,24 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: FONTS.sizes.md,
-    fontWeight: '500',
+    fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
   filterTextActive: {
     color: COLORS.textLight,
-    fontWeight: '600',
+    fontFamily: FONTS.bold,
   },
-
   feedContainer: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
-    paddingBottom: 100,
+    paddingBottom: 130,
   },
-
   postCard: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
     padding: SPACING.xl,
     marginBottom: SPACING.lg,
+    width: '100%',
     ...SHADOWS.medium,
   },
   postHeader: {
@@ -338,22 +401,23 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: FONTS.sizes.md,
-    fontWeight: '700',
+    fontFamily: FONTS.bold,
     color: COLORS.textLight,
-    letterSpacing: 0.5,
   },
   authorInfo: {
     flex: 1,
     marginLeft: SPACING.md,
+    minWidth: 0,
   },
   authorRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
+    flexWrap: 'wrap',
   },
   authorName: {
     fontSize: FONTS.sizes.lg,
-    fontWeight: '600',
+    fontFamily: FONTS.bold,
     color: COLORS.text,
   },
   levelBadge: {
@@ -364,23 +428,20 @@ const styles = StyleSheet.create({
   },
   levelText: {
     fontSize: FONTS.sizes.xs,
-    fontWeight: '700',
+    fontFamily: FONTS.bold,
     color: COLORS.textLight,
-    letterSpacing: 0.3,
   },
   timestamp: {
     fontSize: FONTS.sizes.sm,
     color: COLORS.textMuted,
     marginTop: 2,
   },
-
   postContent: {
     fontSize: FONTS.sizes.lg,
     lineHeight: 24,
     color: COLORS.text,
     marginBottom: SPACING.md,
   },
-
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -398,15 +459,13 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: FONTS.sizes.sm,
-    fontWeight: '600',
+    fontFamily: FONTS.bold,
   },
-
   divider: {
     height: 1,
     backgroundColor: COLORS.borderLight,
     marginBottom: SPACING.md,
   },
-
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -421,9 +480,8 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: FONTS.sizes.md,
     color: COLORS.textSecondary,
-    fontWeight: '500',
+    fontFamily: FONTS.medium,
   },
-
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -432,16 +490,21 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: FONTS.sizes.xl,
-    fontWeight: '600',
+    fontFamily: FONTS.bold,
     color: COLORS.text,
     marginTop: SPACING.md,
   },
-  emptySubtitle: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.textMuted,
-    textAlign: 'center',
+  emptyCta: {
+    marginTop: SPACING.md,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.full,
   },
-
+  emptyCtaText: {
+    color: '#FFF',
+    fontFamily: FONTS.bold,
+  },
   fab: {
     position: 'absolute',
     bottom: 110,
@@ -454,5 +517,78 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 28, 51, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  composer: {
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: SPACING.xxl,
+  },
+  composerTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+    marginBottom: SPACING.md,
+  },
+  composerCats: {
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  composerCat: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surfaceLight,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  composerCatText: {
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+    fontSize: FONTS.sizes.sm,
+  },
+  composerInput: {
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    textAlignVertical: 'top',
+    fontFamily: FONTS.regular,
+    fontSize: FONTS.sizes.lg,
+    color: COLORS.text,
+    marginBottom: SPACING.lg,
+    outlineStyle: 'none' as unknown as undefined,
+  },
+  composerActions: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.surfaceLight,
+    alignItems: 'center',
+  },
+  cancelText: {
+    fontFamily: FONTS.bold,
+    color: COLORS.textSecondary,
+  },
+  publishBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+  },
+  publishText: {
+    fontFamily: FONTS.bold,
+    color: '#FFF',
   },
 });

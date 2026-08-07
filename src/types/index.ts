@@ -1,3 +1,34 @@
+export type OnboardingNiche =
+  | 'beleza'
+  | 'saude'
+  | 'fisico'
+  | 'digital'
+  | 'moda'
+  | 'casa'
+  | 'tech'
+  | 'fitness';
+
+export type RevenueRange =
+  | 'ate_5k'
+  | '5k_15k'
+  | '15k_50k'
+  | '50k_mais';
+
+export type PlatformGoal =
+  | 'primeira_venda'
+  | 'escalar'
+  | 'trocar_nicho'
+  | 'comunidade'
+  | 'renda_extra';
+
+export interface OnboardingProfile {
+  niche: OnboardingNiche;
+  alreadySelling: boolean;
+  revenueRange?: RevenueRange;
+  goal: PlatformGoal;
+  completedAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -7,6 +38,8 @@ export interface User {
   xp: number;
   rank: number;
   joinedAt: string;
+  onboardingCompleted: boolean;
+  onboarding?: OnboardingProfile;
   stats: {
     productsViewed: number;
     salesMade: number;

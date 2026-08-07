@@ -1,7 +1,14 @@
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { FloatingTabBar } from '../../src/components/FloatingTabBar';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function TabsLayout() {
+  const { isAuthenticated, needsOnboarding, isLoading } = useAuth();
+
+  if (!isLoading && isAuthenticated && needsOnboarding) {
+    return <Redirect href="/(auth)/onboarding" />;
+  }
+
   return (
     <Tabs
       tabBar={(props) => <FloatingTabBar {...(props as any)} />}

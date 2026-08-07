@@ -4,7 +4,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { COLORS } from '../src/constants/theme';
 
 export default function Index() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, needsOnboarding } = useAuth();
 
   if (isLoading) {
     return (
@@ -12,6 +12,10 @@ export default function Index() {
         <ActivityIndicator size="large" color={COLORS.accent} />
       </View>
     );
+  }
+
+  if (isAuthenticated && needsOnboarding) {
+    return <Redirect href="/(auth)/onboarding" />;
   }
 
   if (isAuthenticated) {

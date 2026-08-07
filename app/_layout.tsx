@@ -8,6 +8,8 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { AuthProvider } from '../src/contexts/AuthContext';
+import { AppDataProvider } from '../src/contexts/AppDataContext';
+import { ResponsiveShell } from '../src/components/ResponsiveShell';
 import { COLORS } from '../src/constants/theme';
 
 export default function RootLayout() {
@@ -27,19 +29,23 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="product/[id]"
-          options={{
-            presentation: 'modal',
-            headerShown: false,
-          }}
-        />
-      </Stack>
+      <AppDataProvider>
+        <ResponsiveShell>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="product/[id]"
+              options={{
+                presentation: 'modal',
+                headerShown: false,
+              }}
+            />
+          </Stack>
+        </ResponsiveShell>
+      </AppDataProvider>
     </AuthProvider>
   );
 }

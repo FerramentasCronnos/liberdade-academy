@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Liberdade Academy",
+    "slug": "liberdade-academy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "liberdade-academy",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.liberdadeacademy.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1B2A4A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.liberdadeacademy.app",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar"
+    ]
+  }
+}

@@ -19,7 +19,7 @@ App mobile (iOS + Android) da comunidade exclusiva Liberdade Academy — catálo
 - **Ranking** — pódio + classificação por XP/vendas
 - **Perfil** — stats, nichos e top da comunidade
 
-## Como rodar
+## Como rodar (app)
 
 ```bash
 cd liberdade-academy
@@ -27,30 +27,45 @@ npm install --legacy-peer-deps
 npx expo start
 ```
 
-Depois escaneie o QR no Expo Go (iOS/Android) ou pressione `i` / `a` para simulador.
+### Backend (Portainer / Docker)
+
+Stack: API Fastify + Postgres + Redis + Caddy + Adminer.
+
+Guias: [`docs/PORTAINER.md`](docs/PORTAINER.md) · [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) (banco, TikTok, envs)
+
+```bash
+cp infra/.env.example infra/.env
+# edite senhas/JWT em infra/.env
+docker compose --env-file infra/.env up -d --build
+curl http://localhost:8080/health
+```
+
+No app (`.env`):
+
+```env
+EXPO_PUBLIC_API_URL=http://SEU_IP:8080
+```
+
+Reinicie o Expo com `npx expo start --clear`.
 
 ### Login demo
 
-Qualquer e-mail válido + senha com 4+ caracteres entra na comunidade.
+- **Com API:** `thais@liberdade.academy` / `123456`
+- **Sem API (local):** qualquer e-mail válido + senha com 4+ caracteres
 
 ## Kalodata (TikTok)
 
-1. Copie `.env.example` → `.env`
-2. Preencha `EXPO_PUBLIC_CALODATA_API_KEY` (acesso enterprise Kalodata)
-3. Reinicie o Expo
-
-Sem chave, o app usa o catálogo demo e continua funcional.
+Preferível no backend (`CALODATA_API_KEY` na stack Portainer). Sync via `POST /products/sync-kalodata`.
 
 ## Estrutura
 
 ```
-app/
-  (auth)/          # login e cadastro
-  (tabs)/          # home, catálogo, comunidade, ranking, perfil
-  product/[id].tsx # detalhe do produto
+app/                 # telas Expo Router
+backend/             # API Fastify + Prisma
+docker-compose.yml   # stack Portainer (raiz)
+infra/               # Caddyfile + .env.example
+docs/PORTAINER.md    # deploy passo a passo
 src/
-  components/      # FloatingTabBar Soft UI
-  contexts/        # autenticação
-  services/        # Kalodata + mock data
-  constants/       # tema
+  contexts/          # Auth + dados (API ou demo)
+  services/          # apiClient, Kalodata, mocks
 ```

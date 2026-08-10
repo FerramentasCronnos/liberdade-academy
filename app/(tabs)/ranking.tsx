@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/theme';
 import { MOCK_RANKING } from '../../src/services/mockData';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { api, isApiEnabled } from '../../src/services/apiClient';
+import type { RankingUser } from '../../src/types';
 
 const { width } = Dimensions.get('window');
 
@@ -35,8 +38,30 @@ function xpForNextLevel(level: number) {
 
 export default function RankingScreen() {
   const { user } = useAuth();
-  const top3 = MOCK_RANKING.slice(0, 3);
-  const rest = MOCK_RANKING.slice(3);
+  const [ranking, setRanking] = useState<RankingUser[]>(MOCK_RANKING);
+  const [loading, setLoading] = useState(isApiEnabled());
+
+  useEffect(() => {
+    if (!isApiEnabled()) return;
+    api
+      .ranking()
+      .then((res) => {
+        if (res.ranking.length) setRanking(res.ranking);
+      })
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const top3 = ranking.slice(0, 3);
+  const rest = ranking.slice(3);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   const renderPodium = () => {
     const second = top3[1];

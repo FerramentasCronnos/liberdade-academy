@@ -1,0 +1,94 @@
+# Stack Liberdade Academy — deploy no Portainer
+# Stacks > Add stack > Web editor / Upload / Git repository
+
+name: liberdade-academy
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: liberdade_academy
+      POSTGRES_USER: liberdade
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-liberdade}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - liberdade
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liberdade -d liberdade_academy"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - liberdade
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://liberdade:${POSTGRES_PASSWORD:-liberdade}@postgres:5432/liberdade_academy?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-troque-esta-chave-em-producao}
+      PORT: 3000
+      HOST: 0.0.0.0
+      CATALOG_PROVIDER: ${CATALOG_PROVIDER:-seed}
+      SCAVIO_API_KEY: ${SCAVIO_API_KEY:-}
+      SCAVIO_BASE_URL: ${SCAVIO_BASE_URL:-https://api.scavio.dev}
+      APIFY_TOKEN: ${APIFY_TOKEN:-}
+      APIFY_TIKTOK_ACTOR_ID: ${APIFY_TIKTOK_ACTOR_ID:-}
+      CALODATA_API_KEY: ${CALODATA_API_KEY:-}
+      CALODATA_BASE_URL: ${CALODATA_BASE_URL:-https://api.kalodata.com/v1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - liberdade
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - api
+    networks:
+      - liberdade
+
+  adminer:
+    image: adminer:4
+    restart: unless-stopped
+    ports:
+      - "${ADMINER_PORT:-8088}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    networks:
+      - liberdade
+
+networks:
+  liberdade:
+    driver: bridge
+
+volumes:
+  pg_data:
+  redis_data:

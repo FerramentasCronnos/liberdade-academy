@@ -20,6 +20,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/theme';
 import { MOCK_PRODUCTS, CATEGORIES } from '../../src/services/mockData';
 import { fetchCatalogProducts } from '../../src/services/calodataApi';
+import { api, isApiEnabled } from '../../src/services/apiClient';
 import { useAppData } from '../../src/contexts/AppDataContext';
 import type { Product } from '../../src/types';
 import { LAYOUT } from '../../src/constants/layout';
@@ -52,6 +53,20 @@ export default function CatalogScreen() {
   const [sourceLabel, setSourceLabel] = useState('Catálogo local');
 
   const loadProducts = useCallback(async () => {
+    if (isApiEnabled()) {
+      try {
+        const result = await api.products({
+          category: selectedCategory,
+          q: searchQuery,
+        });
+        setProducts(result.products.length ? result.products : MOCK_PRODUCTS);
+        setSourceLabel('API Liberdade · Postgres');
+        return;
+      } catch {
+        // fallback abaixo
+      }
+    }
+
     const result = await fetchCatalogProducts({
       category: selectedCategory,
       query: searchQuery,

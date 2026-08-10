@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String            @id @default(cuid())
+  name                 String
+  email                String            @unique
+  passwordHash         String
+  avatar               String?
+  level                Int               @default(1)
+  xp                   Int               @default(0)
+  rank                 Int               @default(999)
+  joinedAt             DateTime          @default(now())
+  onboardingCompleted  Boolean           @default(false)
+  niche                String?
+  alreadySelling       Boolean?
+  revenueRange         String?
+  goal                 String?
+  onboardingAt         DateTime?
+  productsViewed       Int               @default(0)
+  salesMade            Int               @default(0)
+  communityPosts       Int               @default(0)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  posts                Post[]
+  likes                PostLike[]
+  comments             Comment[]
+  selling              SellingProduct[]
+  notifications        Notification[]
+  notificationReads    NotificationRead[]
+}
+
+model Product {
+  id            String           @id @default(cuid())
+  externalId    String?          @unique
+  name          String
+  image         String
+  price         Float
+  category      String
+  supplier      String
+  rating        Float            @default(4.5)
+  salesCount    Int              @default(0)
+  tiktokViews   Int?
+  isViral       Boolean          @default(false)
+  commission    Int              @default(20)
+  description   String
+  supplierShips Boolean          @default(true)
+  active        Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  selling       SellingProduct[]
+}
+
+model Post {
+  id        String     @id @default(cuid())
+  content   String
+  category  String
+  image     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  authorId  String
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes     PostLike[]
+  comments  Comment[]
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model SellingProduct {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  title     String
+  body      String
+  route     String?
+  createdAt DateTime           @default(now())
+  userId    String?
+  user      User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reads     NotificationRead[]
+}
+
+model NotificationRead {
+  id             String       @id @default(cuid())
+  userId         String
+  notificationId String
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationId])
+}

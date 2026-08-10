@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,9 @@ import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/the
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useAppData } from '../../src/contexts/AppDataContext';
 import { CATEGORIES, MOCK_RANKING, MOCK_PRODUCTS } from '../../src/services/mockData';
+import { api, isApiEnabled } from '../../src/services/apiClient';
 import { confirmDialog, showAlert } from '../../src/utils/dialog';
+import type { RankingUser } from '../../src/types';
 
 function getInitials(name: string) {
   return name
@@ -31,9 +33,25 @@ function xpForNextLevel(level: number) {
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
-  const { sellingIds } = useAppData();
+  const { sellingIds, sellingProducts: apiSellingProducts } = useAppData();
   const router = useRouter();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [teamPreview, setTeamPreview] = useState<RankingUser[]>(MOCK_RANKING.slice(0, 5));
+
+  useEffect(() => {
+    if (!isApiEnabled()) return;
+    api
+      .ranking()
+      .then((res) => {
+        if (res.ranking.length) setTeamPreview(res.ranking.slice(0, 5));
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const sellingProducts = useMemo(() => {
+    if (apiSellingProducts.length) return apiSellingProducts;
+    return MOCK_PRODUCTS.filter((p) => sellingIds.includes(p.id));
+  }, [apiSellingProducts, sellingIds]);
 
   if (!user) return null;
 
@@ -42,8 +60,6 @@ export default function ProfileScreen() {
   const niches = CATEGORIES.filter((c) =>
     ['beleza', 'saude', 'fisico', 'digital'].includes(c.id),
   );
-  const teamPreview = MOCK_RANKING.slice(0, 5);
-  const sellingProducts = MOCK_PRODUCTS.filter((p) => sellingIds.includes(p.id));
 
   const handleSignOut = async () => {
     const ok = await confirmDialog(

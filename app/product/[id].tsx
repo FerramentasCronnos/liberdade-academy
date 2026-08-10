@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,17 @@ import {
   TouchableOpacity,
   Share,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/theme';
 import { MOCK_PRODUCTS } from '../../src/services/mockData';
+import { api, isApiEnabled } from '../../src/services/apiClient';
 import { useAppData } from '../../src/contexts/AppDataContext';
 import { showAlert } from '../../src/utils/dialog';
+import type { Product } from '../../src/types';
 
 function formatPrice(price: number) {
   return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -30,11 +33,28 @@ function formatViews(views: number) {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { toggleSelling, isSelling } = useAppData();
-  const product = useMemo(
-    () => MOCK_PRODUCTS.find((p) => p.id === id) ?? MOCK_PRODUCTS[0],
-    [id],
-  );
+  const fallback = MOCK_PRODUCTS.find((p) => p.id === id) ?? MOCK_PRODUCTS[0];
+  const [product, setProduct] = useState<Product>(fallback);
+  const [loading, setLoading] = useState(isApiEnabled());
   const selling = isSelling(product.id);
+
+  useEffect(() => {
+    if (!id) return;
+    if (!isApiEnabled()) {
+      setProduct(MOCK_PRODUCTS.find((p) => p.id === id) ?? MOCK_PRODUCTS[0]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    api
+      .product(String(id))
+      .then((res) => setProduct(res.product))
+      .catch(() => {
+        setProduct(MOCK_PRODUCTS.find((p) => p.id === id) ?? MOCK_PRODUCTS[0]);
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const onShare = async () => {
     const message = `Confira ${product.name} por ${formatPrice(product.price)} — Liberdade Academy`;
@@ -50,8 +70,8 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const onSell = () => {
-    const nowSelling = toggleSelling(product.id);
+  const onSell = async () => {
+    const nowSelling = await toggleSelling(product.id);
     showAlert(
       nowSelling ? 'Produto ativado!' : 'Produto removido',
       nowSelling
@@ -59,6 +79,14 @@ export default function ProductDetailScreen() {
         : `${product.name} saiu da sua lista de vendas.`,
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

@@ -1,18 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { OnboardingProfile, User } from '../types';
+import { api, isApiEnabled, setToken } from '../services/apiClient';
 
 const SESSION_KEY = '@liberdade_academy_session';
 const USERS_KEY = '@liberdade_academy_users';
 
 type AuthResult = { needsOnboarding: boolean };
-type UsersMap = Record<string, User>;
+type UsersMap = Record<string, User & { passwordHash?: string }>;
 
 interface AuthContextData {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   needsOnboarding: boolean;
+  usingApi: boolean;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signUp: (name: string, email: string, password: string) => Promise<AuthResult>;
   completeOnboarding: (profile: Omit<OnboardingProfile, 'completedAt'>) => Promise<void>;
@@ -46,7 +48,7 @@ async function readUsers(): Promise<UsersMap> {
   return raw ? (JSON.parse(raw) as UsersMap) : {};
 }
 
-async function writeUser(user: User) {
+async function writeLocalUser(user: User) {
   const users = await readUsers();
   users[user.email.toLowerCase()] = user;
   await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
@@ -56,25 +58,46 @@ async function writeUser(user: User) {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const usingApi = isApiEnabled();
 
   useEffect(() => {
-    AsyncStorage.getItem(SESSION_KEY)
-      .then((raw) => {
-        if (!raw) return;
+    (async () => {
+      try {
+        if (usingApi) {
+          const me = await api.me();
+          setUser(me.user);
+          await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(me.user));
+          return;
+        }
+      } catch {
+        // token inválido / API offline → tenta sessão local
+      }
+
+      const raw = await AsyncStorage.getItem(SESSION_KEY);
+      if (raw) {
         const parsed = JSON.parse(raw) as Partial<User>;
         if (parsed?.id && parsed?.email && parsed?.name) {
           setUser(normalizeUser(parsed as User));
         }
-      })
+      }
+    })()
       .catch(() => undefined)
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [usingApi]);
 
   const signIn = async (email: string, password: string): Promise<AuthResult> => {
+    if (usingApi) {
+      const result = await api.login(email, password);
+      await setToken(result.token);
+      setUser(result.user);
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
+      return { needsOnboarding: result.needsOnboarding };
+    }
+
     if (!email.includes('@') || password.length < 4) {
       throw new Error('E-mail ou senha inválidos.');
     }
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const key = email.toLowerCase();
     const users = await readUsers();
@@ -91,15 +114,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: String(Date.now()),
       name: email.split('@')[0],
       email,
-      level: 1,
-      xp: 0,
-      rank: 99,
-      joinedAt: new Date().toISOString().slice(0, 10),
       onboardingCompleted: false,
-      stats: { productsViewed: 0, salesMade: 0, communityPosts: 0 },
     });
     setUser(next);
-    await writeUser(next);
+    await writeLocalUser(next);
     return { needsOnboarding: true };
   };
 
@@ -108,30 +126,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
   ): Promise<AuthResult> => {
+    if (usingApi) {
+      const result = await api.register(name, email, password);
+      await setToken(result.token);
+      setUser(result.user);
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
+      return { needsOnboarding: result.needsOnboarding };
+    }
+
     if (!name.trim() || !email.includes('@') || password.length < 6) {
       throw new Error('Preencha os dados corretamente.');
     }
-    await new Promise((resolve) => setTimeout(resolve, 700));
-
-    const key = email.toLowerCase();
-    const users = await readUsers();
-    if (users[key]?.onboardingCompleted) {
-      throw new Error('Já existe uma conta com este e-mail. Faça login.');
-    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const next = normalizeUser({
-      id: users[key]?.id ?? String(Date.now()),
+      id: String(Date.now()),
       name,
       email,
-      level: 1,
-      xp: 0,
-      rank: 99,
-      joinedAt: new Date().toISOString().slice(0, 10),
       onboardingCompleted: false,
-      stats: { productsViewed: 0, salesMade: 0, communityPosts: 0 },
     });
     setUser(next);
-    await writeUser(next);
+    await writeLocalUser(next);
     return { needsOnboarding: true };
   };
 
@@ -139,6 +154,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile: Omit<OnboardingProfile, 'completedAt'>,
   ) => {
     if (!user) return;
+
+    if (usingApi) {
+      const result = await api.completeOnboarding(profile);
+      setUser(result.user);
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
+      return;
+    }
+
     const next: User = {
       ...user,
       onboardingCompleted: true,
@@ -148,11 +171,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     };
     setUser(next);
-    await writeUser(next);
+    await writeLocalUser(next);
   };
 
   const signOut = async () => {
     setUser(null);
+    await setToken(null);
     await AsyncStorage.removeItem(SESSION_KEY);
   };
 
@@ -163,6 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         needsOnboarding: !!user && !user.onboardingCompleted,
+        usingApi,
         signIn,
         signUp,
         completeOnboarding,

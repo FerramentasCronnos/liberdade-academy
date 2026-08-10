@@ -155,7 +155,7 @@ function PostCard({
 }
 
 export default function CommunityScreen() {
-  const { posts, addPost, toggleLike } = useAppData();
+  const { posts, addPost, toggleLike, refreshPosts } = useAppData();
   const [activeFilter, setActiveFilter] = useState('todos');
   const [refreshing, setRefreshing] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -168,20 +168,28 @@ export default function CommunityScreen() {
       ? posts
       : posts.filter((p) => p.category === activeFilter);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 700);
-  }, []);
+    try {
+      await refreshPosts(activeFilter);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshPosts, activeFilter]);
 
-  const publish = () => {
+  const publish = async () => {
     if (!draft.trim()) {
       showAlert('Atenção', 'Escreva algo antes de publicar.');
       return;
     }
-    addPost(draft, draftCategory);
-    setDraft('');
-    setComposerOpen(false);
-    showAlert('Publicado!', 'Seu post já está na comunidade.');
+    try {
+      await addPost(draft, draftCategory);
+      setDraft('');
+      setComposerOpen(false);
+      showAlert('Publicado!', 'Seu post já está na comunidade.');
+    } catch (error: any) {
+      showAlert('Erro', error.message || 'Não foi possível publicar.');
+    }
   };
 
   return (

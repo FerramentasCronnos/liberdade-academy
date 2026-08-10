@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,9 @@ import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../src/constants/the
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useAppData } from '../../src/contexts/AppDataContext';
 import { MOCK_PRODUCTS, CATEGORIES } from '../../src/services/mockData';
+import { api, isApiEnabled } from '../../src/services/apiClient';
 import { showAlert } from '../../src/utils/dialog';
+import type { Product } from '../../src/types';
 
 const GRID_GAP = 12;
 
@@ -40,12 +42,20 @@ export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifsOpen, setNotifsOpen] = useState(false);
+  const [gridProducts, setGridProducts] = useState<Product[]>(
+    MOCK_PRODUCTS.filter((p) => p.isViral).slice(0, 4),
+  );
   const firstName = user?.name?.split(' ')[0] ?? 'Membro';
 
-  const gridProducts = useMemo(
-    () => MOCK_PRODUCTS.filter((p) => p.isViral).slice(0, 4),
-    [],
-  );
+  useEffect(() => {
+    if (!isApiEnabled()) return;
+    api
+      .products({ viral: true })
+      .then((res) => {
+        if (res.products.length) setGridProducts(res.products.slice(0, 4));
+      })
+      .catch(() => undefined);
+  }, []);
 
   const niches = CATEGORIES.filter((c) =>
     ['beleza', 'saude', 'fisico', 'digital'].includes(c.id),

@@ -47,12 +47,25 @@ services:
       PORT: 3000
       HOST: 0.0.0.0
       CATALOG_PROVIDER: ${CATALOG_PROVIDER:-seed}
-      SCAVIO_API_KEY: ${SCAVIO_API_KEY:-}
-      SCAVIO_BASE_URL: ${SCAVIO_BASE_URL:-https://api.scavio.dev}
+      CATALOG_REGIONS: ${CATALOG_REGIONS:-BR}
+      CATALOG_SYNC_LIMIT: ${CATALOG_SYNC_LIMIT:-100}
       APIFY_TOKEN: ${APIFY_TOKEN:-}
-      APIFY_TIKTOK_ACTOR_ID: ${APIFY_TIKTOK_ACTOR_ID:-}
+      APIFY_ACTOR_ID: ${APIFY_ACTOR_ID:-}
+      APIFY_ACTOR_ID_BR: ${APIFY_ACTOR_ID_BR:-}
+      APIFY_ACTOR_ID_US: ${APIFY_ACTOR_ID_US:-}
+      APIFY_INPUT_JSON: ${APIFY_INPUT_JSON:-}
+      APIFY_PRICE_DIVISOR: ${APIFY_PRICE_DIVISOR:-1}
+      APIFY_PRICE_DIVISOR_BR: ${APIFY_PRICE_DIVISOR_BR:-}
+      APIFY_PRICE_DIVISOR_US: ${APIFY_PRICE_DIVISOR_US:-}
+      APIFY_SEARCH_TERMS: ${APIFY_SEARCH_TERMS:-}
+      UPLOAD_DIR: /app/uploads
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      COMMISSION_RATES_BR: ${COMMISSION_RATES_BR:-}
+      COMMISSION_RATES_US: ${COMMISSION_RATES_US:-}
       CALODATA_API_KEY: ${CALODATA_API_KEY:-}
       CALODATA_BASE_URL: ${CALODATA_BASE_URL:-https://api.kalodata.com/v1}
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,3 +105,4 @@ networks:
 volumes:
   pg_data:
   redis_data:
+  uploads:

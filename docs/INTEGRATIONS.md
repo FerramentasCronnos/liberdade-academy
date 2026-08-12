@@ -11,7 +11,7 @@ O que o app precisa pra ficar **100% funcional** vs o que é **upgrade de catál
 | Banco (auth, comunidade, ranking, vendas, notifs) | **PostgreSQL** | sim | incluso no VPS | container `postgres` |
 | Cache | **Redis** | recomendado | incluso no VPS | container `redis` |
 | Proxy | Caddy | sim (stack) | incluso | container `caddy` |
-| Catálogo viral TikTok | Scavio / Apify / Kalodata | **não** | pago | API externa → sync no Postgres |
+| Catálogo viral TikTok | Apify / Kalodata (ver §2) | **não** | pago | API externa → sync no Postgres |
 | TikTok Shop oficial (Partner API) | TikTok | só se forem loja própria | conta seller | não serve pra “vitrine viral” aberta |
 
 **Regra prática:** com Portainer + Postgres + seed, o app já funciona (login, onboarding, posts, likes, ranking, selling, notificações, catálogo demo).  
@@ -63,42 +63,79 @@ Não serve pra montar um catálogo aberto de “produtos virais do TikTok”.
 
 Pra vitrine / pesquisa de produtos do marketplace, usam **terceiros**:
 
-| Provider | Tipo | Bom pra | Custo (ordem de grandeza) | API self-serve? |
-|----------|------|---------|---------------------------|-----------------|
-| **Scavio** | API TikTok Shop | sync no backend (recomendado pra começar pago) | ~US$ 30/mês ou pay-per-call | sim |
-| **Apify** (actors TikTok Shop) | scrapers via API | flexível, vários actors | créditos (~US$ 5+) | sim |
-| **SocialCrawl / similares** | API produtos/reviews | schema limpo | pay-per-use | sim |
-| **Kalodata** | dashboard analytics | pesquisa manual no browser | ~US$ 45–100/mês dashboard | API só **Enterprise** (caro) |
+| Provider | Custo | Cobre Brasil? | Adapter no código? |
+|----------|-------|---------------|--------------------|
+| **Apify** — actor `unseenuser/TikTok-Shop-Scraper` | US$ 4,50 / 1.000 produtos | ✅ **sim, testado com dados reais** | ✅ sim |
+| **Kalodata** | dashboard US$ 45–100/mês | ✅ 19+ países, inclui BR | ✅ sim, mas API **só Enterprise** |
+| **EchoTik** | 100 chamadas grátis, ~US$ 10–29/mês | ⚠️ não confirmado | ❌ falta escrever |
+| **Scavio** | 250 créditos/mês grátis, US$ 30/mês = 7k | ⚠️ não confirmado | ❌ falta escrever |
+| **FastMoss** | ~US$ 30/mês | ❌ BR não listado nos 17+ países | ❌ falta escrever |
+
+> **Brasil resolvido.** Testamos o actor `unseenuser/TikTok-Shop-Scraper` com
+> `region: BR` e voltaram produtos reais (títulos em português, preço em R$,
+> lojas brasileiras, contagem de vendas). Custo do teste: US$ 0,02.
+>
+> Dois actors populares NÃO servem pro BR, apesar da descrição sugerir:
+> `pro100chok/tiktok-shop-scraper` aceita só `region: "us"`, e
+> `herus13/tiktok-shop-scraper` só faz busca por palavra-chave nos EUA — fora
+> deles exige URL de produto pronta e proxy residencial na região.
+>
+> **Pegadinha do preço:** o `unseenuser` devolve valor em centavos e o próprio
+> `priceDisplay` formata errado (mostra `R$3149.00` pra um produto de R$ 31,49).
+> Por isso existe `APIFY_PRICE_DIVISOR=100`.
+
+> **Termos de uso:** raspar o TikTok fere o ToS deles. Os actors do Apify fazem
+> isso mesmo assim; o risco prático é a fonte quebrar sem aviso. Por isso o
+> catálogo é servido do Postgres e o provider só alimenta a tabela — se a fonte
+> cair, o app continua de pé com o último sync.
 
 ### Recomendação Liberdade Academy
 
-1. **Fase 1 (subir agora):** sem provider → catálogo do **seed** no Postgres (app 100% usável).  
-2. **Fase 2 (catálogo real):** `CATALOG_PROVIDER=scavio` (ou `apify`) + chave no Portainer.  
-3. **Kalodata:** só se já tiverem plano Enterprise com Open API; senão não bloquear o lançamento.
+1. **Fase 1 (subir agora):** `CATALOG_PROVIDER=seed` → catálogo do Postgres (app 100% usável).
+2. **Fase 2 (catálogo real):** testar as cotas grátis, escolher o provider e preencher a chave.
+3. **Kalodata:** só se já tiverem Enterprise; senão não bloqueia o lançamento.
 
 Env (stack / backend):
 
 ```env
-CATALOG_PROVIDER=seed          # seed | scavio | apify | kalodata
-SCAVIO_API_KEY=
-SCAVIO_BASE_URL=https://api.scavio.dev
+CATALOG_PROVIDER=seed          # providers com adapter: seed | apify | kalodata
+CATALOG_REGIONS=BR             # BR, US ou "BR,US"
+CATALOG_SYNC_LIMIT=100         # máx. de produtos por região em cada sync
+
 APIFY_TOKEN=
-APIFY_TIKTOK_ACTOR_ID=
+APIFY_ACTOR_ID=                # aceita "usuario/actor" ou "usuario~actor"
+APIFY_ACTOR_ID_BR=             # opcional: actor específico por região
+APIFY_ACTOR_ID_US=
+APIFY_INPUT_JSON=              # opcional: input próprio do actor
+
 CALODATA_API_KEY=              # só Enterprise
 CALODATA_BASE_URL=https://api.kalodata.com/v1
 ```
 
-Sync manual (autenticado):
+Diagnóstico e sync (autenticado):
 
 ```bash
-POST /products/sync-kalodata   # hoje; evolui pra /products/sync conforme provider
+GET  /catalog/status           # provider ativo, o que falta configurar, contagem por região
+POST /products/sync            # {"provider":"apify","regions":["BR","US"],"limit":200}
+POST /products/sync-kalodata   # depreciado — alias de /products/sync com kalodata
 ```
+
+### Como plugar um provider novo
+
+1. Crie `backend/src/services/catalog/providers/<nome>.ts` implementando `CatalogProvider`
+   (`isConfigured`, `missingConfigMessage`, `fetchTopProducts`).
+2. Registre em `backend/src/services/catalog/index.ts`.
+3. Use `CATALOG_PROVIDER=<nome>`.
+
+O provider só traduz a resposta da API para `RawCatalogProduct`. Categoria,
+moeda, limiar de viral e clamps de rating/comissão ficam em `normalize.ts`,
+iguais pra todo mundo.
 
 ---
 
 ## 3. App Expo (só aponta pro backend)
 
-O mobile **não** deve guardar chaves de Kalodata/Scavio. Só a URL da API:
+O mobile **não** deve guardar chaves de provider nenhum. Só a URL da API:
 
 ```env
 EXPO_PUBLIC_API_URL=https://api.seudominio.com
@@ -120,7 +157,7 @@ EXPO_PUBLIC_API_URL=https://api.seudominio.com
 
 ### Opcional (depois)
 
-- [ ] Conta Scavio ou Apify  
+- [ ] Testar cotas grátis (EchoTik / Scavio / Apify) e confirmar cobertura BR  
 - [ ] Preencher `CATALOG_PROVIDER` + chave  
 - [ ] Rodar sync de produtos  
 - [ ] HTTPS com domínio no Caddy  
@@ -135,7 +172,7 @@ App Expo ──► API Fastify (Portainer)
                  │
                  ├── Postgres  → users, posts, ranking, products, selling, notifs
                  ├── Redis     → cache ranking/catálogo
-                 └── (opcional) Scavio/Apify/Kalodata → enriquece tabela products
+                 └── (opcional) Apify/Kalodata → enriquece tabela products
 ```
 
 Sem a seta opcional, o app já roda com o seed.

@@ -1,4 +1,6 @@
 import type { Product, User, Post, PostLike, Comment } from '@prisma/client';
+import { estimatedCommission } from './commission.js';
+import { tierFor } from './tiers.js';
 
 type UserWithStats = User;
 
@@ -8,6 +10,11 @@ export function serializeUser(user: UserWithStats) {
     name: user.name,
     email: user.email,
     avatar: user.avatar ?? undefined,
+    bio: user.bio ?? undefined,
+    instagram: user.instagram ?? undefined,
+    tiktok: user.tiktok ?? undefined,
+    points: user.points,
+    tier: tierFor(user.points),
     level: user.level,
     xp: user.xp,
     rank: user.rank,
@@ -42,9 +49,18 @@ export function serializeProduct(product: Product) {
     salesCount: product.salesCount,
     tiktokViews: product.tiktokViews ?? undefined,
     isViral: product.isViral,
-    commission: product.commission,
+    /** Taxa vinda da fonte. Ausente = a fonte não informou. */
+    commission: product.commission ?? undefined,
+    /** Taxa configurada por categoria. A UI precisa rotular como estimativa. */
+    commissionEstimated:
+      product.commission == null
+        ? (estimatedCommission(product.category, product.region) ?? undefined)
+        : undefined,
     description: product.description,
     supplierShips: product.supplierShips,
+    region: product.region,
+    currency: product.currency,
+    productUrl: product.productUrl ?? undefined,
   };
 }
 

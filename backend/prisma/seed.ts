@@ -3,147 +3,13 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-const PRODUCTS = [
-  {
-    name: 'Sérum Vitamina C Premium',
-    image: 'https://picsum.photos/seed/prod1/300/300',
-    price: 89.9,
-    category: 'beleza',
-    supplier: 'Beauty Supply Co',
-    rating: 4.8,
-    salesCount: 12500,
-    tiktokViews: 2300000,
-    isViral: true,
-    commission: 35,
-    description: 'Sérum facial com vitamina C pura, ácido hialurônico e niacinamida.',
-    supplierShips: true,
-  },
-  {
-    name: 'Whey Protein Isolado 900g',
-    image: 'https://picsum.photos/seed/prod2/300/300',
-    price: 149.9,
-    category: 'saude',
-    supplier: 'NutriMax Brasil',
-    rating: 4.9,
-    salesCount: 8700,
-    tiktokViews: 1500000,
-    isViral: true,
-    commission: 25,
-    description: 'Whey protein isolado com 30g de proteína por dose.',
-    supplierShips: true,
-  },
-  {
-    name: 'Ring Light Profissional 18"',
-    image: 'https://picsum.photos/seed/prod3/300/300',
-    price: 199.9,
-    category: 'tech',
-    supplier: 'TechStore Direct',
-    rating: 4.7,
-    salesCount: 6200,
-    tiktokViews: 890000,
-    isViral: true,
-    commission: 30,
-    description: 'Ring light profissional com tripé ajustável e suporte para celular.',
-    supplierShips: true,
-  },
-  {
-    name: 'Cinta Modeladora Térmica',
-    image: 'https://picsum.photos/seed/prod4/300/300',
-    price: 79.9,
-    category: 'fitness',
-    supplier: 'FitWear Brasil',
-    rating: 4.6,
-    salesCount: 15800,
-    tiktokViews: 4200000,
-    isViral: true,
-    commission: 40,
-    description: 'Cinta modeladora com efeito térmico para treinos.',
-    supplierShips: true,
-  },
-  {
-    name: 'Kit Skincare Coreano',
-    image: 'https://picsum.photos/seed/prod5/300/300',
-    price: 129.9,
-    category: 'beleza',
-    supplier: 'K-Beauty Import',
-    rating: 4.9,
-    salesCount: 9300,
-    tiktokViews: 3100000,
-    isViral: true,
-    commission: 38,
-    description: 'Kit completo de skincare com 7 etapas da rotina coreana.',
-    supplierShips: true,
-  },
-  {
-    name: 'Curso Dropshipping Avançado',
-    image: 'https://picsum.photos/seed/prod6/300/300',
-    price: 297,
-    category: 'digital',
-    supplier: 'Liberdade Academy',
-    rating: 4.8,
-    salesCount: 3200,
-    isViral: false,
-    commission: 50,
-    description: 'Curso completo de dropshipping com estratégias avançadas.',
-    supplierShips: false,
-  },
-  {
-    name: 'Colágeno Hidrolisado Verisol',
-    image: 'https://picsum.photos/seed/prod7/300/300',
-    price: 69.9,
-    category: 'saude',
-    supplier: 'VitaLab',
-    rating: 4.7,
-    salesCount: 11200,
-    tiktokViews: 1800000,
-    isViral: true,
-    commission: 32,
-    description: 'Colágeno hidrolisado tipo I com tecnologia Verisol.',
-    supplierShips: true,
-  },
-  {
-    name: 'Luminária LED Smart WiFi',
-    image: 'https://picsum.photos/seed/prod8/300/300',
-    price: 159.9,
-    category: 'casa',
-    supplier: 'SmartHome BR',
-    rating: 4.5,
-    salesCount: 4500,
-    tiktokViews: 720000,
-    isViral: true,
-    commission: 28,
-    description: 'Luminária inteligente com controle por app e Alexa.',
-    supplierShips: true,
-  },
-  {
-    name: 'Tênis Esportivo Ultra Boost',
-    image: 'https://picsum.photos/seed/prod9/300/300',
-    price: 249.9,
-    category: 'moda',
-    supplier: 'SneakerDrop',
-    rating: 4.8,
-    salesCount: 7800,
-    tiktokViews: 2600000,
-    isViral: true,
-    commission: 22,
-    description: 'Tênis esportivo com amortecimento ultra boost.',
-    supplierShips: true,
-  },
-  {
-    name: 'Kit Maquiagem Completo',
-    image: 'https://picsum.photos/seed/prod10/300/300',
-    price: 189.9,
-    category: 'beleza',
-    supplier: 'MakeUp Pro',
-    rating: 4.6,
-    salesCount: 5600,
-    tiktokViews: 1400000,
-    isViral: true,
-    commission: 35,
-    description: 'Kit profissional com paleta, pincéis e fixador.',
-    supplierShips: true,
-  },
-];
+// Sem produtos no seed de propósito.
+//
+// Os produtos fictícios usavam imagens aleatórias do picsum.photos, que
+// apareciam no app como se fossem foto do produto. O catálogo agora vem
+// exclusivamente do sync com o provider real (POST /products/sync).
+// Enquanto nenhum sync rodar, a aba Catálogo mostra o estado vazio.
+
 
 async function main() {
   const existing = await prisma.user.count();
@@ -178,8 +44,6 @@ async function main() {
     ),
   );
 
-  const products = await Promise.all(PRODUCTS.map((p) => prisma.product.create({ data: p })));
-
   const ana = users.find((u) => u.email.startsWith('ana'))!;
   const lucas = users.find((u) => u.email.startsWith('lucas'))!;
   const pedro = users.find((u) => u.email.startsWith('pedro'))!;
@@ -210,9 +74,9 @@ async function main() {
   await prisma.notification.createMany({
     data: [
       {
-        title: 'Produto viral do dia',
-        body: 'Sérum Vitamina C Premium está em alta no TikTok.',
-        route: `/product/${products[0].id}`,
+        title: 'Catálogo atualizado',
+        body: 'Novos produtos virais do TikTok Shop entraram no catálogo.',
+        route: '/(tabs)/catalog',
       },
       {
         title: 'Ranking atualizado',

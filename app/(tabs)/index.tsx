@@ -18,6 +18,7 @@ import { useAppData } from '../../src/contexts/AppDataContext';
 import { MOCK_PRODUCTS, CATEGORIES } from '../../src/services/mockData';
 import { api, isApiEnabled } from '../../src/services/apiClient';
 import { showAlert } from '../../src/utils/dialog';
+import { CATALOG_REGION } from '../../src/constants/catalog';
 import type { Product } from '../../src/types';
 
 const GRID_GAP = 12;
@@ -42,19 +43,19 @@ export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifsOpen, setNotifsOpen] = useState(false);
+  // Com API ligada não semeamos com mocks: eles têm imagem genérica e
+  // piscariam como produto real até a resposta chegar.
   const [gridProducts, setGridProducts] = useState<Product[]>(
-    MOCK_PRODUCTS.filter((p) => p.isViral).slice(0, 4),
+    isApiEnabled() ? [] : MOCK_PRODUCTS.filter((p) => p.isViral).slice(0, 4),
   );
   const firstName = user?.name?.split(' ')[0] ?? 'Membro';
 
   useEffect(() => {
     if (!isApiEnabled()) return;
     api
-      .products({ viral: true })
-      .then((res) => {
-        if (res.products.length) setGridProducts(res.products.slice(0, 4));
-      })
-      .catch(() => undefined);
+      .products({ viral: true, region: CATALOG_REGION })
+      .then((res) => setGridProducts(res.products.slice(0, 4)))
+      .catch(() => setGridProducts([]));
   }, []);
 
   const niches = CATEGORIES.filter((c) =>

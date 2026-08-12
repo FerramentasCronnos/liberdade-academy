@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Liberdade Academy — design system
+   ----------------------------------------------------------------------------
+   Direção: navy profundo + dourado, sobre fundo creme. O creme (em vez de
+   branco puro) e o dourado dão o ar de "academia premium" e afastam do rosa
+   chapado do concorrente, sem perder a leveza.
+   ========================================================================= */
+
+@theme {
+  /* Marca */
+  --color-ink-50: #f4f6fa;
+  --color-ink-100: #e4e9f2;
+  --color-ink-200: #c6d0e0;
+  --color-ink-300: #9aa9c2;
+  --color-ink-400: #6b7d9c;
+  --color-ink-500: #47597a;
+  --color-ink-600: #32425f;
+  --color-ink-700: #22304a;
+  --color-ink-800: #16223a;
+  --color-ink-900: #0e1729;
+  --color-ink-950: #080e1a;
+
+  /* Dourado — destaque, conquista, nível */
+  --color-gold-100: #fbf1d9;
+  --color-gold-200: #f5e0ac;
+  --color-gold-300: #eecb78;
+  --color-gold-400: #e3b352;
+  --color-gold-500: #d09a33;
+  --color-gold-600: #ab7a24;
+  --color-gold-700: #825b1d;
+
+  /* Creme — plano de fundo */
+  --color-sand-50: #fdfcfa;
+  --color-sand-100: #faf7f2;
+  --color-sand-200: #f2ede4;
+  --color-sand-300: #e6ded1;
+
+  /* Comissão / positivo */
+  --color-money-400: #34d399;
+  --color-money-500: #10b981;
+  --color-money-600: #059669;
+  --color-money-700: #047857;
+
+  --color-danger-500: #ef4444;
+
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), ui-serif, Georgia, serif;
+
+  --radius-card: 1.125rem;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 1px 2px rgb(14 23 41 / 0.04), 0 8px 24px -12px rgb(14 23 41 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(14 23 41 / 0.05), 0 18px 40px -18px rgb(14 23 41 / 0.28);
+}
+
+/* --------------------------------------------------------------------------
+   Papéis semânticos. Os componentes usam SEMPRE estas variáveis, nunca a cor
+   crua — é o que faz o modo escuro funcionar sem reescrever componente.
+   ----------------------------------------------------------------------- */
+:root {
+  --bg: #eaf0fb;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #f1f5fc;
+  --border: #e2e9f5;
+  --border-strong: #cbd6ea;
+
+  /* Barra lateral sólida, do topo ao rodapé — a âncora visual da tela */
+  --sidebar-bg: linear-gradient(180deg, #4b3fb0 0%, #3d3392 100%);
+  --sidebar-text: #ffffff;
+  --sidebar-muted: rgb(255 255 255 / 0.62);
+  --sidebar-hover: rgb(255 255 255 / 0.1);
+  --sidebar-active-bg: #ffffff;
+  --sidebar-active-text: #3d3392;
+  --violet: #4b3fb0;
+  --violet-soft: #ece9fa;
+
+  --text: var(--color-ink-900);
+  --text-muted: var(--color-ink-500);
+  --text-faint: var(--color-ink-400);
+  --text-inverse: #ffffff;
+
+  --brand: #4b3fb0;
+  --brand-hover: #3d3392;
+  --brand-soft: #ece9fa;
+
+  --accent: var(--color-gold-500);
+  --accent-soft: var(--color-gold-100);
+  --accent-text: var(--color-gold-700);
+
+  --money: var(--color-money-600);
+  --money-soft: #e7f8f1;
+}
+
+.dark {
+  --bg: var(--color-ink-950);
+  --bg-elevated: var(--color-ink-900);
+  --bg-sunken: #101a2e;
+  --border: var(--color-ink-800);
+  --border-strong: var(--color-ink-700);
+
+  --sidebar-bg: linear-gradient(180deg, #241d52 0%, #16123a 100%);
+  --sidebar-text: #ffffff;
+  --sidebar-muted: rgb(255 255 255 / 0.55);
+  --sidebar-hover: rgb(255 255 255 / 0.08);
+  --sidebar-active-bg: rgb(255 255 255 / 0.14);
+  --sidebar-active-text: #ffffff;
+  --violet: #7b6ce8;
+  --violet-soft: rgb(123 108 232 / 0.16);
+
+  --text: var(--color-ink-50);
+  --text-muted: var(--color-ink-300);
+  --text-faint: var(--color-ink-400);
+  --text-inverse: var(--color-ink-950);
+
+  --brand: #7b6ce8;
+  --brand-hover: #9385f0;
+  --brand-soft: rgb(123 108 232 / 0.18);
+
+  --accent: var(--color-gold-400);
+  --accent-soft: rgb(227 179 82 / 0.14);
+  --accent-text: var(--color-gold-300);
+
+  --money: var(--color-money-400);
+  --money-soft: rgb(16 185 129 / 0.14);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-sunken: var(--bg-sunken);
+  --color-border-base: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text-base: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-text-inverse: var(--text-inverse);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-money: var(--money);
+  --color-money-soft: var(--money-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Evita o flash de tema claro antes do script de tema rodar */
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+
+  ::selection {
+    background-color: var(--color-gold-200);
+    color: var(--color-ink-900);
+  }
+}
+
+@layer utilities {
+  /* Trilho horizontal sem barra de rolagem visível (categorias, filtros) */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}

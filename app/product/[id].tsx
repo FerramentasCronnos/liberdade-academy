@@ -20,14 +20,15 @@ import { useAppData } from '../../src/contexts/AppDataContext';
 import { showAlert } from '../../src/utils/dialog';
 import type { Product } from '../../src/types';
 
-function formatPrice(price: number) {
-  return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+function formatPrice(price: number, currency = 'BRL') {
+  const locale = currency === 'USD' ? 'en-US' : 'pt-BR';
+  return price.toLocaleString(locale, { style: 'currency', currency });
 }
 
-function formatViews(views: number) {
-  if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M`;
-  if (views >= 1_000) return `${(views / 1_000).toFixed(0)}K`;
-  return String(views);
+function formatCompact(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+  return String(value);
 }
 
 export default function ProductDetailScreen() {
@@ -57,7 +58,7 @@ export default function ProductDetailScreen() {
   }, [id]);
 
   const onShare = async () => {
-    const message = `Confira ${product.name} por ${formatPrice(product.price)} — Liberdade Academy`;
+    const message = `Confira ${product.name} por ${formatPrice(product.price, product.currency)} — Liberdade Academy`;
     try {
       if (Platform.OS === 'web' && navigator.clipboard) {
         await navigator.clipboard.writeText(message);
@@ -112,7 +113,7 @@ export default function ProductDetailScreen() {
         </View>
 
         <Text style={styles.name}>{product.name}</Text>
-        <Text style={styles.price}>{formatPrice(product.price)}</Text>
+        <Text style={styles.price}>{formatPrice(product.price, product.currency)}</Text>
 
         <View style={styles.metaRow}>
           <View style={styles.metaChip}>
@@ -122,13 +123,21 @@ export default function ProductDetailScreen() {
           {product.tiktokViews != null && (
             <View style={styles.metaChip}>
               <Ionicons name="logo-tiktok" size={14} color={COLORS.text} />
-              <Text style={styles.metaText}>{formatViews(product.tiktokViews)} views</Text>
+              <Text style={styles.metaText}>{formatCompact(product.tiktokViews)} views</Text>
             </View>
           )}
-          <View style={styles.metaChip}>
-            <Ionicons name="cash-outline" size={14} color={COLORS.success} />
-            <Text style={styles.metaText}>{product.commission}% comissão</Text>
-          </View>
+          {product.salesCount > 0 && (
+            <View style={styles.metaChip}>
+              <Ionicons name="bag-check-outline" size={14} color={COLORS.text} />
+              <Text style={styles.metaText}>{formatCompact(product.salesCount)} vendidos</Text>
+            </View>
+          )}
+          {product.commission != null && (
+            <View style={styles.metaChip}>
+              <Ionicons name="cash-outline" size={14} color={COLORS.success} />
+              <Text style={styles.metaText}>{product.commission}% comissão</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.card}>

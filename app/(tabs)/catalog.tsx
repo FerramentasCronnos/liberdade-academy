@@ -24,15 +24,25 @@ import { api, isApiEnabled } from '../../src/services/apiClient';
 import { useAppData } from '../../src/contexts/AppDataContext';
 import type { Product } from '../../src/types';
 import { LAYOUT } from '../../src/constants/layout';
+import { CatalogFilterSheet } from '../../src/components/CatalogFilterSheet';
+import {
+  CATALOG_REGION,
+  DEFAULT_FILTERS,
+  applyCatalogFilters,
+  countActiveFilters,
+  type CatalogFilters,
+} from '../../src/constants/catalog';
 
-function formatViews(views: number): string {
-  if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M`;
-  if (views >= 1_000) return `${(views / 1_000).toFixed(1)}K`;
-  return `${views}`;
+function formatCompact(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return `${value}`;
 }
 
-function formatPrice(price: number): string {
-  return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+/** Produto US vem em dólar — formatar tudo como BRL mostraria preço errado. */
+function formatPrice(price: number, currency = 'BRL'): string {
+  const locale = currency === 'USD' ? 'en-US' : 'pt-BR';
+  return price.toLocaleString(locale, { style: 'currency', currency });
 }
 
 export default function CatalogScreen() {
@@ -49,8 +59,14 @@ export default function CatalogScreen() {
   const [searchQuery, setSearchQuery] = useState(params.q ?? '');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  // Com API ligada o catálogo é só o que vem dela — os mocks têm imagem
+  // genérica e apareceriam como produto de verdade.
+  const [products, setProducts] = useState<Product[]>(
+    isApiEnabled() ? [] : MOCK_PRODUCTS,
+  );
   const [sourceLabel, setSourceLabel] = useState('Catálogo local');
+  const [filters, setFilters] = useState<CatalogFilters>(DEFAULT_FILTERS);
+  const [filtersVisible, setFiltersVisible] = useState(false);
 
   const loadProducts = useCallback(async () => {
     if (isApiEnabled()) {
@@ -58,12 +74,16 @@ export default function CatalogScreen() {
         const result = await api.products({
           category: selectedCategory,
           q: searchQuery,
+          region: CATALOG_REGION,
         });
-        setProducts(result.products.length ? result.products : MOCK_PRODUCTS);
-        setSourceLabel('API Liberdade · Postgres');
+        setProducts(result.products);
+        setSourceLabel('TikTok Shop Brasil');
         return;
       } catch {
-        // fallback abaixo
+        // API fora do ar: mostra vazio em vez de produto fictício
+        setProducts([]);
+        setSourceLabel('Catálogo indisponível');
+        return;
       }
     }
 
@@ -71,8 +91,8 @@ export default function CatalogScreen() {
       category: selectedCategory,
       query: searchQuery,
     });
-    setProducts(result.products.length ? result.products : MOCK_PRODUCTS);
-    setSourceLabel(result.fromApi ? 'Kalodata · TikTok' : 'Demo · atualizado diariamente');
+    setProducts(result.products);
+    setSourceLabel(result.fromApi ? 'TikTok Shop' : 'Demo local');
   }, [selectedCategory, searchQuery]);
 
   useEffect(() => {
@@ -85,7 +105,8 @@ export default function CatalogScreen() {
     loadProducts().finally(() => setLoading(false));
   }, [loadProducts]);
 
-  const filteredProducts = useMemo(() => {
+  /** Lista após nicho e busca — o painel de filtros parte daqui. */
+  const baseProducts = useMemo(() => {
     let list = products;
     if (selectedCategory !== 'todos') {
       list = list.filter((p) => p.category === selectedCategory);
@@ -96,6 +117,13 @@ export default function CatalogScreen() {
     }
     return list;
   }, [products, selectedCategory, searchQuery]);
+
+  const filteredProducts = useMemo(
+    () => applyCatalogFilters(baseProducts, filters),
+    [baseProducts, filters],
+  );
+
+  const activeFilterCount = countActiveFilters(filters);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -140,7 +168,7 @@ export default function CatalogScreen() {
               {item.name}
             </Text>
             <Text style={[styles.productPrice, highlighted && styles.textOnDark]}>
-              {formatPrice(item.price)}
+              {formatPrice(item.price, item.currency)}
             </Text>
 
             <View style={styles.ratingRow}>
@@ -148,16 +176,22 @@ export default function CatalogScreen() {
               <Text style={[styles.ratingText, highlighted && styles.textOnDarkMuted]}>
                 {item.rating}
               </Text>
-              {item.tiktokViews != null && (
+              {item.tiktokViews != null ? (
                 <Text style={[styles.viewsText, highlighted && styles.textOnDarkMuted]}>
-                  · {formatViews(item.tiktokViews)}
+                  · {formatCompact(item.tiktokViews)} views
                 </Text>
-              )}
+              ) : item.salesCount > 0 ? (
+                <Text style={[styles.viewsText, highlighted && styles.textOnDarkMuted]}>
+                  · {formatCompact(item.salesCount)} vendidos
+                </Text>
+              ) : null}
             </View>
 
-            <Text style={[styles.commissionText, highlighted && { color: '#86EFAC' }]}>
-              {item.commission}% comissão
-            </Text>
+            {item.commission != null && (
+              <Text style={[styles.commissionText, highlighted && { color: '#86EFAC' }]}>
+                {item.commission}% comissão
+              </Text>
+            )}
 
             {item.supplierShips && (
               <View style={[styles.shippingBadge, highlighted && styles.shippingOnDark]}>
@@ -184,21 +218,40 @@ export default function CatalogScreen() {
         <Text style={styles.headerTitle}>Catálogo</Text>
         <Text style={styles.headerSubtitle}>3.000+ produtos virais validados</Text>
 
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={18} color={COLORS.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar produtos..."
-            placeholderTextColor={COLORS.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color={COLORS.textSecondary} />
-            </TouchableOpacity>
-          )}
+        <View style={styles.searchRow}>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={18} color={COLORS.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar produtos..."
+              placeholderTextColor={COLORS.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={18} color={COLORS.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
+            onPress={() => setFiltersVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={activeFilterCount > 0 ? '#FFFFFF' : COLORS.primary}
+            />
+            {activeFilterCount > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.sourceRow}>
@@ -274,6 +327,17 @@ export default function CatalogScreen() {
           }
         />
       )}
+
+      <CatalogFilterSheet
+        visible={filtersVisible}
+        filters={filters}
+        products={baseProducts}
+        onClose={() => setFiltersVisible(false)}
+        onApply={(next) => {
+          setFilters(next);
+          setFiltersVisible(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -302,17 +366,54 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.lg,
+    width: '100%',
+  },
   searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     paddingHorizontal: SPACING.lg,
-    marginTop: SPACING.lg,
     height: 48,
     gap: SPACING.sm,
-    width: '100%',
     ...SHADOWS.small,
+  },
+  filterBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.small,
+  },
+  filterBtnActive: {
+    backgroundColor: COLORS.primary,
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 3,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: COLORS.surface,
+  },
+  filterBadgeText: {
+    fontSize: 9,
+    fontFamily: FONTS.bold,
+    color: '#FFFFFF',
   },
   searchInput: {
     flex: 1,

@@ -58,10 +58,19 @@ export interface Product {
   salesCount: number;
   tiktokViews?: number;
   isViral: boolean;
-  commission: number;
+  /** Ausente quando a fonte não informa a comissão — não exibir chute. */
+  commission?: number;
   description: string;
   supplierShips: boolean;
+  /** Mercado do produto. Ausente em produtos do catálogo demo local. */
+  region?: ProductRegion;
+  /** Moeda do preço (BRL / USD). Default BRL quando ausente. */
+  currency?: string;
+  /** Link do produto no TikTok Shop, quando o provider devolve. */
+  productUrl?: string;
 }
+
+export type ProductRegion = 'BR' | 'US';
 
 export type ProductCategory =
   | 'beleza'

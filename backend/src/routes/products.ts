@@ -2,7 +2,15 @@ import type { FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma.js';
 import { cacheGet, cacheSet } from '../lib/redis.js';
 import { serializeProduct } from '../lib/serialize.js';
-import { syncKalodataProducts } from '../services/kalodata.js';
+import {
+  AVAILABLE_PROVIDERS,
+  CatalogConfigError,
+  configuredRegions,
+  getProvider,
+  isRegion,
+  syncCatalog,
+  type Region,
+} from '../services/catalog/index.js';
 
 export async function productRoutes(app: FastifyInstance) {
   app.get('/products', async (request) => {
@@ -10,23 +18,32 @@ export async function productRoutes(app: FastifyInstance) {
       category?: string;
       q?: string;
       viral?: string;
+      region?: string;
       page?: string;
     };
 
     const category = query.category && query.category !== 'todos' ? query.category : undefined;
     const q = query.q?.trim();
     const viral = query.viral === 'true';
+    // region ausente = todas as regiões (o app decide se filtra)
+    const region =
+      query.region && query.region !== 'todos' && isRegion(query.region.toUpperCase())
+        ? (query.region.toUpperCase() as Region)
+        : undefined;
     const page = Math.max(1, Number(query.page || 1));
     const take = 40;
     const skip = (page - 1) * take;
 
-    const cacheKey = `products:${category || 'all'}:${q || ''}:${viral}:${page}`;
+    const cacheKey = `products:${region || 'all'}:${category || 'all'}:${q || ''}:${viral}:${page}`;
     const cached = await cacheGet<{ products: unknown[]; page: number }>(cacheKey);
     if (cached) return cached;
 
     const products = await prisma.product.findMany({
       where: {
         active: true,
+        // produto sem foto não vai pra vitrine — card vazio parece bug
+        image: { startsWith: 'http' },
+        ...(region ? { region } : {}),
         ...(category ? { category } : {}),
         ...(viral ? { isViral: true } : {}),
         ...(q
@@ -72,13 +89,70 @@ export async function productRoutes(app: FastifyInstance) {
     ],
   }));
 
+  /** Diagnóstico: qual provider está ativo e o que já existe por região. */
+  app.get('/catalog/status', async () => {
+    const provider = getProvider();
+    const grouped = await prisma.product.groupBy({
+      by: ['region', 'provider'],
+      where: { active: true },
+      _count: { _all: true },
+    });
+
+    return {
+      provider: provider.name,
+      configured: provider.isConfigured(),
+      missingConfig: provider.isConfigured() ? undefined : provider.missingConfigMessage(),
+      supportedRegions: provider.supportedRegions,
+      syncRegions: configuredRegions(),
+      availableProviders: AVAILABLE_PROVIDERS,
+      counts: grouped.map((row) => ({
+        region: row.region,
+        provider: row.provider,
+        products: row._count._all,
+      })),
+    };
+  });
+
+  /** Sync genérico — funciona com qualquer provider registrado. */
+  app.post('/products/sync', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const body = (request.body || {}) as {
+      provider?: string;
+      regions?: string[];
+      limit?: number;
+      category?: string;
+    };
+
+    const regions = (body.regions || [])
+      .map((value) => value.trim().toUpperCase())
+      .filter(isRegion) as Region[];
+
+    try {
+      return await syncCatalog({
+        provider: body.provider,
+        regions,
+        limit: body.limit,
+        category: body.category,
+      });
+    } catch (error) {
+      if (error instanceof CatalogConfigError) {
+        return reply.status(422).send({ message: error.message });
+      }
+      return reply.status(502).send({
+        message: error instanceof Error ? error.message : 'Falha ao sincronizar catálogo.',
+      });
+    }
+  });
+
+  /** @deprecated use POST /products/sync. Mantido para não quebrar chamadas antigas. */
   app.post('/products/sync-kalodata', { preHandler: [app.authenticate] }, async (_request, reply) => {
     try {
-      const result = await syncKalodataProducts();
-      return result;
-    } catch (error: any) {
+      return await syncCatalog({ provider: 'kalodata' });
+    } catch (error) {
+      if (error instanceof CatalogConfigError) {
+        return reply.status(422).send({ message: error.message });
+      }
       return reply.status(502).send({
-        message: error.message || 'Falha ao sincronizar Kalodata.',
+        message: error instanceof Error ? error.message : 'Falha ao sincronizar Kalodata.',
       });
     }
   });

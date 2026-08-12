@@ -13,6 +13,10 @@ model User {
   email                String            @unique
   passwordHash         String
   avatar               String?
+  bio                  String?
+  instagram            String?
+  tiktok               String?
+  points               Int               @default(0)
   level                Int               @default(1)
   xp                   Int               @default(0)
   rank                 Int               @default(999)
@@ -38,7 +42,11 @@ model User {
 
 model Product {
   id            String           @id @default(cuid())
-  externalId    String?          @unique
+  externalId    String?
+  provider      String           @default("seed")
+  region        String           @default("BR")
+  currency      String           @default("BRL")
+  productUrl    String?
   name          String
   image         String
   price         Float
@@ -48,13 +56,18 @@ model Product {
   salesCount    Int              @default(0)
   tiktokViews   Int?
   isViral       Boolean          @default(false)
-  commission    Int              @default(20)
+  commission    Int?
   description   String
   supplierShips Boolean          @default(true)
   active        Boolean          @default(true)
+  syncedAt      DateTime?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   selling       SellingProduct[]
+
+  @@unique([provider, region, externalId])
+  @@index([region, category, active])
+  @@index([region, isViral, salesCount])
 }
 
 model Post {

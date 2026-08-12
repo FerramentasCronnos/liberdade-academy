@@ -3,6 +3,7 @@ import type {
   CommunityPost,
   OnboardingProfile,
   Product,
+  ProductRegion,
   RankingUser,
   User,
 } from '../types';
@@ -85,11 +86,17 @@ export const api = {
       body: JSON.stringify(profile),
     }),
 
-  products: (params?: { category?: string; q?: string; viral?: boolean }) => {
+  products: (params?: {
+    category?: string;
+    q?: string;
+    viral?: boolean;
+    region?: ProductRegion;
+  }) => {
     const search = new URLSearchParams();
     if (params?.category) search.set('category', params.category);
     if (params?.q) search.set('q', params.q);
     if (params?.viral) search.set('viral', 'true');
+    if (params?.region) search.set('region', params.region);
     const qs = search.toString();
     return request<{ products: Product[] }>(`/products${qs ? `?${qs}` : ''}`, {
       auth: false,

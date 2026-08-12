@@ -244,3 +244,11 @@ export const IconGift = (p: P) => (
     <path d="M12 8.5S10.5 4 8 4a2.2 2.2 0 0 0 0 4.5ZM12 8.5S13.5 4 16 4a2.2 2.2 0 0 1 0 4.5Z" />
   </svg>
 );
+
+export const IconWallet = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H18a2 2 0 0 1 2 2v1" />
+    <rect x="3" y="8.5" width="18" height="11.5" rx="2.5" />
+    <circle cx="16.5" cy="14.5" r="1.4" fill="currentColor" />
+  </svg>
+);

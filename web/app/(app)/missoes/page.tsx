@@ -2,10 +2,34 @@ import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { PointsHeader } from '@/components/points-header';
 import { MissionCard } from '@/components/mission-card';
+import { Tabs } from '@/components/tabs';
 import { apiFetch, getCurrentUser, getToken } from '@/lib/session';
-import { formatPoints, type Mission, type PointsEntry } from '@/lib/gamification';
+import {
+  formatPoints,
+  type Mission,
+  type PointsEntry,
+  type PointsSummary,
+} from '@/lib/gamification';
 
 export const metadata = { title: 'Missões · Liberdade Academy' };
+
+function MissionGrid({ missions, empty }: { missions: Mission[]; empty: string }) {
+  if (missions.length === 0) {
+    return (
+      <div className="mt-4 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-14 text-center text-[13.5px] text-[var(--text-muted)]">
+        {empty}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {missions.map((mission) => (
+        <MissionCard key={mission.id} mission={mission} />
+      ))}
+    </div>
+  );
+}
 
 export default async function MissionsPage() {
   if (!(await getToken())) redirect('/login');
@@ -13,13 +37,15 @@ export default async function MissionsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const [missionsData, entriesData] = await Promise.all([
+  const [missionsData, entriesData, summaryData] = await Promise.all([
     apiFetch<{ missions: Mission[] }>('/missions').catch(() => null),
     apiFetch<{ entries: PointsEntry[] }>('/points/entries').catch(() => null),
+    apiFetch<PointsSummary>('/points/summary').catch(() => null),
   ]);
 
   const missions = missionsData?.missions ?? [];
   const entries = entriesData?.entries ?? [];
+  const summary = summaryData ?? { balance: user.points, accumulated: 0, redeemed: 0 };
 
   const available = missions.filter((m) => !m.locked && m.status !== 'pending');
   const pending = missions.filter((m) => m.status === 'pending');
@@ -29,47 +55,57 @@ export default async function MissionsPage() {
     <>
       <PageHeader title="Missões" subtitle="Complete tarefas e acumule pontos" />
 
-      <div className="mx-auto max-w-[1100px] px-5 pb-12 pt-2 sm:px-8">
-        <PointsHeader user={user} />
+      <div className="mx-auto max-w-[1240px] px-5 pb-12 pt-2 sm:px-8">
+        <PointsHeader
+          user={user}
+          summary={summary}
+          action={{ href: '/recompensas', label: 'Recompensas' }}
+        />
 
-        {pending.length > 0 && (
-          <>
-            <h2 className="mt-8 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-              Em análise ({pending.length})
-            </h2>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {pending.map((mission) => (
-                <MissionCard key={mission.id} mission={mission} />
-              ))}
-            </div>
-          </>
-        )}
-
-        <h2 className="mt-8 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-          Disponíveis ({available.length})
-        </h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {available.map((mission) => (
-            <MissionCard key={mission.id} mission={mission} />
-          ))}
+        <div className="mt-8">
+          <Tabs
+            tabs={[
+              {
+                id: 'disponiveis',
+                label: 'Disponíveis',
+                count: available.length,
+                content: (
+                  <MissionGrid
+                    missions={available}
+                    empty="Nenhuma missão disponível agora. Volte amanhã — as repetíveis liberam a cada 24 h."
+                  />
+                ),
+              },
+              {
+                id: 'analise',
+                label: 'Em análise',
+                count: pending.length,
+                content: (
+                  <MissionGrid
+                    missions={pending}
+                    empty="Nenhuma comprovação aguardando revisão."
+                  />
+                ),
+              },
+              {
+                id: 'concluidas',
+                label: 'Concluídas',
+                count: done.length,
+                content: (
+                  <MissionGrid missions={done} empty="Você ainda não concluiu nenhuma missão." />
+                ),
+              },
+            ]}
+          />
         </div>
 
-        {done.length > 0 && (
-          <>
-            <h2 className="mt-8 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">
-              Concluídas ({done.length})
-            </h2>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {done.map((mission) => (
-                <MissionCard key={mission.id} mission={mission} />
-              ))}
-            </div>
-          </>
-        )}
-
-        <h2 className="mt-8 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-          Extrato
+        <h2
+          id="extrato"
+          className="mt-10 scroll-mt-6 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]"
+        >
+          Extrato de pontos
         </h2>
+
         <div className="mt-3 rounded-[22px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
           {entries.length === 0 ? (
             <p className="py-6 text-center text-[13.5px] text-[var(--text-muted)]">

@@ -169,6 +169,33 @@ export async function missionRoutes(app: FastifyInstance) {
     },
   );
 
+  /**
+   * Resumo do saldo.
+   * "acumulado" soma só os créditos e "resgatado" só os débitos — assim o
+   * membro vê quanto ganhou na vida, não apenas o que sobrou.
+   */
+  app.get('/points/summary', { preHandler: [app.authenticate] }, async (request) => {
+    const userId = request.user.sub;
+
+    const [credits, debits, user] = await Promise.all([
+      prisma.pointsEntry.aggregate({
+        where: { userId, points: { gt: 0 } },
+        _sum: { points: true },
+      }),
+      prisma.pointsEntry.aggregate({
+        where: { userId, points: { lt: 0 } },
+        _sum: { points: true },
+      }),
+      prisma.user.findUnique({ where: { id: userId } }),
+    ]);
+
+    return {
+      balance: user?.points ?? 0,
+      accumulated: credits._sum.points ?? 0,
+      redeemed: Math.abs(debits._sum.points ?? 0),
+    };
+  });
+
   /** Extrato de pontos do usuário. */
   app.get('/points/entries', { preHandler: [app.authenticate] }, async (request) => {
     const entries = await prisma.pointsEntry.findMany({

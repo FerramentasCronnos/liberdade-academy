@@ -74,3 +74,9 @@ export const REDEMPTION_STATUS: Record<string, { label: string; className: strin
 export function formatPoints(value: number) {
   return value.toLocaleString('pt-BR');
 }
+
+export interface PointsSummary {
+  balance: number;
+  accumulated: number;
+  redeemed: number;
+}

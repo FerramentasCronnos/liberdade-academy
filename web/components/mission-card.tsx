@@ -7,6 +7,7 @@ import { useFormStatus } from 'react-dom';
 import { submitMission, type SubmitState } from '@/app/(app)/missoes/actions';
 import { uploadAvatar } from '@/app/(app)/perfil/actions';
 import { MISSION_CATEGORIES, type Mission } from '@/lib/gamification';
+import { MissionArt } from './mission-art';
 import { IconCheck, IconUpload, IconX } from './icons';
 
 function Submit({ disabled }: { disabled: boolean }) {
@@ -57,20 +58,23 @@ export function MissionCard({ mission }: { mission: Mission }) {
   return (
     <>
       <article
-        className={`flex flex-col rounded-[22px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)] transition ${
+        className={`flex flex-col overflow-hidden rounded-[22px] bg-[var(--bg-elevated)] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)] ${
           done ? 'opacity-70' : ''
         }`}
       >
-        <div className="flex items-start justify-between gap-3">
-          <span className="rounded-full bg-[var(--brand)] px-2.5 py-1 text-[11px] font-bold text-white">
+        <div className="relative">
+          <MissionArt slug={mission.slug} category={mission.category} className="h-[132px]" />
+
+          <span className="absolute left-3 top-3 rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
             +{mission.points} pts
           </span>
-          <span className="rounded-full bg-[var(--bg-sunken)] px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wider text-[var(--text-faint)]">
+          <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wider text-[var(--color-ink-800)]">
             {MISSION_CATEGORIES[mission.category] ?? mission.category}
           </span>
         </div>
 
-        <h3 className="mt-3 font-display text-[16px] font-semibold leading-snug text-[var(--text)]">
+        <div className="flex flex-1 flex-col p-5">
+        <h3 className="font-display text-[16px] font-semibold leading-snug text-[var(--text)]">
           {mission.title}
         </h3>
         <p className="mt-1 text-[13px] leading-relaxed text-[var(--text-muted)]">
@@ -118,6 +122,7 @@ export function MissionCard({ mission }: { mission: Mission }) {
               Enviar comprovação
             </button>
           )}
+        </div>
         </div>
       </article>
 

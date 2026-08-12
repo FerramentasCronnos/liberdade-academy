@@ -42,6 +42,53 @@ model User {
   missionCompletions   MissionCompletion[]
   redemptions          Redemption[]
   pointsEntries        PointsEntry[]
+  affiliateAccounts    AffiliateAccount[]
+  offerTemplates       OfferTemplate[]
+  affiliateLinks       AffiliateLink[]
+}
+
+/// Conta de afiliado do membro em cada marketplace.
+/// `secret` guarda credenciais cifradas (AES-256-GCM); `publicId` é a tag ou
+/// id que aparece no próprio link e não precisa de sigilo.
+model AffiliateAccount {
+  id          String   @id @default(cuid())
+  userId      String
+  marketplace String
+  publicId    String?
+  secret      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, marketplace])
+}
+
+/// Link gerado, guardado para histórico e para o membro reaproveitar.
+model AffiliateLink {
+  id          String   @id @default(cuid())
+  userId      String
+  marketplace String
+  originalUrl String
+  affiliateUrl String
+  title       String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/// Template de mensagem para divulgação.
+model OfferTemplate {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  marketplace String   @default("shopee")
+  body        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Missão da gamificação. "automatic" é creditada por evento no sistema;

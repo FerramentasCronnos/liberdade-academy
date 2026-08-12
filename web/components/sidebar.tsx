@@ -36,9 +36,9 @@ const MAIN: Item[] = [
 ];
 
 const TOOLS: Item[] = [
-  { href: '/gerar-link', label: 'Gerar Link', icon: IconLink, soon: true },
+  { href: '/gerar-link', label: 'Gerar Link', icon: IconLink },
   { href: '/analytics', label: 'Analytics', icon: IconChart, soon: true },
-  { href: '/templates', label: 'Templates', icon: IconPages, soon: true },
+  { href: '/templates', label: 'Templates', icon: IconPages },
   { href: '/credenciais', label: 'Credenciais', icon: IconSettings, soon: true },
 ];
 

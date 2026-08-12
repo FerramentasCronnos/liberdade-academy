@@ -10,5 +10,8 @@ npx prisma migrate deploy
 echo "[api] seeding (idempotent-ish)..."
 npx tsx prisma/seed.ts || true
 
+echo "[api] seeding gamification (upsert por slug)..."
+npx tsx prisma/seed-gamification.ts || true
+
 echo "[api] starting..."
 exec node dist/index.js

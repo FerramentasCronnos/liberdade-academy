@@ -236,3 +236,11 @@ export const IconTikTok = (p: P) => (
     <path d="M14 4c.4 2.4 2.1 4 4.5 4.2" />
   </svg>
 );
+
+export const IconGift = (p: P) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="8.5" width="18" height="4" rx="1" />
+    <path d="M5 12.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7.5M12 8.5V21" />
+    <path d="M12 8.5S10.5 4 8 4a2.2 2.2 0 0 0 0 4.5ZM12 8.5S13.5 4 16 4a2.2 2.2 0 0 1 0 4.5Z" />
+  </svg>
+);

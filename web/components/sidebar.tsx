@@ -31,8 +31,8 @@ const MAIN: Item[] = [
   { href: '/catalogo', label: 'Catálogo', icon: IconGrid },
   { href: '/comunidade', label: 'Comunidade', icon: IconMessage },
   { href: '/ranking', label: 'Ranking', icon: IconTrophy },
-  { href: '/missoes', label: 'Missões', icon: IconMedal, soon: true },
-  { href: '/recompensas', label: 'Recompensas', icon: IconArchive, soon: true },
+  { href: '/missoes', label: 'Missões', icon: IconMedal },
+  { href: '/recompensas', label: 'Recompensas', icon: IconArchive },
 ];
 
 const TOOLS: Item[] = [

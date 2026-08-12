@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
+import { AUTO_MISSIONS, tryCompleteAutoMission } from '../services/missions.js';
 import { serializePost } from '../lib/serialize.js';
 
 const createPostSchema = z.object({
@@ -59,6 +60,9 @@ export async function postRoutes(app: FastifyInstance) {
       },
     });
 
+    // missão "Postar na Comunidade" — respeita o cooldown definido na missão
+    await tryCompleteAutoMission(request.user.sub, AUTO_MISSIONS.postCommunity);
+
     return { post: serializePost(post, request.user.sub) };
   });
 
@@ -79,6 +83,8 @@ export async function postRoutes(app: FastifyInstance) {
       await prisma.postLike.create({
         data: { postId: id, userId: request.user.sub },
       });
+      // missão "Engajar Comunidade" — só na curtida, não ao descurtir
+      await tryCompleteAutoMission(request.user.sub, AUTO_MISSIONS.engageCommunity);
     }
 
     const post = await prisma.post.findUnique({

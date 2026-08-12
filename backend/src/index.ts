@@ -11,6 +11,8 @@ import { rankingRoutes } from './routes/ranking.js';
 import { sellingRoutes } from './routes/selling.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { uploadRoutes, UPLOAD_DIR } from './routes/uploads.js';
+import { missionRoutes } from './routes/missions.js';
+import { rewardRoutes } from './routes/rewards.js';
 import { prisma } from './lib/prisma.js';
 
 const app = Fastify({
@@ -59,6 +61,8 @@ await app.register(rankingRoutes);
 await app.register(sellingRoutes);
 await app.register(notificationRoutes);
 await app.register(uploadRoutes);
+await app.register(missionRoutes);
+await app.register(rewardRoutes);
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';

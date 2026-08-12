@@ -32,12 +32,100 @@ model User {
   communityPosts       Int               @default(0)
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
+  isAdmin              Boolean           @default(false)
   posts                Post[]
   likes                PostLike[]
   comments             Comment[]
   selling              SellingProduct[]
   notifications        Notification[]
   notificationReads    NotificationRead[]
+  missionCompletions   MissionCompletion[]
+  redemptions          Redemption[]
+  pointsEntries        PointsEntry[]
+}
+
+/// Missão da gamificação. "automatic" é creditada por evento no sistema;
+/// "proof" exige print e passa por revisão.
+model Mission {
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  title       String
+  description String
+  points      Int
+  category    String              @default("outras")
+  kind        String              @default("proof")
+  repeatable  Boolean             @default(false)
+  /// Janela mínima entre repetições, em horas (24 = uma vez por dia).
+  cooldownHours Int?
+  active      Boolean             @default(true)
+  order       Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  completions MissionCompletion[]
+}
+
+model MissionCompletion {
+  id            String    @id @default(cuid())
+  missionId     String
+  userId        String
+  /// pending | approved | rejected
+  status        String    @default("pending")
+  proofUrl      String?
+  note          String?
+  pointsAwarded Int       @default(0)
+  createdAt     DateTime  @default(now())
+  reviewedAt    DateTime?
+  mission       Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, missionId])
+  @@index([status])
+}
+
+model Reward {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  title       String
+  description String?
+  image       String?
+  costPoints  Int
+  /// null = estoque ilimitado
+  stock       Int?
+  active      Boolean      @default(true)
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id         String    @id @default(cuid())
+  rewardId   String
+  userId     String
+  costPoints Int
+  /// requested | approved | delivered | rejected
+  status     String    @default("requested")
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reward     Reward    @relation(fields: [rewardId], references: [id], onDelete: Restrict)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+/// Extrato de pontos. O saldo em User.points é derivado daqui — toda alteração
+/// grava uma linha, para o histórico bater com o saldo.
+model PointsEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  points    Int
+  reason    String
+  refType   String?
+  refId     String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model Product {

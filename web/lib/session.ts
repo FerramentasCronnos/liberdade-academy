@@ -66,7 +66,14 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T |
   });
 
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error(`API respondeu ${response.status}`);
+
+  if (!response.ok) {
+    // repassa a mensagem da API — é ela que explica "pontos insuficientes",
+    // "já tem envio em análise" etc. para o usuário
+    const data = (await response.json().catch(() => ({}))) as { message?: string };
+    throw new Error(data.message || `API respondeu ${response.status}`);
+  }
+
   return (await response.json()) as T;
 }
 

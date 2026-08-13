@@ -46,6 +46,24 @@ model User {
   offerTemplates       OfferTemplate[]
   affiliateLinks       AffiliateLink[]
   landingPages         LandingPage[]
+  adCreatives          AdCreative[]
+}
+
+/// Anúncio do Baú: criativo em imagem que a administração sobe e os membros
+/// baixam para usar nas próprias campanhas.
+model AdCreative {
+  id          String   @id @default(cuid())
+  title       String
+  category    String   @default("geral")
+  image       String
+  notes       String?
+  active      Boolean  @default(true)
+  downloads   Int      @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([category, active])
 }
 
 /// Página pública do membro (presell ou link na bio).

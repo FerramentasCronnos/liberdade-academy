@@ -16,6 +16,7 @@ import { rewardRoutes } from './routes/rewards.js';
 import { affiliateRoutes } from './routes/affiliate.js';
 import { templateRoutes } from './routes/templates.js';
 import { pageRoutes } from './routes/pages.js';
+import { adRoutes } from './routes/ads.js';
 import { prisma } from './lib/prisma.js';
 
 const app = Fastify({
@@ -69,6 +70,7 @@ await app.register(rewardRoutes);
 await app.register(affiliateRoutes);
 await app.register(templateRoutes);
 await app.register(pageRoutes);
+await app.register(adRoutes);
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';

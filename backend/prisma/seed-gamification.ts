@@ -177,11 +177,27 @@ async function main() {
     });
   }
 
-  // primeiro usuário vira admin, para conseguir revisar as comprovações
-  const admin = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' } });
-  if (admin && !admin.isAdmin) {
-    await prisma.user.update({ where: { id: admin.id }, data: { isAdmin: true } });
-    console.log(`Admin: ${admin.email}`);
+  // Define a administradora, que revisa as comprovações de missão.
+  //
+  // Só promove se AINDA NÃO existir nenhum admin. A versão anterior pegava o
+  // "primeiro usuário por createdAt" a cada execução — como o seed cria todos
+  // no mesmo instante, o desempate era arbitrário e cada restart promovia
+  // alguém diferente, espalhando admin sem ninguém perceber.
+  const existingAdmin = await prisma.user.findFirst({ where: { isAdmin: true } });
+
+  if (!existingAdmin) {
+    const wanted = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+
+    const admin = wanted
+      ? await prisma.user.findUnique({ where: { email: wanted } })
+      : await prisma.user.findFirst({ orderBy: [{ createdAt: 'asc' }, { email: 'asc' }] });
+
+    if (admin) {
+      await prisma.user.update({ where: { id: admin.id }, data: { isAdmin: true } });
+      console.log(`Admin definida: ${admin.email}`);
+    }
+  } else {
+    console.log(`Admin já definida: ${existingAdmin.email}`);
   }
 
   console.log(`Gamificação: ${MISSIONS.length} missões, ${REWARDS.length} recompensas.`);

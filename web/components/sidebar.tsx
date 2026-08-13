@@ -42,7 +42,8 @@ const TOOLS: Item[] = [
   { href: '/analytics', label: 'Analytics', icon: IconChart, soon: true },
   { href: '/templates', label: 'Templates', icon: IconPages },
   { href: '/paginas/presell', label: 'Página de Presell', icon: IconMegaphone },
-  { href: '/paginas/bio', label: 'Página para BIO', icon: IconIdCard, soon: true },
+  { href: '/paginas/bio', label: 'Página para BIO', icon: IconIdCard },
+  { href: '/anuncios', label: 'Baú de Anúncios', icon: IconArchive },
   { href: '/credenciais', label: 'Credenciais', icon: IconSettings, soon: true },
 ];
 

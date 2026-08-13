@@ -1,6 +1,6 @@
 import { CatalogView } from '@/components/catalog-view';
 import { PageHeader } from '@/components/page-header';
-import { fetchProducts } from '@/lib/api';
+import { CATALOG_REGION, fetchProducts } from '@/lib/api';
 import type { Product } from '@/lib/types';
 
 export const metadata = {
@@ -12,7 +12,7 @@ export default async function CatalogPage() {
   let error: string | null = null;
 
   try {
-    products = await fetchProducts({ region: 'BR' });
+    products = await fetchProducts({ region: CATALOG_REGION });
   } catch (e) {
     // API fora do ar não derruba a página; mostramos o aviso e a tela vazia,
     // nunca produto fictício.
@@ -23,7 +23,7 @@ export default async function CatalogPage() {
     <>
       <PageHeader
         title="Catálogo"
-        subtitle="Produtos virais validados do TikTok Shop Brasil"
+        subtitle="Produtos virais validados do TikTok Shop"
       />
 
       {error && (

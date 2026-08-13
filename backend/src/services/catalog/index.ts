@@ -61,6 +61,8 @@ export interface SyncOptions {
   regions?: Region[];
   limit?: number;
   category?: string;
+  /** Termos de busca específicos, no lugar do mapa padrão da categoria. */
+  terms?: string[];
 }
 
 export interface SyncRegionResult {
@@ -116,7 +118,12 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
 
   for (const region of regions) {
     try {
-      const raw = await provider.fetchTopProducts({ region, limit, category: options.category });
+      const raw = await provider.fetchTopProducts({
+        region,
+        limit,
+        category: options.category,
+        terms: options.terms,
+      });
       const normalized = raw
         .map((item) => normalizeProduct(item, provider.name, region))
         .filter((item): item is NonNullable<typeof item> => item !== null);

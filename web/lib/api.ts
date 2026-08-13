@@ -6,6 +6,12 @@ export const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808
 );
 
 /**
+ * Mercado do catálogo. O backend é multi-região; isto decide o que a vitrine
+ * mostra. Trocar aqui (ou via env) muda o app inteiro.
+ */
+export const CATALOG_REGION = process.env.NEXT_PUBLIC_CATALOG_REGION || 'US';
+
+/**
  * De onde o produto veio.
  *
  * Hoje o backend só sincroniza TikTok Shop, então a origem é fixa. Quando
@@ -45,6 +51,7 @@ export interface FetchProductsParams {
   q?: string;
   viral?: boolean;
   region?: string;
+  limit?: number;
 }
 
 export async function fetchProducts(params: FetchProductsParams = {}): Promise<Product[]> {
@@ -52,7 +59,9 @@ export async function fetchProducts(params: FetchProductsParams = {}): Promise<P
   if (params.category && params.category !== 'todos') search.set('category', params.category);
   if (params.q) search.set('q', params.q);
   if (params.viral) search.set('viral', 'true');
-  search.set('region', params.region || 'BR');
+  search.set('region', params.region || CATALOG_REGION);
+  // o catálogo filtra e ordena no cliente, então buscamos tudo de uma vez
+  search.set('limit', String(params.limit ?? 200));
 
   const response = await fetch(`${API_URL}/products?${search.toString()}`, {
     // catálogo muda por sync, não por request — 60s evita martelar a API

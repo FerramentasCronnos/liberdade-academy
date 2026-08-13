@@ -1,6 +1,7 @@
 import type { Product, User, Post, PostLike, Comment } from '@prisma/client';
 import { estimatedCommission } from './commission.js';
 import { tierFor } from './tiers.js';
+import { planInfo } from './plans.js';
 
 type UserWithStats = User;
 
@@ -15,6 +16,8 @@ export function serializeUser(user: UserWithStats) {
     tiktok: user.tiktok ?? undefined,
     points: user.points,
     tier: tierFor(user.points),
+    plan: planInfo(user.plan, user.planExpiresAt),
+    isAdmin: user.isAdmin,
     level: user.level,
     xp: user.xp,
     rank: user.rank,

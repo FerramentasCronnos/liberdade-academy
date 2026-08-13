@@ -45,6 +45,14 @@ export interface FetchOptions {
   limit: number;
   /** Categoria interna (beleza, saude, ...) quando o provider suportar filtro. */
   category?: string;
+  /**
+   * Termos de busca explícitos.
+   *
+   * O actor devolve no máximo 5 itens por execução na conta grátis, então
+   * buscar termo a termo é a única forma de montar catálogo grande: cada
+   * execução traz um conjunto diferente.
+   */
+  terms?: string[];
 }
 
 export interface CatalogProvider {

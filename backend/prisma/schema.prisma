@@ -33,6 +33,12 @@ model User {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
   isAdmin              Boolean           @default(false)
+  /// free | mensal_97 | anual_147 — o anual libera tudo.
+  plan                 String            @default("free")
+  planExpiresAt        DateTime?
+  /// De onde veio o plano: manual | hotmart | kiwify | eduzz ...
+  planSource           String?
+  planUpdatedAt        DateTime?
   posts                Post[]
   likes                PostLike[]
   comments             Comment[]

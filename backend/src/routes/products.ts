@@ -20,6 +20,7 @@ export async function productRoutes(app: FastifyInstance) {
       viral?: string;
       region?: string;
       page?: string;
+      limit?: string;
     };
 
     const category = query.category && query.category !== 'todos' ? query.category : undefined;
@@ -31,10 +32,11 @@ export async function productRoutes(app: FastifyInstance) {
         ? (query.region.toUpperCase() as Region)
         : undefined;
     const page = Math.max(1, Number(query.page || 1));
-    const take = 40;
+    // teto de 200 para uma resposta grande não virar consulta cara sem querer
+    const take = Math.min(Math.max(1, Number(query.limit || 40)), 200);
     const skip = (page - 1) * take;
 
-    const cacheKey = `products:${region || 'all'}:${category || 'all'}:${q || ''}:${viral}:${page}`;
+    const cacheKey = `products:${region || 'all'}:${category || 'all'}:${q || ''}:${viral}:${page}:${take}`;
     const cached = await cacheGet<{ products: unknown[]; page: number }>(cacheKey);
     if (cached) return cached;
 
@@ -120,6 +122,7 @@ export async function productRoutes(app: FastifyInstance) {
       regions?: string[];
       limit?: number;
       category?: string;
+      terms?: string[];
     };
 
     const regions = (body.regions || [])
@@ -132,6 +135,7 @@ export async function productRoutes(app: FastifyInstance) {
         regions,
         limit: body.limit,
         category: body.category,
+        terms: body.terms?.slice(0, 20),
       });
     } catch (error) {
       if (error instanceof CatalogConfigError) {

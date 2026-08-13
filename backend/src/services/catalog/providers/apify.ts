@@ -194,7 +194,7 @@ export const apifyProvider: CatalogProvider = {
     return 'Defina APIFY_ACTOR_ID (ou APIFY_ACTOR_ID_BR / APIFY_ACTOR_ID_US) com o actor de TikTok Shop escolhido.';
   },
 
-  async fetchTopProducts({ region, limit, category }: FetchOptions): Promise<RawCatalogProduct[]> {
+  async fetchTopProducts({ region, limit, category, terms: explicit }: FetchOptions): Promise<RawCatalogProduct[]> {
     const token = process.env.APIFY_TOKEN;
     if (!token) throw new CatalogConfigError(this.missingConfigMessage());
 
@@ -212,6 +212,15 @@ export const apifyProvider: CatalogProvider = {
       Number(process.env[`APIFY_PRICE_DIVISOR_${region}`] || process.env.APIFY_PRICE_DIVISOR || 1) || 1;
 
     const termToCategory = searchTermsFor(region, category);
+
+    // termos explícitos vencem o mapa padrão; herdam a categoria pedida
+    if (explicit?.length) {
+      termToCategory.clear();
+      for (const term of explicit) {
+        termToCategory.set(term, (category as InternalCategory) ?? 'fisico');
+      }
+    }
+
     const terms = [...termToCategory.keys()];
     const perTerm = Math.max(1, Math.ceil(limit / Math.max(1, terms.length)));
 

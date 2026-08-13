@@ -25,7 +25,7 @@ interface ProfileResponse {
 export async function generateMetadata({ params }: { params: Params }) {
   const { id } = await params;
   const data = await apiFetch<ProfileResponse>(`/users/${id}/profile`).catch(() => null);
-  return { title: data ? `${data.user.name} · Comunidade` : 'Perfil da Comunidade' };
+  return { title: data ? `${data.user.name} · Comunidade` : 'Perfil de la Comunidad' };
 }
 
 function Stat({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
@@ -57,7 +57,7 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
 
   return (
     <>
-      <PageHeader title="Perfil da Comunidade" />
+      <PageHeader title="Perfil de la Comunidad" />
 
       <div className="mx-auto max-w-[720px] px-5 pb-12 pt-2 sm:px-8">
         <Link
@@ -65,7 +65,7 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
           className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--text-muted)] transition hover:text-[var(--text)]"
         >
           <IconArrowLeft className="h-4 w-4" />
-          Comunidade
+          Comunidad
         </Link>
 
         <section className="mt-4 rounded-[24px] bg-[var(--bg-elevated)] p-6 text-center shadow-[var(--shadow-soft)]">
@@ -89,7 +89,7 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
           </span>
 
           <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-[var(--text-muted)]">
-            {user.bio || (isMe ? 'Você ainda não escreveu sua bio.' : 'Sem bio ainda.')}
+            {user.bio || (isMe ? 'Aún no escribiste tu bio.' : 'Sin bio todavía.')}
           </p>
 
           {(user.instagram || user.tiktok) && (
@@ -118,15 +118,15 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
           )}
 
           <div className="mt-5 flex items-start justify-center gap-8">
-            <Stat label="publicações" value={String(stats.posts)} />
+            <Stat label="publicaciones" value={String(stats.posts)} />
             <Stat
-              label="curtidas"
+              label="me gusta"
               value={String(stats.likesReceived)}
               icon={<IconHeart className="h-4 w-4 text-red-500" />}
             />
             <Stat
-              label="membro desde"
-              value={new Date(user.joinedAt).toLocaleDateString('pt-BR', {
+              label="miembro desde"
+              value={new Date(user.joinedAt).toLocaleDateString('es-419', {
                 month: 'short',
                 year: '2-digit',
               })}
@@ -145,7 +145,7 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
 
         <section className="mt-4 rounded-[24px] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-soft)]">
           <h3 className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-            Conquistas e gamificação
+            Logros y gamificación
           </h3>
 
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -153,7 +153,7 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
               <IconTrophy className="h-6 w-6 shrink-0 text-[var(--color-gold-400)]" />
               <div>
                 <p className="text-[10.5px] font-bold uppercase tracking-wider text-white/60">
-                  Nível atual
+                  Nivel actual
                 </p>
                 <p className="font-display text-[17px] font-semibold">{tier.current.label}</p>
               </div>
@@ -163,10 +163,10 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
               <IconMedal className="h-6 w-6 shrink-0 text-[var(--text-faint)]" />
               <div>
                 <p className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--text-faint)]">
-                  Próximo nível
+                  Próximo nivel
                 </p>
                 <p className="font-display text-[17px] font-semibold text-[var(--text)]">
-                  {tier.next?.label ?? 'Nível máximo'}
+                  {tier.next?.label ?? 'Nivel máximo'}
                 </p>
               </div>
             </div>
@@ -180,14 +180,14 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
               />
             </div>
             <p className="mt-1.5 flex justify-between text-[11.5px] text-[var(--text-faint)]">
-              <span>{user.points.toLocaleString('pt-BR')} pontos</span>
-              {tier.next && <span>{tier.next.min.toLocaleString('pt-BR')} para {tier.next.label}</span>}
+              <span>{user.points.toLocaleString('es-419')} pontos</span>
+              {tier.next && <span>{tier.next.min.toLocaleString('es-419')} para {tier.next.label}</span>}
             </p>
           </div>
         </section>
 
         <h3 className="mt-6 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-          Publicações
+          Publicaciones
         </h3>
 
         <div className="mt-3 flex flex-col gap-4">
@@ -197,7 +197,7 @@ export default async function MemberProfilePage({ params }: { params: Params }) 
 
           {posts.length === 0 && (
             <div className="rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-14 text-center text-[13.5px] text-[var(--text-muted)]">
-              Nenhuma publicação ainda.
+              Aún no hay publicaciones.
             </div>
           )}
         </div>

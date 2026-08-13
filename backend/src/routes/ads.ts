@@ -53,10 +53,10 @@ export async function adRoutes(app: FastifyInstance) {
   /** Só a administração publica — o baú é curadoria, não upload livre. */
   app.post('/ads', { preHandler: [app.authenticate] }, async (request, reply) => {
     const me = await prisma.user.findUnique({ where: { id: request.user.sub } });
-    if (!me?.isAdmin) return reply.status(403).send({ message: 'Acesso restrito.' });
+    if (!me?.isAdmin) return reply.status(403).send({ message: 'Acceso restringido.' });
 
     const parsed = adSchema.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ message: 'Dados inválidos.' });
+    if (!parsed.success) return reply.status(400).send({ message: 'Datos inválidos.' });
 
     const ad = await prisma.adCreative.create({
       data: { ...parsed.data, createdById: request.user.sub },
@@ -67,7 +67,7 @@ export async function adRoutes(app: FastifyInstance) {
 
   app.delete('/ads/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
     const me = await prisma.user.findUnique({ where: { id: request.user.sub } });
-    if (!me?.isAdmin) return reply.status(403).send({ message: 'Acesso restrito.' });
+    if (!me?.isAdmin) return reply.status(403).send({ message: 'Acceso restringido.' });
 
     const { id } = request.params as { id: string };
     await prisma.adCreative.deleteMany({ where: { id } });

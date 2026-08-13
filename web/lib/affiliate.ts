@@ -31,8 +31,8 @@ export const AFFILIATE_MARKETPLACES: Array<{
     id: 'amazon',
     label: 'Amazon',
     color: '#ff9900',
-    how: 'Basta a sua tag do Associates: o link é a URL do produto com ?tag=.',
-    field: 'Tag do Amazon Associates',
+    how: 'Basta tu tag de Associates: el enlace es la URL del producto con ?tag=.',
+    field: 'Tag de Amazon Associates',
     placeholder: 'seunome-20',
     panelUrl: 'https://associados.amazon.com.br',
   },
@@ -40,18 +40,18 @@ export const AFFILIATE_MARKETPLACES: Array<{
     id: 'shopee',
     label: 'Shopee',
     color: '#ee4d2d',
-    how: 'A Shopee só emite link rastreável pelo painel ou pela API de afiliados.',
-    field: 'App ID da API de afiliados',
-    placeholder: 'ainda não integrado',
+    how: 'Shopee solo emite enlace rastreable desde el panel o la API de afiliados.',
+    field: 'App ID de la API de afiliados',
+    placeholder: 'aún no integrado',
     panelUrl: 'https://affiliate.shopee.com.br',
   },
   {
     id: 'mercado_livre',
-    label: 'Mercado Livre',
+    label: 'Mercado Libre',
     color: '#ffe600',
-    how: 'O Mercado Livre só emite link rastreável pelo painel ou pela API de afiliados.',
-    field: 'Client ID da aplicação',
-    placeholder: 'ainda não integrado',
+    how: 'Mercado Libre solo emite enlace rastreable desde el panel o la API de afiliados.',
+    field: 'Client ID de la aplicación',
+    placeholder: 'aún no integrado',
     panelUrl: 'https://afiliados.mercadolivre.com.br',
   },
 ];
@@ -59,7 +59,7 @@ export const AFFILIATE_MARKETPLACES: Array<{
 export const MARKETPLACE_LABEL: Record<string, string> = {
   amazon: 'Amazon',
   shopee: 'Shopee',
-  mercado_livre: 'Mercado Livre',
+  mercado_livre: 'Mercado Libre',
 };
 
 export interface OfferTemplate {
@@ -72,26 +72,26 @@ export interface OfferTemplate {
 
 /** Variáveis que o membro pode usar no corpo do template. */
 export const TEMPLATE_VARS: Array<{ token: string; label: string; sample: string }> = [
-  { token: '{{titulo}}', label: 'Título', sample: 'Fone Bluetooth Sem Fio Premium' },
-  { token: '{{preco}}', label: 'Preço', sample: 'R$ 89,90' },
-  { token: '{{preco_de}}', label: 'Preço de', sample: 'R$ 199,90' },
-  { token: '{{desconto}}', label: 'Desconto', sample: '55%' },
+  { token: '{{titulo}}', label: 'Título', sample: 'Audífonos Bluetooth Premium' },
+  { token: '{{preco}}', label: 'Precio', sample: 'R$ 89,90' },
+  { token: '{{preco_de}}', label: 'Precio antes', sample: 'R$ 199,90' },
+  { token: '{{desconto}}', label: 'Descuento', sample: '55%' },
   { token: '{{link}}', label: 'Link', sample: 'https://s.shopee.com.br/exemplo' },
-  { token: '{{loja}}', label: 'Loja', sample: 'Shopee' },
+  { token: '{{loja}}', label: 'Tienda', sample: 'Shopee' },
 ];
 
-export const DEFAULT_TEMPLATE_BODY = `🔥 OLHA SÓ QUE ACHADO!
+export const DEFAULT_TEMPLATE_BODY = `🔥 ¡MIRA ESTE HALLAZGO!
 
 🎁 {{titulo}}
 
-😱 {{desconto}} DE DESCONTO
-De: {{preco_de}}
-✨ Por: {{preco}}
+😱 {{desconto}} DE DESCUENTO
+Antes: {{preco_de}}
+✨ Ahora: {{preco}}
 
-🛒 Compre aqui:
+🛒 Compra aquí:
 {{link}}
 
-⚠️ Promoção sujeita à alteração de preço e estoque do site`;
+⚠️ Promoción sujeta a cambios de precio y stock en el sitio`;
 
 /** Troca as variáveis pelos valores informados; o que faltar vira exemplo. */
 export function renderTemplate(body: string, values: Record<string, string>) {

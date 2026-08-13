@@ -28,7 +28,7 @@ export async function templateRoutes(app: FastifyInstance) {
 
   app.post('/templates', { preHandler: [app.authenticate] }, async (request, reply) => {
     const parsed = templateSchema.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ message: 'Dados inválidos.' });
+    if (!parsed.success) return reply.status(400).send({ message: 'Datos inválidos.' });
 
     const template = await prisma.offerTemplate.create({
       data: { ...parsed.data, userId: request.user.sub },
@@ -40,14 +40,14 @@ export async function templateRoutes(app: FastifyInstance) {
   app.put('/templates/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const parsed = templateSchema.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ message: 'Dados inválidos.' });
+    if (!parsed.success) return reply.status(400).send({ message: 'Datos inválidos.' });
 
     // updateMany com userId no filtro: garante que ninguém edita template alheio
     const updated = await prisma.offerTemplate.updateMany({
       where: { id, userId: request.user.sub },
       data: parsed.data,
     });
-    if (updated.count === 0) return reply.status(404).send({ message: 'Template não encontrado.' });
+    if (updated.count === 0) return reply.status(404).send({ message: 'Plantilla no encontrada.' });
 
     return { ok: true };
   });
@@ -58,7 +58,7 @@ export async function templateRoutes(app: FastifyInstance) {
     const deleted = await prisma.offerTemplate.deleteMany({
       where: { id, userId: request.user.sub },
     });
-    if (deleted.count === 0) return reply.status(404).send({ message: 'Template não encontrado.' });
+    if (deleted.count === 0) return reply.status(404).send({ message: 'Plantilla no encontrada.' });
 
     return { ok: true };
   });

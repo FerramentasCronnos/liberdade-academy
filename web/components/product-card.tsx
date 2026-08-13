@@ -62,31 +62,31 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
 
         <div className="mt-auto pt-1">
-          <p className="text-[12px] text-[var(--text-faint)]">Preço</p>
+          <p className="text-[12px] text-[var(--text-faint)]">Precio</p>
           <p className="text-[17px] font-bold leading-tight tracking-tight text-[var(--text)]">
             {formatPrice(product.price, product.currency)}
           </p>
 
           {product.commissionValue != null && rate != null ? (
             <p className="mt-1 text-[13px] font-semibold text-[var(--money)]">
-              Comissão: {formatPrice(product.commissionValue, product.currency)}{' '}
+              Comisión: {formatPrice(product.commissionValue, product.currency)}{' '}
               <span className="font-medium opacity-75">({rate}%)</span>
               {isEstimate && (
                 <span
                   className="ml-1 cursor-help font-medium text-[var(--text-faint)]"
-                  title="Percentual configurado por categoria — a fonte do TikTok Shop não informa a taxa por produto."
+                  title="Porcentaje configurado por categoría — la fuente de TikTok Shop no informa la tasa por producto."
                 >
                   est.
                 </span>
               )}
             </p>
           ) : (
-            <p className="mt-1 text-[12px] text-[var(--text-faint)]">Comissão não informada</p>
+            <p className="mt-1 text-[12px] text-[var(--text-faint)]">Comisión no informada</p>
           )}
         </div>
 
         <span className="mt-1 inline-flex items-center justify-center rounded-xl bg-[var(--brand)] px-4 py-2.5 text-[13px] font-semibold text-white transition group-hover:bg-[var(--brand-hover)]">
-          Divulgar este produto
+          Promocionar este producto
         </span>
       </div>
     </Link>

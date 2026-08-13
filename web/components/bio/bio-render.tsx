@@ -99,7 +99,7 @@ export function BioRender({ data, scale = 1 }: { data: BioData; scale?: number }
           })}
 
           {config.links.length === 0 && (
-            <p style={{ color: subtitleColor, fontSize: 12.5 * scale }}>Sem links</p>
+            <p style={{ color: subtitleColor, fontSize: 12.5 * scale }}>Sin enlaces</p>
           )}
         </div>
       </div>

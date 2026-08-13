@@ -20,7 +20,7 @@ export async function authRoutes(app: FastifyInstance) {
     const email = parsed.data.email.toLowerCase();
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) {
-      return reply.status(409).send({ message: 'Já existe uma conta com este e-mail.' });
+      return reply.status(409).send({ message: 'Ya existe una cuenta con este correo.' });
     }
 
     const user = await prisma.user.create({
@@ -42,19 +42,19 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/auth/login', async (request, reply) => {
     const parsed = credentialsSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ message: 'E-mail ou senha inválidos.' });
+      return reply.status(400).send({ message: 'Correo o contraseña inválidos.' });
     }
 
     const user = await prisma.user.findUnique({
       where: { email: parsed.data.email.toLowerCase() },
     });
     if (!user) {
-      return reply.status(401).send({ message: 'E-mail ou senha inválidos.' });
+      return reply.status(401).send({ message: 'Correo o contraseña inválidos.' });
     }
 
     const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
     if (!ok) {
-      return reply.status(401).send({ message: 'E-mail ou senha inválidos.' });
+      return reply.status(401).send({ message: 'Correo o contraseña inválidos.' });
     }
 
     const token = app.jwt.sign({ sub: user.id, email: user.email });

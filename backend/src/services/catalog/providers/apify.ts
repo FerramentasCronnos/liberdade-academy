@@ -55,7 +55,7 @@ function searchTermsFor(region: Region, category?: string): Map<string, Internal
       const parsed = JSON.parse(override) as Record<string, Record<string, string[]>>;
       if (parsed[region]) table = parsed[region] as Partial<Record<InternalCategory, string[]>>;
     } catch {
-      throw new CatalogConfigError('APIFY_SEARCH_TERMS não é um JSON válido.');
+      throw new CatalogConfigError('APIFY_SEARCH_TERMS no es un JSON válido.');
     }
   }
 
@@ -189,7 +189,7 @@ export const apifyProvider: CatalogProvider = {
 
   missingConfigMessage() {
     if (!process.env.APIFY_TOKEN) {
-      return 'APIFY_TOKEN não configurado. Crie a conta em apify.com e gere o token em Settings → API & Integrations.';
+      return 'APIFY_TOKEN no está configurado. Crea la cuenta en apify.com y genera el token en Settings → API & Integrations.';
     }
     return 'Defina APIFY_ACTOR_ID (ou APIFY_ACTOR_ID_BR / APIFY_ACTOR_ID_US) com o actor de TikTok Shop escolhido.';
   },
@@ -245,7 +245,7 @@ export const apifyProvider: CatalogProvider = {
             .replaceAll('{{category}}', category || ''),
         );
       } catch {
-        throw new CatalogConfigError('APIFY_INPUT_JSON não é um JSON válido.');
+        throw new CatalogConfigError('APIFY_INPUT_JSON no es un JSON válido.');
       }
     }
 

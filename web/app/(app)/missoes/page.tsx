@@ -11,7 +11,7 @@ import {
   type PointsSummary,
 } from '@/lib/gamification';
 
-export const metadata = { title: 'Missões · Liberdade Academy' };
+export const metadata = { title: 'Misiones · Liberdade Academy' };
 
 function MissionGrid({ missions, empty }: { missions: Mission[]; empty: string }) {
   if (missions.length === 0) {
@@ -53,7 +53,7 @@ export default async function MissionsPage() {
 
   return (
     <>
-      <PageHeader title="Missões" subtitle="Complete tarefas e acumule pontos" />
+      <PageHeader title="Misiones" subtitle="Completa tareas y acumula puntos" />
 
       <div className="mx-auto max-w-[1240px] px-5 pb-12 pt-2 sm:px-8">
         <PointsHeader
@@ -67,32 +67,32 @@ export default async function MissionsPage() {
             tabs={[
               {
                 id: 'disponiveis',
-                label: 'Disponíveis',
+                label: 'Disponibles',
                 count: available.length,
                 content: (
                   <MissionGrid
                     missions={available}
-                    empty="Nenhuma missão disponível agora. Volte amanhã — as repetíveis liberam a cada 24 h."
+                    empty="Ninguna misión disponible ahora. Vuelve mañana — las repetibles se liberan cada 24 h."
                   />
                 ),
               },
               {
                 id: 'analise',
-                label: 'Em análise',
+                label: 'En revisión',
                 count: pending.length,
                 content: (
                   <MissionGrid
                     missions={pending}
-                    empty="Nenhuma comprovação aguardando revisão."
+                    empty="Ningún comprobante esperando revisión."
                   />
                 ),
               },
               {
                 id: 'concluidas',
-                label: 'Concluídas',
+                label: 'Completadas',
                 count: done.length,
                 content: (
-                  <MissionGrid missions={done} empty="Você ainda não concluiu nenhuma missão." />
+                  <MissionGrid missions={done} empty="Aún no completaste ninguna misión." />
                 ),
               },
             ]}
@@ -103,13 +103,13 @@ export default async function MissionsPage() {
           id="extrato"
           className="mt-10 scroll-mt-6 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]"
         >
-          Extrato de pontos
+          Historial de puntos
         </h2>
 
         <div className="mt-3 rounded-[22px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
           {entries.length === 0 ? (
             <p className="py-6 text-center text-[13.5px] text-[var(--text-muted)]">
-              Nenhuma movimentação ainda. Complete uma missão para começar.
+              Aún no hay movimientos. Completa una misión para empezar.
             </p>
           ) : (
             <ul className="divide-y divide-[var(--border)]">
@@ -120,7 +120,7 @@ export default async function MissionsPage() {
                       {entry.reason}
                     </p>
                     <p className="text-[12px] text-[var(--text-faint)]">
-                      {new Date(entry.createdAt).toLocaleDateString('pt-BR', {
+                      {new Date(entry.createdAt).toLocaleDateString('es-419', {
                         day: '2-digit',
                         month: 'short',
                         hour: '2-digit',

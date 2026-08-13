@@ -17,16 +17,16 @@ export default async function PresellListPage() {
     <>
       <PageHeader
         title="Página de Presell"
-        subtitle="Capture o clique e distribua entre seus grupos de WhatsApp"
+        subtitle="Captura el clic y distribúyelo entre tus grupos de WhatsApp"
       />
 
       <div className="mx-auto max-w-[1100px] px-5 pb-12 pt-2 sm:px-8">
         <section className="rounded-[24px] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-soft)]">
           <h2 className="font-display text-[17px] font-semibold text-[var(--text)]">
-            Escolha um template
+            Elige una plantilla
           </h2>
           <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">
-            Você pode trocar o template a qualquer momento depois.
+            Puedes cambiar la plantilla en cualquier momento.
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -56,7 +56,7 @@ export default async function PresellListPage() {
         {pages.length > 0 && (
           <>
             <h2 className="mt-8 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-              Minhas páginas
+              Mis páginas
             </h2>
             <ul className="mt-3 divide-y divide-[var(--border)] rounded-[22px] bg-[var(--bg-elevated)] px-5 shadow-[var(--shadow-soft)]">
               {pages.map((page) => (
@@ -78,7 +78,7 @@ export default async function PresellListPage() {
                         : 'bg-[var(--bg-sunken)] text-[var(--text-faint)]'
                     }`}
                   >
-                    {page.published ? 'Publicada' : 'Rascunho'}
+                    {page.published ? 'Publicada' : 'Borrador'}
                   </span>
                 </li>
               ))}

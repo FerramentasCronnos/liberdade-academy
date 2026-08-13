@@ -35,7 +35,7 @@ export async function postRoutes(app: FastifyInstance) {
   app.post('/posts', { preHandler: [app.authenticate] }, async (request, reply) => {
     const parsed = createPostSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ message: 'Conteúdo inválido.' });
+      return reply.status(400).send({ message: 'Contenido inválido.' });
     }
 
     const post = await prisma.post.create({
@@ -91,7 +91,7 @@ export async function postRoutes(app: FastifyInstance) {
       where: { id },
       include: { author: true, likes: true, comments: true },
     });
-    if (!post) return reply.status(404).send({ message: 'Post não encontrado.' });
+    if (!post) return reply.status(404).send({ message: 'Publicación no encontrada.' });
 
     return { post: serializePost(post, request.user.sub) };
   });

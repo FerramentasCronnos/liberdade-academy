@@ -32,7 +32,7 @@ export const kalodataProvider: CatalogProvider = {
   },
 
   missingConfigMessage() {
-    return 'CALODATA_API_KEY não configurada. A Open API da Kalodata exige plano Enterprise.';
+    return 'CALODATA_API_KEY no está configurada. La Open API de Kalodata exige plan Enterprise.';
   },
 
   async fetchTopProducts({ region, limit, category }: FetchOptions): Promise<RawCatalogProduct[]> {

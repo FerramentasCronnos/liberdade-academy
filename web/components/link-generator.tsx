@@ -18,7 +18,7 @@ function GenerateButton() {
       disabled={pending}
       className="rounded-2xl bg-[var(--brand)] px-5 py-3 text-[14px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Gerando…' : 'Gerar link'}
+      {pending ? 'Generando…' : 'Generar enlace'}
     </button>
   );
 }
@@ -31,7 +31,7 @@ function SaveButton() {
       disabled={pending}
       className="shrink-0 rounded-xl bg-[var(--brand)] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Salvando…' : 'Salvar'}
+      {pending ? 'Guardando…' : 'Guardar'}
     </button>
   );
 }
@@ -55,7 +55,7 @@ function CopyButton({ value }: { value: string }) {
       onClick={copy}
       className="shrink-0 rounded-xl bg-[var(--brand)] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
     >
-      {copied ? 'Copiado!' : 'Copiar'}
+      {copied ? '¡Copiado!' : 'Copiar'}
     </button>
   );
 }
@@ -126,7 +126,7 @@ export function LinkGenerator({
               rel="noreferrer noopener"
               className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--border)] px-4 py-2.5 text-[13px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)]"
             >
-              Painel
+              Panel
               <IconExternal className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -139,13 +139,13 @@ export function LinkGenerator({
           {accountState.ok && (
             <p className="mt-2 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--money)]">
               <IconCheck className="h-4 w-4" />
-              Salvo.
+              Guardado.
             </p>
           )}
 
           {!isReady && (
             <p className="mt-2 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[12.5px] leading-relaxed text-[var(--text-muted)]">
-              Integração ainda não disponível. Por enquanto, gere o link no painel de afiliados
+              Integración aún no disponible. Por ahora, genera el enlace en el panel de afiliados
               do {info.label} — assim que as credenciais de API forem cadastradas, isto passa a
               funcionar aqui.
             </p>
@@ -161,7 +161,7 @@ export function LinkGenerator({
         <input type="hidden" name="marketplace" value={marketplace} />
 
         <label className="block text-[13px] font-semibold text-[var(--text)]">
-          URL do produto
+          URL del producto
         </label>
         <div className="mt-1.5 flex flex-wrap gap-2">
           <input
@@ -183,7 +183,7 @@ export function LinkGenerator({
         {linkState.link && (
           <div className="mt-4 rounded-2xl bg-[var(--money-soft)] p-4">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--money)]">
-              Seu link de afiliado
+              Tu enlace de afiliado
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <code className="min-w-0 flex-1 truncate rounded-xl bg-[var(--bg-elevated)] px-3.5 py-2.5 text-[13px] text-[var(--text)]">
@@ -196,7 +196,7 @@ export function LinkGenerator({
 
         <p className="mt-3 inline-flex items-center gap-1.5 text-[11.5px] text-[var(--text-faint)]">
           <IconLink className="h-3.5 w-3.5" />
-          Confira sempre o link antes de divulgar — é ele que credita sua comissão.
+          Revisa siempre el enlace antes de promocionar — es el que acredita tu comisión.
         </p>
       </form>
     </>

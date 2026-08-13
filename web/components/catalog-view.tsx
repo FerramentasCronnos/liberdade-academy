@@ -148,7 +148,7 @@ export function CatalogView({ products }: { products: Product[] }) {
               type="button"
               disabled={!mp.available}
               onClick={() => setMarketplace(mp.id)}
-              title={mp.available ? undefined : 'Integração ainda não disponível'}
+              title={mp.available ? undefined : 'Integración aún no disponible'}
               className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-medium shadow-[var(--shadow-soft)] transition ${
                 active
                   ? 'border-[var(--brand)] bg-[var(--brand)] text-[var(--text-inverse)]'
@@ -163,7 +163,7 @@ export function CatalogView({ products }: { products: Product[] }) {
               {mp.label}
               {!mp.available && (
                 <span className="text-[9.5px] font-semibold uppercase tracking-wider opacity-70">
-                  em breve
+                  pronto
                 </span>
               )}
             </button>
@@ -175,7 +175,7 @@ export function CatalogView({ products }: { products: Product[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar produto..."
+            placeholder="Buscar producto..."
             className="w-full bg-transparent text-[13px] text-[var(--text)] outline-none placeholder:text-[var(--text-faint)]"
           />
         </div>
@@ -184,10 +184,10 @@ export function CatalogView({ products }: { products: Product[] }) {
       {visible.length === 0 ? (
         <div className="mt-10 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-20 text-center">
           <p className="font-display text-lg font-semibold text-[var(--text)]">
-            Nenhum produto encontrado
+            Ningún producto encontrado
           </p>
           <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">
-            Ajuste os filtros ou tente outro termo de busca.
+            Ajusta los filtros o prueba otro término de búsqueda.
           </p>
         </div>
       ) : (

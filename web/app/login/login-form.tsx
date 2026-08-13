@@ -27,21 +27,21 @@ export function LoginForm() {
     <form action={formAction} className="mt-7">
       <label className="block">
         <span className="mb-1.5 block text-[13px] font-medium text-[var(--text-muted)]">
-          E-mail
+          Correo
         </span>
         <input
           name="email"
           type="email"
           autoComplete="email"
           required
-          placeholder="voce@email.com"
+          placeholder="tucorreo@email.com"
           className={field}
         />
       </label>
 
       <label className="mt-4 block">
         <span className="mb-1.5 block text-[13px] font-medium text-[var(--text-muted)]">
-          Senha
+          Contraseña
         </span>
         <input
           name="password"

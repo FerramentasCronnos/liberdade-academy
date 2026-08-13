@@ -31,20 +31,20 @@ type Item = {
 
 const MAIN: Item[] = [
   { href: '/catalogo', label: 'Catálogo', icon: IconGrid },
-  { href: '/comunidade', label: 'Comunidade', icon: IconMessage },
+  { href: '/comunidade', label: 'Comunidad', icon: IconMessage },
   { href: '/ranking', label: 'Ranking', icon: IconTrophy },
-  { href: '/missoes', label: 'Missões', icon: IconMedal },
+  { href: '/missoes', label: 'Misiones', icon: IconMedal },
   { href: '/recompensas', label: 'Recompensas', icon: IconArchive },
 ];
 
 const TOOLS: Item[] = [
-  { href: '/gerar-link', label: 'Gerar Link', icon: IconLink },
+  { href: '/gerar-link', label: 'Generar Enlace', icon: IconLink },
   { href: '/analytics', label: 'Analytics', icon: IconChart, soon: true },
-  { href: '/templates', label: 'Templates', icon: IconPages },
+  { href: '/templates', label: 'Plantillas', icon: IconPages },
   { href: '/paginas/presell', label: 'Página de Presell', icon: IconMegaphone },
   { href: '/paginas/bio', label: 'Página para BIO', icon: IconIdCard },
-  { href: '/anuncios', label: 'Baú de Anúncios', icon: IconArchive },
-  { href: '/credenciais', label: 'Credenciais', icon: IconSettings, soon: true },
+  { href: '/anuncios', label: 'Baúl de Anuncios', icon: IconArchive },
+  { href: '/credenciais', label: 'Credenciales', icon: IconSettings, soon: true },
 ];
 
 const STORAGE_KEY = 'la-sidebar-collapsed';
@@ -132,7 +132,7 @@ export function Sidebar({ user }: { user: SessionUser | null }) {
         <button
           type="button"
           onClick={toggle}
-          aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
+          aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
           aria-expanded={!collapsed}
           className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/60 transition hover:bg-white/10 hover:text-white"
         >
@@ -157,7 +157,7 @@ export function Sidebar({ user }: { user: SessionUser | null }) {
 
         {!collapsed ? (
           <p className="px-4 pb-2 pt-7 text-[10.5px] font-bold uppercase tracking-[0.18em] text-[var(--sidebar-muted)]">
-            Ferramentas
+            Herramientas
           </p>
         ) : (
           <div className="my-4 h-px bg-white/12" />

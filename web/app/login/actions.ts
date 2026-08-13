@@ -11,7 +11,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const password = String(formData.get('password') || '');
 
   if (!email || !password) {
-    return { error: 'Preencha e-mail e senha.' };
+    return { error: 'Completa el correo y la contraseña.' };
   }
 
   let response: Response;
@@ -23,16 +23,16 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
       cache: 'no-store',
     });
   } catch {
-    return { error: 'Não consegui falar com a API. A stack está de pé?' };
+    return { error: 'No pude conectar con la API. ¿El stack está activo?' };
   }
 
   if (!response.ok) {
     // não revelamos se foi o e-mail ou a senha que errou
-    return { error: 'E-mail ou senha inválidos.' };
+    return { error: 'Correo o contraseña inválidos.' };
   }
 
   const data = (await response.json()) as { token?: string };
-  if (!data.token) return { error: 'A API não devolveu um token.' };
+  if (!data.token) return { error: 'La API no devolvió un token.' };
 
   await setToken(data.token);
   redirect('/catalogo');

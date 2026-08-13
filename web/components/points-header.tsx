@@ -36,7 +36,7 @@ export function PointsHeader({
           </span>
           <div className="min-w-0">
             <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/55">
-              Nível atual
+              Nivel actual
             </p>
             <p className="font-display text-[28px] font-semibold leading-tight">
               {tier.current.label}
@@ -56,7 +56,7 @@ export function PointsHeader({
           <span>
             {tier.next
               ? `${formatPoints(user.points)} / ${formatPoints(goal)} para ${tier.next.label}`
-              : 'Nível máximo alcançado'}
+              : 'Nivel máximo alcanzado'}
           </span>
         </p>
       </div>
@@ -64,7 +64,7 @@ export function PointsHeader({
       <div className="rounded-[24px] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-soft)]">
         <div className="flex items-start justify-between gap-2">
           <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">
-            Saldo de pontos
+            Saldo de puntos
           </p>
           <IconWallet className="h-[18px] w-[18px] text-[var(--text-faint)]" />
         </div>
@@ -85,7 +85,7 @@ export function PointsHeader({
           </div>
           <div className="rounded-2xl bg-[var(--bg-sunken)] px-3 py-2.5">
             <p className="text-[9.5px] font-bold uppercase tracking-wider text-[var(--text-faint)]">
-              Resgatado
+              Canjeado
             </p>
             <p className="text-[16px] font-bold text-[var(--text)]">
               {formatPoints(summary.redeemed)}
@@ -98,7 +98,7 @@ export function PointsHeader({
             href="#extrato"
             className="grid place-items-center rounded-2xl border border-[var(--border)] px-3 py-2.5 text-[13px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)]"
           >
-            Extrato
+            Historial
           </a>
           <Link
             href={action.href}
@@ -111,7 +111,7 @@ export function PointsHeader({
 
         <p className="mt-2 inline-flex items-center gap-1.5 text-[11.5px] text-[var(--text-faint)]">
           <IconMedal className="h-3.5 w-3.5" />
-          Acumule com missões e troque por recompensas.
+          Acumula con misiones y cambia por recompensas.
         </p>
       </div>
     </section>

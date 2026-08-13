@@ -14,10 +14,10 @@ export async function redeemReward(
 
   try {
     const result = await apiFetch(`/rewards/${rewardId}/redeem`, { method: 'POST' });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch (e) {
     // a API devolve "Pontos insuficientes", "Recompensa esgotada" etc.
-    return { error: e instanceof Error ? e.message : 'Não consegui resgatar.' };
+    return { error: e instanceof Error ? e.message : 'No pude canjear.' };
   }
 
   revalidatePath('/recompensas');

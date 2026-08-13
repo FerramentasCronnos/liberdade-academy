@@ -21,12 +21,12 @@ const display = Fraunces({
 export const metadata: Metadata = {
   title: 'Liberdade Academy',
   description:
-    'Catálogo de produtos virais, comunidade e missões para afiliados da Liberdade Academy.',
+    'Catálogo de productos virales, comunidad y misiones para afiliados de Liberdade Academy.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

@@ -65,7 +65,7 @@ export function PostComposer() {
         name="content"
         rows={3}
         maxLength={2000}
-        placeholder="Compartilhe uma dica, um resultado ou tire uma dúvida…"
+        placeholder="Comparte un consejo, un resultado o haz una pregunta…"
         className="w-full resize-none bg-transparent text-[14.5px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--text-faint)]"
       />
 
@@ -74,11 +74,11 @@ export function PostComposer() {
 
       {image && (
         <div className="relative mt-2 overflow-hidden rounded-2xl bg-[var(--bg-sunken)]">
-          <img src={image} alt="Prévia da imagem do post" className="max-h-[380px] w-full object-cover" />
+          <img src={image} alt="Vista previa de la imagen" className="max-h-[380px] w-full object-cover" />
           <button
             type="button"
             onClick={() => setImage(null)}
-            aria-label="Remover imagem"
+            aria-label="Quitar imagen"
             className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/55 text-white backdrop-blur transition hover:bg-black/75"
           >
             <IconX className="h-4 w-4" />
@@ -102,11 +102,11 @@ export function PostComposer() {
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          aria-label="Adicionar foto"
+          aria-label="Agregar foto"
           className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-sunken)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-muted)] transition hover:text-[var(--brand)] disabled:opacity-60"
         >
           <IconImage className="h-4 w-4" />
-          {uploading ? 'Enviando…' : 'Foto'}
+          {uploading ? 'Subiendo…' : 'Foto'}
         </button>
 
         {POST_CATEGORIES.map((cat) => (

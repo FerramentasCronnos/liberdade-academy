@@ -7,7 +7,7 @@ import { IconGrid, IconMessage, IconTrophy, IconUser } from './icons';
 /** Barra inferior no celular — a sidebar some abaixo de lg. */
 const ITEMS = [
   { href: '/catalogo', label: 'Catálogo', icon: IconGrid },
-  { href: '/comunidade', label: 'Comunidade', icon: IconMessage },
+  { href: '/comunidade', label: 'Comunidad', icon: IconMessage },
   { href: '/ranking', label: 'Ranking', icon: IconTrophy },
   { href: '/perfil', label: 'Perfil', icon: IconUser },
 ];

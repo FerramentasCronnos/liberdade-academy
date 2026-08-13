@@ -28,7 +28,7 @@ export function AppearanceCard() {
 
   return (
     <section className="rounded-[24px] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-soft)]">
-      <h2 className="font-display text-[18px] font-semibold text-[var(--text)]">Aparência</h2>
+      <h2 className="font-display text-[18px] font-semibold text-[var(--text)]">Apariencia</h2>
 
       <div className="mt-4 flex items-center gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--violet-soft)] text-[var(--brand)]">
@@ -41,10 +41,10 @@ export function AppearanceCard() {
 
         <div className="min-w-0 flex-1">
           <p className="text-[14.5px] font-semibold text-[var(--text)]">
-            {mounted && dark ? 'Tema escuro' : 'Tema claro'}
+            {mounted && dark ? 'Tema oscuro' : 'Tema claro'}
           </p>
           <p className="text-[12.5px] text-[var(--text-muted)]">
-            Alterar a aparência da aplicação
+            Cambiar la apariencia de la aplicación
           </p>
         </div>
 
@@ -52,7 +52,7 @@ export function AppearanceCard() {
           type="button"
           role="switch"
           aria-checked={dark}
-          aria-label="Alternar tema escuro"
+          aria-label="Alternar tema oscuro"
           onClick={toggle}
           className={`relative h-7 w-12 shrink-0 rounded-full transition ${
             dark ? 'bg-[var(--brand)]' : 'bg-[var(--border-strong)]'

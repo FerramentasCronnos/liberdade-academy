@@ -76,7 +76,7 @@ export function SidebarProfile({
 
             <p className="mt-2.5 inline-flex items-center gap-1.5 text-[13px] font-bold text-[var(--brand)]">
               <IconMedal className="h-4 w-4" />
-              {user.points.toLocaleString('pt-BR')} pontos
+              {user.points.toLocaleString('es-419')} pontos
             </p>
 
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--bg-sunken)]">
@@ -108,7 +108,7 @@ export function SidebarProfile({
             className="flex items-center gap-2.5 px-4 py-2.5 text-[13.5px] font-medium text-[var(--text)] transition hover:bg-[var(--bg-sunken)]"
           >
             <IconMedal className="h-[17px] w-[17px] text-[var(--text-muted)]" />
-            Perfil da Comunidade
+            Perfil de la Comunidad
           </Link>
 
           <form action={logout} className="border-t border-[var(--border)]">
@@ -117,7 +117,7 @@ export function SidebarProfile({
               className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13.5px] font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
             >
               <IconLogout className="h-[17px] w-[17px]" />
-              Sair
+              Salir
             </button>
           </form>
         </div>

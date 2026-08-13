@@ -22,7 +22,7 @@ function SaveButton({ editing }: { editing: boolean }) {
       disabled={pending}
       className="w-full rounded-2xl bg-[var(--brand)] px-4 py-3 text-[14px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Salvando…' : editing ? 'Salvar alterações' : 'Criar template'}
+      {pending ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear plantilla'}
     </button>
   );
 }
@@ -87,7 +87,7 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
         <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-display text-[16px] font-semibold text-[var(--text)]">
-              Meus templates
+              Mis plantillas
             </h2>
             <button
               type="button"
@@ -100,7 +100,7 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
 
           {templates.length === 0 ? (
             <p className="py-6 text-center text-[13.5px] text-[var(--text-muted)]">
-              Nenhum template ainda. Escreva a mensagem abaixo e salve.
+              Aún no hay plantillas. Escribe el mensaje abajo y guárdalo.
             </p>
           ) : (
             <ul className="mt-3 divide-y divide-[var(--border)]">
@@ -151,14 +151,14 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 block text-[13px] font-semibold text-[var(--text)]">
-                Nome do template
+                Nombre de la plantilla
               </span>
               <input
                 name="name"
                 defaultValue={editing?.name ?? ''}
                 key={editing?.id ?? 'new'}
                 required
-                placeholder="Oferta relâmpago"
+                placeholder="Oferta relámpago"
                 className={field}
               />
             </label>
@@ -174,7 +174,7 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
                 className={field}
               >
                 <option value="shopee">Shopee</option>
-                <option value="mercado_livre">Mercado Livre</option>
+                <option value="mercado_livre">Mercado Libre</option>
                 <option value="amazon">Amazon</option>
                 <option value="tiktok_shop">TikTok Shop</option>
               </select>
@@ -183,7 +183,7 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
 
           <div className="mt-3">
             <span className="mb-1.5 block text-[13px] font-semibold text-[var(--text)]">
-              Mensagem
+              Mensaje
             </span>
 
             <div className="mb-2 flex flex-wrap gap-1.5">
@@ -217,7 +217,7 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
           {state.ok && (
             <p className="mt-2 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--money)]">
               <IconCheck className="h-4 w-4" />
-              Template salvo.
+              Plantilla guardada.
             </p>
           )}
 
@@ -231,10 +231,10 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
       <aside className="flex flex-col gap-4">
         <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
           <h2 className="font-display text-[15px] font-semibold text-[var(--text)]">
-            Dados do produto
+            Datos del producto
           </h2>
           <p className="mt-0.5 text-[12px] text-[var(--text-muted)]">
-            Preencha para ver a mensagem final. Vazio usa exemplo.
+            Complétalos para ver el mensaje final. Vacío usa el ejemplo.
           </p>
 
           <div className="mt-3 flex flex-col gap-2">
@@ -260,7 +260,7 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
         <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
           <h2 className="inline-flex items-center gap-2 font-display text-[15px] font-semibold text-[var(--text)]">
             <IconMessage className="h-4 w-4 text-[var(--money)]" />
-            Prévia no WhatsApp
+            Vista previa en WhatsApp
           </h2>
 
           <div className="mt-3 rounded-2xl bg-[var(--bg-sunken)] p-3">
@@ -274,7 +274,7 @@ export function TemplateStudio({ templates }: { templates: OfferTemplate[] }) {
             onClick={copyMessage}
             className="mt-3 w-full rounded-2xl bg-[var(--brand)] px-4 py-3 text-[14px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
           >
-            {copied ? 'Mensagem copiada!' : 'Copiar mensagem'}
+            {copied ? '¡Mensaje copiado!' : 'Copiar mensaje'}
           </button>
         </section>
       </aside>

@@ -6,8 +6,8 @@ export default function Page() {
   return (
     <ComingSoon
       title="Configurar Credenciais"
-      subtitle="Conecte suas contas de afiliado"
-      needs={['Criptografia das credenciais em repouso','Validação da chave junto a cada marketplace','Tela de conexão por programa de afiliado']}
+      subtitle="Conecta tus cuentas de afiliado"
+      needs={['Cifrado de las credenciales en reposo','Validación de la clave con cada marketplace','Pantalla de conexión por programa de afiliado']}
     />
   );
 }

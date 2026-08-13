@@ -12,7 +12,7 @@ export interface MarketplaceInfo {
 export const MARKETPLACES: MarketplaceInfo[] = [
   { id: 'tiktok_shop', label: 'TikTok Shop', color: '#111827', available: true },
   { id: 'shopee', label: 'Shopee', color: '#ee4d2d', available: false },
-  { id: 'mercado_livre', label: 'Mercado Livre', color: '#ffe600', available: false },
+  { id: 'mercado_livre', label: 'Mercado Libre', color: '#ffe600', available: false },
   { id: 'amazon', label: 'Amazon', color: '#ff9900', available: false },
 ];
 
@@ -38,25 +38,25 @@ export interface Category {
 
 /** Rótulo curto usado no chip do card. */
 export const CATEGORY_LABEL: Record<string, string> = {
-  beleza: 'Beleza',
-  saude: 'Saúde',
+  beleza: 'Belleza',
+  saude: 'Salud',
   fitness: 'Fitness',
   moda: 'Moda',
   casa: 'Casa',
-  tech: 'Eletrônicos',
+  tech: 'Electrónicos',
   digital: 'Digital',
-  fisico: 'Outros',
+  fisico: 'Otros',
 };
 
 export const CATEGORIES: Category[] = [
   { id: 'todos', label: 'Todas' },
-  { id: 'beleza', label: 'Beleza' },
-  { id: 'saude', label: 'Saúde' },
+  { id: 'beleza', label: 'Belleza' },
+  { id: 'saude', label: 'Salud' },
   { id: 'fitness', label: 'Fitness' },
   { id: 'moda', label: 'Moda' },
-  { id: 'casa', label: 'Casa & Cozinha' },
-  { id: 'tech', label: 'Eletrônicos' },
-  { id: 'fisico', label: 'Outros' },
+  { id: 'casa', label: 'Casa y Cocina' },
+  { id: 'tech', label: 'Electrónicos' },
+  { id: 'fisico', label: 'Otros' },
   { id: 'digital', label: 'Digital' },
 ];
 
@@ -92,9 +92,9 @@ export interface Product extends ApiProduct {
 export type SortId = 'vendas' | 'preco_asc' | 'preco_desc' | 'avaliacao' | 'comissao';
 
 export const SORTS: Array<{ id: SortId; label: string }> = [
-  { id: 'vendas', label: 'Mais vendidos' },
-  { id: 'comissao', label: 'Maior comissão' },
-  { id: 'preco_asc', label: 'Menor preço' },
-  { id: 'preco_desc', label: 'Maior preço' },
-  { id: 'avaliacao', label: 'Melhor avaliação' },
+  { id: 'vendas', label: 'Más vendidos' },
+  { id: 'comissao', label: 'Mayor comisión' },
+  { id: 'preco_asc', label: 'Menor precio' },
+  { id: 'preco_desc', label: 'Mayor precio' },
+  { id: 'avaliacao', label: 'Mejor valoración' },
 ];

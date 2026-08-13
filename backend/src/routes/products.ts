@@ -73,15 +73,15 @@ export async function productRoutes(app: FastifyInstance) {
   app.get('/products/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const product = await prisma.product.findUnique({ where: { id } });
-    if (!product) return reply.status(404).send({ message: 'Produto não encontrado.' });
+    if (!product) return reply.status(404).send({ message: 'Producto no encontrado.' });
     return { product: serializeProduct(product) };
   });
 
   app.get('/categories', async () => ({
     categories: [
       { id: 'todos', label: 'Todos', icon: 'apps' },
-      { id: 'beleza', label: 'Beleza', icon: 'flower' },
-      { id: 'saude', label: 'Saúde', icon: 'fitness' },
+      { id: 'beleza', label: 'Belleza', icon: 'flower' },
+      { id: 'saude', label: 'Salud', icon: 'fitness' },
       { id: 'fisico', label: 'Físicos', icon: 'cube' },
       { id: 'digital', label: 'Digital', icon: 'cloud-download' },
       { id: 'moda', label: 'Moda', icon: 'shirt' },
@@ -142,7 +142,7 @@ export async function productRoutes(app: FastifyInstance) {
         return reply.status(422).send({ message: error.message });
       }
       return reply.status(502).send({
-        message: error instanceof Error ? error.message : 'Falha ao sincronizar catálogo.',
+        message: error instanceof Error ? error.message : 'Falló la sincronización del catálogo.',
       });
     }
   });

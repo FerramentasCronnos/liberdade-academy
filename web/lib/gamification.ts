@@ -45,11 +45,11 @@ export interface PointsEntry {
 }
 
 export const MISSION_CATEGORIES: Record<string, string> = {
-  outras: 'Outras',
-  vendas: 'Vendas',
+  outras: 'Otras',
+  vendas: 'Ventas',
   marketplaces: 'Marketplaces',
   curso: 'Curso',
-  indicacoes: 'Indicações',
+  indicacoes: 'Referidos',
 };
 
 export const REDEMPTION_STATUS: Record<string, { label: string; className: string }> = {
@@ -58,21 +58,21 @@ export const REDEMPTION_STATUS: Record<string, { label: string; className: strin
     className: 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300',
   },
   approved: {
-    label: 'Aprovado',
+    label: 'Aprobado',
     className: 'bg-[var(--violet-soft)] text-[var(--brand)]',
   },
   delivered: {
-    label: 'Entregue',
+    label: 'Entregado',
     className: 'bg-[var(--money-soft)] text-[var(--money)]',
   },
   rejected: {
-    label: 'Recusado',
+    label: 'Rechazado',
     className: 'bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300',
   },
 };
 
 export function formatPoints(value: number) {
-  return value.toLocaleString('pt-BR');
+  return value.toLocaleString('es-419');
 }
 
 export interface PointsSummary {

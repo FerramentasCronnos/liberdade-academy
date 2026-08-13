@@ -49,7 +49,7 @@ function ColorField({
       />
       <input
         type="color"
-        aria-label="Escolher cor"
+        aria-label="Elegir color"
         value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#ffffff'}
         onChange={(e) => onChange(e.target.value)}
         className="h-10 w-11 shrink-0 cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
@@ -86,7 +86,7 @@ function SaveButton() {
       disabled={pending}
       className="rounded-xl bg-[var(--brand)] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Salvando…' : 'Salvar alterações'}
+      {pending ? 'Guardando…' : 'Guardar cambios'}
     </button>
   );
 }
@@ -127,7 +127,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
         <input type="hidden" name="id" value={page.id} />
         <input type="hidden" name="payload" value={payload} />
 
-        <Card title="Template">
+        <Card title="Plantilla">
           <select
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
@@ -140,7 +140,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
             ))}
           </select>
           <p className="mt-1.5 text-[11.5px] text-[var(--text-faint)]">
-            Renderizando com o layout{' '}
+            Renderizando con el diseño{' '}
             <strong>{PRESELL_TEMPLATES.find((t) => t.id === template)?.label}</strong>.
           </p>
         </Card>
@@ -164,7 +164,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
               className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-3.5 py-2.5 text-[13px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)] disabled:opacity-60"
             >
               <IconUpload className="h-4 w-4" />
-              {uploading ? 'Enviando…' : 'Enviar imagem'}
+              {uploading ? 'Subiendo…' : 'Subir imagen'}
             </button>
             {avatar && (
               <button
@@ -173,12 +173,12 @@ export function PresellEditor({ page }: { page: LandingPage }) {
                 className="inline-flex items-center gap-1 text-[12.5px] font-medium text-[var(--text-muted)] transition hover:text-red-600"
               >
                 <IconX className="h-3.5 w-3.5" />
-                Remover
+                Quitar
               </button>
             )}
           </div>
           <p className="mt-1.5 text-[11.5px] text-[var(--text-faint)]">
-            PNG, JPG, WEBP ou GIF, até 5MB.
+            PNG, JPG, WEBP o GIF, hasta 5MB.
           </p>
         </Card>
 
@@ -188,7 +188,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
             <input value={title} onChange={(e) => setTitle(e.target.value)} className={input} />
             <input
               type="color"
-              aria-label="Cor do título"
+              aria-label="Color del título"
               value={config.titleColor}
               onChange={(e) => set('titleColor', e.target.value)}
               className="h-10 w-11 shrink-0 cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
@@ -205,21 +205,21 @@ export function PresellEditor({ page }: { page: LandingPage }) {
             />
             <input
               type="color"
-              aria-label="Cor do subtítulo"
+              aria-label="Color del subtítulo"
               value={config.subtitleColor}
               onChange={(e) => set('subtitleColor', e.target.value)}
               className="h-10 w-11 shrink-0 cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
             />
           </div>
 
-          <label className={`${label} mt-3`}>Texto do botão</label>
+          <label className={`${label} mt-3`}>Texto del botón</label>
           <input
             value={config.buttonText}
             onChange={(e) => set('buttonText', e.target.value)}
             className={input}
           />
 
-          <label className={`${label} mt-3`}>Rodapé</label>
+          <label className={`${label} mt-3`}>Pie de página</label>
           <input
             value={config.footerText}
             onChange={(e) => set('footerText', e.target.value)}
@@ -227,12 +227,12 @@ export function PresellEditor({ page }: { page: LandingPage }) {
           />
         </Card>
 
-        <Card title="Cores">
-          <label className={label}>Cor principal</label>
+        <Card title="Colores">
+          <label className={label}>Color principal</label>
           <ColorField value={config.primaryColor} onChange={(v) => set('primaryColor', v)} />
 
           <div className="mt-3 flex items-center gap-2">
-            <span className={`${label} mb-0`}>Fundo</span>
+            <span className={`${label} mb-0`}>Fondo</span>
             <div className="inline-flex overflow-hidden rounded-full border border-[var(--border)]">
               {(['solido', 'degrade'] as const).map((mode) => (
                 <button
@@ -245,7 +245,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
                       : 'text-[var(--text-muted)]'
                   }`}
                 >
-                  {mode === 'solido' ? 'Sólido' : 'Degradê'}
+                  {mode === 'solido' ? 'Sólido' : 'Degradado'}
                 </button>
               ))}
             </div>
@@ -257,23 +257,23 @@ export function PresellEditor({ page }: { page: LandingPage }) {
 
           {config.bgMode === 'degrade' && (
             <div className="mt-2">
-              <label className={label}>Segunda cor do degradê</label>
+              <label className={label}>Segundo color del degradado</label>
               <ColorField value={config.bgColor2} onChange={(v) => set('bgColor2', v)} />
             </div>
           )}
 
-          <label className={`${label} mt-3`}>Borda da foto</label>
+          <label className={`${label} mt-3`}>Borde de la foto</label>
           <ColorField
             value={config.photoBorder}
             onChange={(v) => set('photoBorder', v)}
             placeholder="Automático"
           />
           <p className="mt-1 text-[11.5px] text-[var(--text-faint)]">
-            Deixe em branco para usar a cor do fundo levemente escurecida.
+            Déjalo vacío para usar el color de fondo levemente oscurecido.
           </p>
         </Card>
 
-        <Card title="Benefícios">
+        <Card title="Beneficios">
           <div className="flex flex-col gap-2">
             {config.benefits.map((benefit, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -309,7 +309,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
                       config.benefits.filter((_, i) => i !== index),
                     )
                   }
-                  aria-label="Remover benefício"
+                  aria-label="Quitar beneficio"
                   className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--text-faint)] transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
                 >
                   <IconX className="h-4 w-4" />
@@ -323,11 +323,11 @@ export function PresellEditor({ page }: { page: LandingPage }) {
             onClick={() => set('benefits', [...config.benefits, { icon: '⭐', label: '' }])}
             className="mt-2 w-full rounded-xl border border-dashed border-[var(--border-strong)] py-2.5 text-[13px] font-semibold text-[var(--text-muted)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
           >
-            + Adicionar benefício
+            + Agregar beneficio
           </button>
         </Card>
 
-        <Card title="Contador regressivo">
+        <Card title="Cuenta regresiva">
           <div className="flex items-center justify-between gap-3">
             <span className="text-[13px] text-[var(--text-muted)]">Mostrar contador</span>
             <Toggle
@@ -338,7 +338,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
 
           {config.countdown.enabled && (
             <>
-              <label className={`${label} mt-3`}>Duração (segundos)</label>
+              <label className={`${label} mt-3`}>Duración (segundos)</label>
               <input
                 type="number"
                 min={5}
@@ -349,7 +349,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
                 className={input}
               />
 
-              <label className={`${label} mt-3`}>Mensagem do contador</label>
+              <label className={`${label} mt-3`}>Mensaje del contador</label>
               <div className="flex items-start gap-2">
                 <textarea
                   rows={2}
@@ -361,7 +361,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
                 />
                 <input
                   type="color"
-                  aria-label="Cor da mensagem"
+                  aria-label="Color del mensaje"
                   value={config.countdown.messageColor}
                   onChange={(e) =>
                     set('countdown', { ...config.countdown, messageColor: e.target.value })
@@ -370,7 +370,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
                 />
               </div>
 
-              <label className={`${label} mt-3`}>Mensagem no fim (expirado)</label>
+              <label className={`${label} mt-3`}>Mensaje al finalizar (expirado)</label>
               <div className="flex items-start gap-2">
                 <textarea
                   rows={3}
@@ -382,7 +382,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
                 />
                 <input
                   type="color"
-                  aria-label="Cor da mensagem final"
+                  aria-label="Color del mensaje final"
                   value={config.countdown.expiredColor}
                   onChange={(e) =>
                     set('countdown', { ...config.countdown, expiredColor: e.target.value })
@@ -394,9 +394,9 @@ export function PresellEditor({ page }: { page: LandingPage }) {
           )}
         </Card>
 
-        <Card title="Escassez de vagas">
+        <Card title="Escasez de cupos">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[13px] text-[var(--text-muted)]">Mostrar vagas</span>
+            <span className="text-[13px] text-[var(--text-muted)]">Mostrar cupos</span>
             <Toggle
               on={config.scarcity.enabled}
               onChange={(v) => set('scarcity', { ...config.scarcity, enabled: v })}
@@ -429,8 +429,8 @@ export function PresellEditor({ page }: { page: LandingPage }) {
         </Card>
 
         {template === 'prova_social' && (
-          <Card title="Prova social">
-            <label className={label}>Chamada</label>
+          <Card title="Prueba social">
+            <label className={label}>Titular</label>
             <input
               value={config.proof.highlight}
               onChange={(e) => set('proof', { ...config.proof, highlight: e.target.value })}
@@ -444,7 +444,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
               className={input}
             />
 
-            <label className={`${label} mt-3`}>Depoimento</label>
+            <label className={`${label} mt-3`}>Testimonio</label>
             <textarea
               rows={3}
               value={config.proof.testimonial}
@@ -454,7 +454,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
           </Card>
         )}
 
-        <Card title="Rastreamento (Meta Pixel + CAPI)">
+        <Card title="Seguimiento (Meta Pixel + CAPI)">
           <label className={label}>Pixel ID</label>
           <input
             value={config.tracking.pixelId}
@@ -464,8 +464,8 @@ export function PresellEditor({ page }: { page: LandingPage }) {
           />
           {config.tracking.pixelId && !/^\d+$/.test(config.tracking.pixelId) && (
             <p className="mt-1 text-[11.5px] font-medium text-red-600 dark:text-red-400">
-              O Pixel ID deve conter apenas números — copie o ID do Gerenciador de Eventos (não
-              use e-mail ou nome).
+              El Pixel ID debe tener solo números — copia el ID del Administrador de Eventos (no
+              uses correo ni nombre).
             </p>
           )}
 
@@ -480,7 +480,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
             className={input}
           />
           <p className="mt-1 text-[11.5px] text-[var(--text-faint)]">
-            Opcional — o rastreamento pelo navegador já funciona só com o Pixel ID.
+            Opcional — el seguimiento por navegador ya funciona solo con el Pixel ID.
           </p>
 
           <label className={`${label} mt-3`}>Test Event Code (opcional)</label>
@@ -504,7 +504,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
           {state.ok && (
             <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--money)]">
               <IconCheck className="h-4 w-4" />
-              Salvo.
+              Guardado.
             </span>
           )}
         </div>
@@ -518,7 +518,7 @@ export function PresellEditor({ page }: { page: LandingPage }) {
           />
         </PhoneFrame>
         <p className="mt-2 text-center text-[11.5px] text-[var(--text-faint)]">
-          Pré-visualização em tempo real
+          Vista previa en tiempo real
         </p>
       </aside>
     </div>

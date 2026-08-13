@@ -8,8 +8,8 @@ import { IconBell, IconChevronDown, IconExternal } from './icons';
 
 const NAV = [
   { href: '/catalogo', label: 'Catálogo' },
-  { href: '/comunidade', label: 'Comunidade' },
-  { href: '/missoes', label: 'Missões' },
+  { href: '/comunidade', label: 'Comunidad' },
+  { href: '/missoes', label: 'Misiones' },
   { href: '/recompensas', label: 'Recompensas' },
 ];
 
@@ -47,7 +47,7 @@ export function Topbar() {
             rel="noreferrer noopener"
             className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--brand)] px-4 py-2 text-[14px] font-semibold text-[var(--text-inverse)] transition hover:bg-[var(--brand-hover)]"
           >
-            Área de membros
+            Área de miembros
             <IconExternal className="h-3.5 w-3.5" />
           </a>
         </nav>
@@ -55,7 +55,7 @@ export function Topbar() {
         <div className="ml-auto flex items-center gap-1 md:ml-0">
           <button
             type="button"
-            aria-label="Notificações"
+            aria-label="Notificaciones"
             className="relative grid h-9 w-9 place-items-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]"
           >
             <IconBell className="h-[18px] w-[18px]" />

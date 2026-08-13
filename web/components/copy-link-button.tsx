@@ -26,12 +26,12 @@ export function CopyLinkButton({ url }: { url: string }) {
       {copied ? (
         <>
           <IconCheck className="h-4 w-4 text-[var(--money)]" />
-          Link copiado
+          Enlace copiado
         </>
       ) : (
         <>
           <IconLink className="h-4 w-4" />
-          Copiar link
+          Copiar enlace
         </>
       )}
     </button>

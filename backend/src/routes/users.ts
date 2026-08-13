@@ -52,7 +52,7 @@ export async function userRoutes(app: FastifyInstance) {
         },
       },
     });
-    if (!user) return reply.status(404).send({ message: 'Membro não encontrado.' });
+    if (!user) return reply.status(404).send({ message: 'Miembro no encontrado.' });
 
     const likesReceived = await prisma.postLike.count({
       where: { post: { authorId: id } },
@@ -71,7 +71,7 @@ export async function userRoutes(app: FastifyInstance) {
   app.put('/users/me', { preHandler: [app.authenticate] }, async (request, reply) => {
     const parsed = profileSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ message: 'Dados de perfil inválidos.' });
+      return reply.status(400).send({ message: 'Datos de perfil inválidos.' });
     }
 
     const { name, bio, instagram, tiktok, avatar } = parsed.data;
@@ -94,7 +94,7 @@ export async function userRoutes(app: FastifyInstance) {
   app.put('/users/me/onboarding', { preHandler: [app.authenticate] }, async (request, reply) => {
     const parsed = onboardingSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ message: 'Dados de onboarding inválidos.' });
+      return reply.status(400).send({ message: 'Datos de onboarding inválidos.' });
     }
 
     const user = await prisma.user.update({

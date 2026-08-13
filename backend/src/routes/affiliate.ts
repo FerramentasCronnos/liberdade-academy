@@ -47,14 +47,14 @@ export async function affiliateRoutes(app: FastifyInstance) {
 
   app.put('/affiliate/accounts', { preHandler: [app.authenticate] }, async (request, reply) => {
     const parsed = accountSchema.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ message: 'Dados inválidos.' });
+    if (!parsed.success) return reply.status(400).send({ message: 'Datos inválidos.' });
 
     const { marketplace, publicId, secret } = parsed.data;
 
     if (secret && !canEncrypt()) {
       return reply.status(503).send({
         message:
-          'CREDENTIALS_KEY não configurada no servidor. Sem ela não gravo segredo em texto puro.',
+          'CREDENTIALS_KEY no está configurada en el servidor. Sin ella no guardo secretos en texto plano.',
       });
     }
 
@@ -81,14 +81,14 @@ export async function affiliateRoutes(app: FastifyInstance) {
 
   app.post('/affiliate/links', { preHandler: [app.authenticate] }, async (request, reply) => {
     const parsed = linkSchema.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ message: 'Informe a URL do produto.' });
+    if (!parsed.success) return reply.status(400).send({ message: 'Indica la URL del producto.' });
 
     const marketplace =
       parsed.data.marketplace ?? (detectMarketplace(parsed.data.url) as Marketplace | null);
 
     if (!marketplace) {
       return reply.status(422).send({
-        message: 'Não reconheci o marketplace desta URL. Use Amazon, Shopee ou Mercado Livre.',
+        message: 'No reconocí el marketplace de esta URL. Usa Amazon, Shopee o Mercado Libre.',
       });
     }
 
@@ -124,7 +124,7 @@ export async function affiliateRoutes(app: FastifyInstance) {
           .status(error.code === 'BAD_URL' ? 400 : 422)
           .send({ message: error.message, code: error.code });
       }
-      return reply.status(500).send({ message: 'Falha ao gerar o link.' });
+      return reply.status(500).send({ message: 'Falló la generación del enlace.' });
     }
   });
 
@@ -153,7 +153,7 @@ export async function affiliateRoutes(app: FastifyInstance) {
     const deleted = await prisma.affiliateLink.deleteMany({
       where: { id, userId: request.user.sub },
     });
-    if (deleted.count === 0) return reply.status(404).send({ message: 'Link não encontrado.' });
+    if (deleted.count === 0) return reply.status(404).send({ message: 'Enlace no encontrado.' });
 
     return { ok: true };
   });

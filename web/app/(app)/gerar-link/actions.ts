@@ -10,19 +10,19 @@ export async function generateLink(_prev: LinkState, formData: FormData): Promis
   const url = String(formData.get('url') || '').trim();
   const marketplace = String(formData.get('marketplace') || '').trim();
 
-  if (!url) return { error: 'Cole a URL do produto.' };
+  if (!url) return { error: 'Pega la URL del producto.' };
 
   try {
     const result = await apiFetch<{ link: AffiliateLink }>('/affiliate/links', {
       method: 'POST',
       body: JSON.stringify({ url, ...(marketplace ? { marketplace } : {}) }),
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
 
     revalidatePath('/gerar-link');
     return { link: result.link };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Não consegui gerar o link.' };
+    return { error: e instanceof Error ? e.message : 'No pude generar el enlace.' };
   }
 }
 
@@ -42,9 +42,9 @@ export async function saveAccount(
       method: 'PUT',
       body: JSON.stringify({ marketplace, publicId: publicId || null }),
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Não consegui salvar.' };
+    return { error: e instanceof Error ? e.message : 'No pude guardar.' };
   }
 
   revalidatePath('/gerar-link');

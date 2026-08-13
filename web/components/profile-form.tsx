@@ -22,7 +22,7 @@ function Submit() {
       disabled={pending}
       className="w-full rounded-2xl bg-[var(--brand)] px-4 py-3.5 text-[14.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Salvando…' : 'Salvar alterações'}
+      {pending ? 'Guardando…' : 'Guardar cambios'}
     </button>
   );
 }
@@ -82,7 +82,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
           className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-3.5 py-2 text-[13px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)] disabled:opacity-60"
         >
           <IconUpload className="h-4 w-4" />
-          {uploading ? 'Enviando…' : 'Enviar foto'}
+          {uploading ? 'Subiendo…' : 'Subir foto'}
         </button>
 
         {uploadError && (
@@ -91,19 +91,19 @@ export function ProfileForm({ user }: { user: SessionUser }) {
       </div>
 
       <label className="mt-6 block">
-        <span className={labelText}>Nome</span>
+        <span className={labelText}>Nombre</span>
         <input name="name" defaultValue={user.name} required maxLength={80} className={field} />
       </label>
 
       <label className="mt-4 block">
-        <span className={labelText}>E-mail</span>
+        <span className={labelText}>Correo</span>
         <input
           value={user.email}
           disabled
           className={`${field} cursor-not-allowed opacity-60`}
         />
         <span className="mt-1 block text-[11.5px] text-[var(--text-faint)]">
-          O e-mail é o seu login e não pode ser alterado aqui.
+          El correo es tu acceso y no se puede cambiar aquí.
         </span>
       </label>
 
@@ -115,7 +115,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
           maxLength={160}
           value={bio}
           onChange={(e) => setBio(e.target.value)}
-          placeholder="Conte em poucas palavras quem é você (aparece na Comunidade)"
+          placeholder="Cuenta en pocas palabras quién eres (aparece en la Comunidad)"
           className={`${field} resize-none`}
         />
         <span className="mt-1 block text-right text-[11.5px] text-[var(--text-faint)]">
@@ -128,7 +128,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
         className="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--border)] px-4 py-3 text-[13.5px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)]"
       >
         <IconMedal className="h-4 w-4" />
-        Ver no Perfil da Comunidade
+        Ver en el Perfil de la Comunidad
       </Link>
 
       <label className="block">
@@ -159,7 +159,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
       {state.ok && (
         <p className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--money)]">
           <IconCheck className="h-4 w-4" />
-          Perfil atualizado.
+          Perfil actualizado.
         </p>
       )}
 

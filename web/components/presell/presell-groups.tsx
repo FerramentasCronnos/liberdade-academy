@@ -24,7 +24,7 @@ function AddButton() {
       disabled={pending}
       className="shrink-0 rounded-xl bg-[var(--brand)] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Adicionando…' : '+ Adicionar'}
+      {pending ? 'Agregando…' : '+ Adicionar'}
     </button>
   );
 }
@@ -44,16 +44,16 @@ export function PresellGroups({ page }: { page: LandingPage }) {
     <div className="flex flex-col gap-4">
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--violet-soft)] px-4 py-3">
         <p className="text-[13.5px] font-semibold text-[var(--brand)]">
-          Alterações aplicadas em tempo real
+          Cambios aplicados en tiempo real
         </p>
         <p className="mt-0.5 text-[12.5px] leading-relaxed text-[var(--text-muted)]">
-          Mudanças em grupos, limites de cliques e modo de rotação passam a valer imediatamente
-          para quem acessa o link publicado. Não é preciso republicar a página.
+          Los cambios en grupos, límites de clics y modo de rotación se aplican de inmediato
+          para quien abra el enlace publicado. No hace falta republicar la página.
         </p>
       </div>
 
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
-        <h3 className="text-[14px] font-semibold text-[var(--text)]">Distribuição de cliques</h3>
+        <h3 className="text-[14px] font-semibold text-[var(--text)]">Distribución de clics</h3>
 
         <form action={saveRotation} className="mt-3">
           <input type="hidden" name="pageId" value={page.id} />
@@ -67,18 +67,18 @@ export function PresellGroups({ page }: { page: LandingPage }) {
           <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] px-3.5 py-3">
             <div className="min-w-0">
               <p className="text-[13.5px] font-medium text-[var(--text)]">
-                Rotação automática ao atingir o limite
+                Rotación automática al alcanzar el límite
               </p>
               <p className="mt-0.5 text-[12px] leading-relaxed text-[var(--text-muted)]">
-                Envia todos os cliques para o primeiro grupo ativo até ele atingir o limite;
-                então passa para o próximo. Desligado, distribui parelho entre os grupos.
+                Envía todos los clics al primer grupo activo hasta que alcance el límite;
+                luego pasa al siguiente. Apagado, reparte parejo entre los grupos.
               </p>
             </div>
             <button
               type="submit"
               role="switch"
               aria-checked={page.rotationAuto}
-              aria-label="Alternar rotação automática"
+              aria-label="Alternar rotación automática"
               className={`relative h-6 w-11 shrink-0 rounded-full transition ${
                 page.rotationAuto ? 'bg-[var(--brand)]' : 'bg-[var(--border-strong)]'
               }`}
@@ -96,49 +96,49 @@ export function PresellGroups({ page }: { page: LandingPage }) {
           <input type="hidden" name="pageId" value={page.id} />
           <input type="hidden" name="rotationAuto" value={String(page.rotationAuto)} />
 
-          <label className={label}>Limite padrão de cliques por grupo</label>
+          <label className={label}>Límite estándar de clics por grupo</label>
           <div className="flex gap-2">
             <input
               name="defaultClickLimit"
               type="number"
               min={1}
               defaultValue={page.defaultClickLimit ?? ''}
-              placeholder="Sem limite"
+              placeholder="Sin límite"
               className={input}
             />
             <button
               type="submit"
               className="shrink-0 rounded-xl border border-[var(--border)] px-4 py-2.5 text-[13.5px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)]"
             >
-              Salvar
+              Guardar
             </button>
           </div>
           <p className="mt-1 text-[11.5px] text-[var(--text-faint)]">
-            Quantos cliques antes de passar para o próximo grupo. Usado quando o grupo não tem
-            limite próprio. Deixe vazio para não limitar.
+            Cuántos clics antes de pasar al siguiente grupo. Se usa cuando el grupo no tiene
+            límite propio. Déjalo vacío para no limitar.
           </p>
         </form>
       </section>
 
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
-        <h3 className="text-[14px] font-semibold text-[var(--text)]">Adicionar grupo</h3>
+        <h3 className="text-[14px] font-semibold text-[var(--text)]">Agregar grupo</h3>
 
         <form action={formAction} className="mt-3 flex flex-wrap items-end gap-2">
           <input type="hidden" name="pageId" value={page.id} />
 
           <div className="min-w-[140px] flex-1">
-            <label className={label}>Nome interno</label>
+            <label className={label}>Nombre interno</label>
             <input name="name" placeholder={`Grupo #${groups.length + 1}`} className={input} />
           </div>
 
           <div className="min-w-[220px] flex-[2]">
-            <label className={label}>Link de convite do WhatsApp</label>
+            <label className={label}>Enlace de invitación de WhatsApp</label>
             <input name="inviteUrl" placeholder="https://chat.whatsapp.com/..." className={input} />
           </div>
 
           <div className="min-w-[120px] flex-1">
-            <label className={label}>Limite de cliques</label>
-            <input name="clickLimit" type="number" min={1} placeholder="Sem limite" className={input} />
+            <label className={label}>Límite de clics</label>
+            <input name="clickLimit" type="number" min={1} placeholder="Sin límite" className={input} />
           </div>
 
           <AddButton />
@@ -157,14 +157,14 @@ export function PresellGroups({ page }: { page: LandingPage }) {
         </h3>
 
         <p className="mt-2 rounded-xl bg-[var(--bg-sunken)] px-3.5 py-2 text-[12px] text-[var(--text-muted)]">
-          Modo: <strong>{page.rotationAuto ? 'Automático' : 'Distribuído'}</strong> · Limite
-          padrão: <strong>{page.defaultClickLimit ?? 'sem limite'}</strong> · Próximo da fila:{' '}
+          Modo: <strong>{page.rotationAuto ? 'Automático' : 'Distribuido'}</strong> · Límite
+          estándar: <strong>{page.defaultClickLimit ?? 'sin límite'}</strong> · Siguiente en la fila:{' '}
           <strong>{nextInQueue?.name ?? '—'}</strong>
         </p>
 
         {groups.length === 0 ? (
           <div className="mt-3 rounded-xl border border-dashed border-[var(--border-strong)] py-10 text-center text-[13px] text-[var(--text-muted)]">
-            Nenhum grupo cadastrado. Adicione ao menos um para o botão da página funcionar.
+            Ningún grupo registrado. Agrega al menos uno para que el botón funcione.
           </div>
         ) : (
           <ul className="mt-3 divide-y divide-[var(--border)]">
@@ -178,12 +178,12 @@ export function PresellGroups({ page }: { page: LandingPage }) {
                       {group.name}
                       {full && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
-                          no limite
+                          en el límite
                         </span>
                       )}
                       {nextInQueue?.id === group.id && (
                         <span className="rounded-full bg-[var(--money-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--money)]">
-                          recebendo
+                          recibiendo
                         </span>
                       )}
                     </p>

@@ -54,7 +54,7 @@ async function main() {
         authorId: ana.id,
         category: 'resultado',
         content:
-          'Galera, fiz minha primeira venda de R$500 hoje usando o catálogo! O sérum de vitamina C tá bombando no TikTok.',
+          '¡Chicas, hice mi primera venta de US$500 hoy usando el catálogo! El sérum de vitamina C está explotando en TikTok.',
       },
       {
         authorId: lucas.id,
@@ -66,7 +66,7 @@ async function main() {
         authorId: pedro.id,
         category: 'resultado',
         content:
-          'Batemos a meta do mês! R$15.000 em vendas só com dropshipping. Sem estoque, sem logística.',
+          '¡Superamos la meta del mes! US$15.000 en ventas solo con dropshipping. Sin stock, sin logística.',
       },
     ],
   });
@@ -74,18 +74,18 @@ async function main() {
   await prisma.notification.createMany({
     data: [
       {
-        title: 'Catálogo atualizado',
-        body: 'Novos produtos virais do TikTok Shop entraram no catálogo.',
+        title: 'Catálogo actualizado',
+        body: 'Nuevos productos virales de TikTok Shop entraron al catálogo.',
         route: '/(tabs)/catalog',
       },
       {
-        title: 'Ranking atualizado',
-        body: 'Confira sua posição na classificação da semana.',
+        title: 'Ranking actualizado',
+        body: 'Mira tu posición en la clasificación de la semana.',
         route: '/(tabs)/ranking',
       },
       {
-        title: 'Nova postagem',
-        body: 'Ana Clara compartilhou um resultado na comunidade.',
+        title: 'Nueva publicación',
+        body: 'Ana Clara compartió un resultado en la comunidad.',
         route: '/(tabs)/community',
       },
     ],

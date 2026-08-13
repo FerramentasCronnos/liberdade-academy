@@ -19,9 +19,9 @@ export interface AdCreative {
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
-  geral: 'Geral',
-  beleza: 'Beleza',
-  saude: 'Saúde',
+  geral: 'General',
+  beleza: 'Belleza',
+  saude: 'Salud',
   fitness: 'Fitness',
   moda: 'Moda',
   casa: 'Casa',
@@ -39,7 +39,7 @@ function PublishButton() {
       disabled={pending}
       className="rounded-xl bg-[var(--brand)] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Publicando…' : 'Publicar no baú'}
+      {pending ? 'Publicando…' : 'Publicar en el baúl'}
     </button>
   );
 }
@@ -108,7 +108,7 @@ function AdCard({ ad, isAdmin }: { ad: AdCreative; isAdmin: boolean }) {
           onClick={download}
           className="mt-auto rounded-xl bg-[var(--brand)] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
         >
-          {saved ? 'Baixado!' : 'Baixar imagem'}
+          {saved ? '¡Descargado!' : 'Descargar imagen'}
         </button>
       </div>
     </article>
@@ -156,10 +156,10 @@ export function AdVault({
           className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]"
         >
           <h2 className="font-display text-[16px] font-semibold text-[var(--text)]">
-            Publicar anúncio
+            Publicar anuncio
           </h2>
           <p className="mt-0.5 text-[12.5px] text-[var(--text-muted)]">
-            Visível só para você, que é administradora. Os membros veem apenas o baú.
+            Visible solo para ti, que eres administradora. Los miembros ven solo el baúl.
           </p>
 
           <input type="hidden" name="image" value={image ?? ''} />
@@ -181,7 +181,7 @@ export function AdVault({
                 <button
                   type="button"
                   onClick={() => setImage(null)}
-                  aria-label="Remover imagem"
+                  aria-label="Quitar imagen"
                   className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/55 text-white transition hover:bg-black/75"
                 >
                   <IconX className="h-4 w-4" />
@@ -195,12 +195,12 @@ export function AdVault({
                 className="flex h-[150px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] text-[13px] font-semibold text-[var(--text-muted)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] disabled:opacity-60"
               >
                 <IconUpload className="h-5 w-5" />
-                {uploading ? 'Enviando…' : 'Escolher imagem'}
+                {uploading ? 'Subiendo…' : 'Elegir imagen'}
               </button>
             )}
 
             <div className="flex flex-col gap-2">
-              <input name="title" placeholder="Nome do anúncio" className={input} />
+              <input name="title" placeholder="Nombre del anuncio" className={input} />
               <select name="category" className={input}>
                 {categories.map((category) => (
                   <option key={category} value={category}>
@@ -208,7 +208,7 @@ export function AdVault({
                   </option>
                 ))}
               </select>
-              <input name="notes" placeholder="Observação (opcional)" className={input} />
+              <input name="notes" placeholder="Observación (opcional)" className={input} />
             </div>
           </div>
 
@@ -247,11 +247,11 @@ export function AdVault({
 
       {ads.length === 0 ? (
         <div className="mt-5 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-16 text-center">
-          <p className="font-display text-lg font-semibold text-[var(--text)]">Baú vazio</p>
+          <p className="font-display text-lg font-semibold text-[var(--text)]">Baúl vacío</p>
           <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">
             {isAdmin
-              ? 'Publique o primeiro anúncio acima.'
-              : 'Nenhum anúncio publicado nesta categoria ainda.'}
+              ? 'Publica el primer anuncio arriba.'
+              : 'Aún no hay anuncios publicados en esta categoría.'}
           </p>
         </div>
       ) : (

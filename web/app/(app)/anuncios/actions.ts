@@ -11,17 +11,17 @@ export async function createAd(_prev: AdState, formData: FormData): Promise<AdSt
   const image = String(formData.get('image') || '').trim();
   const notes = String(formData.get('notes') || '').trim();
 
-  if (!image) return { error: 'Envie a imagem do anúncio.' };
-  if (title.length < 2) return { error: 'Dê um nome ao anúncio.' };
+  if (!image) return { error: 'Envía la imagen del anuncio.' };
+  if (title.length < 2) return { error: 'Ponle un nombre al anuncio.' };
 
   try {
     const result = await apiFetch('/ads', {
       method: 'POST',
       body: JSON.stringify({ title, category, image, notes: notes || null }),
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Não consegui publicar.' };
+    return { error: e instanceof Error ? e.message : 'No pude publicar.' };
   }
 
   revalidatePath('/anuncios');

@@ -22,7 +22,7 @@ function SaveButton() {
       disabled={pending}
       className="rounded-xl bg-[var(--brand)] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Salvando…' : 'Salvar alterações'}
+      {pending ? 'Guardando…' : 'Guardar cambios'}
     </button>
   );
 }
@@ -106,7 +106,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
               className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-3.5 py-2.5 text-[13px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)] disabled:opacity-60"
             >
               <IconUpload className="h-4 w-4" />
-              {uploading ? 'Enviando…' : 'Enviar imagem'}
+              {uploading ? 'Subiendo…' : 'Subir imagen'}
             </button>
 
             {avatar && (
@@ -115,7 +115,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
                 onClick={() => setAvatar(undefined)}
                 className="text-[12.5px] font-medium text-[var(--text-muted)] transition hover:text-red-600"
               >
-                Remover
+                Quitar
               </button>
             )}
           </div>
@@ -131,11 +131,11 @@ export function BioEditor({ page }: { page: LandingPage }) {
             className={`${input} resize-none`}
           />
 
-          <label className={`${label} mt-3`}>Cor de fundo da página</label>
+          <label className={`${label} mt-3`}>Color de fondo de la página</label>
           <div className="flex items-center gap-2">
             <input
               type="color"
-              aria-label="Cor de fundo"
+              aria-label="Color de fondo"
               value={/^#[0-9a-f]{6}$/i.test(config.bgColor) ? config.bgColor : '#ffffff'}
               onChange={(e) => setConfig((prev) => ({ ...prev, bgColor: e.target.value }))}
               className="h-10 w-11 shrink-0 cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
@@ -149,9 +149,9 @@ export function BioEditor({ page }: { page: LandingPage }) {
 
           <div className="mt-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[13.5px] font-medium text-[var(--text)]">Colocar banner</p>
+              <p className="text-[13.5px] font-medium text-[var(--text)]">Poner banner</p>
               <p className="text-[12px] text-[var(--text-muted)]">
-                Degradê de 3 cores no topo com card sobreposto.
+                Degradado de 3 colores arriba con tarjeta superpuesta.
               </p>
             </div>
             <button
@@ -174,7 +174,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
         </section>
 
         <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
-          <h3 className="mb-3 text-[14px] font-semibold text-[var(--text)]">Links</h3>
+          <h3 className="mb-3 text-[14px] font-semibold text-[var(--text)]">Enlaces</h3>
 
           <div className="flex flex-col gap-3">
             {config.links.map((link, index) => (
@@ -193,13 +193,13 @@ export function BioEditor({ page }: { page: LandingPage }) {
                       !link.bg || link.bg === 'transparent' ? `1px solid ${link.fg}44` : undefined,
                   }}
                 >
-                  {link.label || 'Sem título'}
+                  {link.label || 'Sin título'}
                 </div>
 
                 <input
                   value={link.label}
                   onChange={(e) => setLink(index, { label: e.target.value })}
-                  placeholder="Nome do botão"
+                  placeholder="Nombre del botón"
                   className={input}
                 />
                 <input
@@ -217,7 +217,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
                       onChange={(e) => setLink(index, { bg: e.target.value })}
                       className="h-8 w-9 cursor-pointer rounded border border-[var(--border)] bg-transparent"
                     />
-                    Botão
+                    Botón
                   </label>
 
                   <label className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)]">
@@ -235,7 +235,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
                       type="button"
                       onClick={() => move(index, -1)}
                       disabled={index === 0}
-                      aria-label="Mover para cima"
+                      aria-label="Mover arriba"
                       className="grid h-8 w-8 place-items-center rounded-lg text-[var(--text-faint)] transition hover:bg-[var(--bg-sunken)] hover:text-[var(--text)] disabled:opacity-30"
                     >
                       ↑
@@ -244,7 +244,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
                       type="button"
                       onClick={() => move(index, 1)}
                       disabled={index === config.links.length - 1}
-                      aria-label="Mover para baixo"
+                      aria-label="Mover abajo"
                       className="grid h-8 w-8 place-items-center rounded-lg text-[var(--text-faint)] transition hover:bg-[var(--bg-sunken)] hover:text-[var(--text)] disabled:opacity-30"
                     >
                       ↓
@@ -257,7 +257,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
                           links: prev.links.filter((_, i) => i !== index),
                         }))
                       }
-                      aria-label="Remover link"
+                      aria-label="Quitar enlace"
                       className="grid h-8 w-8 place-items-center rounded-lg text-[var(--text-faint)] transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
                     >
                       <IconX className="h-4 w-4" />
@@ -278,7 +278,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
             }
             className="mt-3 w-full rounded-xl border border-dashed border-[var(--border-strong)] py-2.5 text-[13px] font-semibold text-[var(--text-muted)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
           >
-            + Adicionar link
+            + Agregar enlace
           </button>
         </section>
 
@@ -292,7 +292,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
           {state.ok && (
             <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--money)]">
               <IconCheck className="h-4 w-4" />
-              Salvo.
+              Guardado.
             </span>
           )}
         </div>
@@ -303,7 +303,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
           <BioRender data={{ title, subtitle, avatar, config }} scale={0.94} />
         </PhoneFrame>
         <p className="mt-2 text-center text-[11.5px] text-[var(--text-faint)]">
-          Preview atualizado em tempo real
+          Vista previa en tiempo real
         </p>
       </aside>
     </div>

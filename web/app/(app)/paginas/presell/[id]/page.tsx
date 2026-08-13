@@ -15,7 +15,7 @@ type Search = Promise<{ tab?: string; range?: string }>;
 const TABS = [
   { id: 'page', label: 'Página' },
   { id: 'group', label: 'Grupo' },
-  { id: 'stats', label: 'Estatísticas' },
+  { id: 'stats', label: 'Estadísticas' },
 ];
 
 export default async function PresellEditorPage({
@@ -49,7 +49,7 @@ export default async function PresellEditorPage({
           className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--text-muted)] transition hover:text-[var(--text)]"
         >
           <IconArrowLeft className="h-4 w-4" />
-          Minhas páginas
+          Mis páginas
         </Link>
 
         {/* Barra de status */}
@@ -61,7 +61,7 @@ export default async function PresellEditorPage({
                 : 'bg-[var(--bg-sunken)] text-[var(--text-faint)]'
             }`}
           >
-            {page.published ? 'Publicada' : 'Rascunho'}
+            {page.published ? 'Publicada' : 'Borrador'}
           </span>
 
           <code className="rounded-lg bg-[var(--bg-sunken)] px-2.5 py-1 text-[12.5px] text-[var(--text-muted)]">
@@ -86,7 +86,7 @@ export default async function PresellEditorPage({
               <input type="hidden" name="kind" value="presell" />
               <button
                 type="submit"
-                aria-label="Excluir página"
+                aria-label="Eliminar página"
                 className="grid h-9 w-9 place-items-center rounded-xl text-[var(--text-faint)] transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
               >
                 <IconX className="h-4 w-4" />
@@ -136,7 +136,7 @@ export default async function PresellEditorPage({
               <PresellStats stats={stats} pageId={page.id} slug={page.slug} range={range} />
             ) : (
               <p className="text-[13.5px] text-[var(--text-muted)]">
-                Não consegui carregar as estatísticas.
+                No pude cargar las estadísticas.
               </p>
             ))}
         </div>

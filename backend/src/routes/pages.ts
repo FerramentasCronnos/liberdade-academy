@@ -107,7 +107,7 @@ export async function pageRoutes(app: FastifyInstance) {
 
   app.post('/pages', { preHandler: [app.authenticate] }, async (request, reply) => {
     const parsed = pageSchema.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ message: 'Dados inválidos.' });
+    if (!parsed.success) return reply.status(400).send({ message: 'Datos inválidos.' });
 
     // tenta alguns slugs antes de desistir — colisão é rara mas possível
     let slug = parsed.data.slug ? normalizeSlug(parsed.data.slug) : randomSlug();
@@ -115,7 +115,7 @@ export async function pageRoutes(app: FastifyInstance) {
       const taken = await prisma.landingPage.findUnique({ where: { slug } });
       if (!taken) break;
       if (parsed.data.slug) {
-        return reply.status(409).send({ message: 'Este endereço já está em uso.' });
+        return reply.status(409).send({ message: 'Esta dirección ya está en uso.' });
       }
       slug = randomSlug();
     }
@@ -140,19 +140,19 @@ export async function pageRoutes(app: FastifyInstance) {
   app.put('/pages/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const parsed = pageSchema.partial().safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ message: 'Dados inválidos.' });
+    if (!parsed.success) return reply.status(400).send({ message: 'Datos inválidos.' });
 
     const existing = await prisma.landingPage.findFirst({
       where: { id, userId: request.user.sub },
     });
-    if (!existing) return reply.status(404).send({ message: 'Página não encontrada.' });
+    if (!existing) return reply.status(404).send({ message: 'Página no encontrada.' });
 
     let slug = existing.slug;
     if (parsed.data.slug) {
       slug = normalizeSlug(parsed.data.slug);
       if (slug !== existing.slug) {
         const taken = await prisma.landingPage.findUnique({ where: { slug } });
-        if (taken) return reply.status(409).send({ message: 'Este endereço já está em uso.' });
+        if (taken) return reply.status(409).send({ message: 'Esta dirección ya está en uso.' });
       }
     }
 
@@ -178,7 +178,7 @@ export async function pageRoutes(app: FastifyInstance) {
     const deleted = await prisma.landingPage.deleteMany({
       where: { id, userId: request.user.sub },
     });
-    if (deleted.count === 0) return reply.status(404).send({ message: 'Página não encontrada.' });
+    if (deleted.count === 0) return reply.status(404).send({ message: 'Página no encontrada.' });
 
     return { ok: true };
   });
@@ -188,13 +188,13 @@ export async function pageRoutes(app: FastifyInstance) {
   app.put('/pages/:id/rotation', { preHandler: [app.authenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const parsed = rotationSchema.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ message: 'Dados inválidos.' });
+    if (!parsed.success) return reply.status(400).send({ message: 'Datos inválidos.' });
 
     const updated = await prisma.landingPage.updateMany({
       where: { id, userId: request.user.sub },
       data: parsed.data,
     });
-    if (updated.count === 0) return reply.status(404).send({ message: 'Página não encontrada.' });
+    if (updated.count === 0) return reply.status(404).send({ message: 'Página no encontrada.' });
 
     return { ok: true };
   });
@@ -203,11 +203,11 @@ export async function pageRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const parsed = groupSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ message: 'Informe nome e link de convite válidos.' });
+      return reply.status(400).send({ message: 'Indica un nombre y un enlace de invitación válidos.' });
     }
 
     const page = await prisma.landingPage.findFirst({ where: { id, userId: request.user.sub } });
-    if (!page) return reply.status(404).send({ message: 'Página não encontrada.' });
+    if (!page) return reply.status(404).send({ message: 'Página no encontrada.' });
 
     const count = await prisma.pageGroup.count({ where: { pageId: id } });
 
@@ -231,7 +231,7 @@ export async function pageRoutes(app: FastifyInstance) {
       const { id, groupId } = request.params as { id: string; groupId: string };
 
       const page = await prisma.landingPage.findFirst({ where: { id, userId: request.user.sub } });
-      if (!page) return reply.status(404).send({ message: 'Página não encontrada.' });
+      if (!page) return reply.status(404).send({ message: 'Página no encontrada.' });
 
       await prisma.pageGroup.deleteMany({ where: { id: groupId, pageId: id } });
       return { ok: true };
@@ -245,7 +245,7 @@ export async function pageRoutes(app: FastifyInstance) {
 
     const page = await prisma.landingPage.findUnique({ where: { slug } });
     if (!page || !page.published) {
-      return reply.status(404).send({ message: 'Página não encontrada.' });
+      return reply.status(404).send({ message: 'Página no encontrada.' });
     }
 
     prisma.landingPage
@@ -279,7 +279,7 @@ export async function pageRoutes(app: FastifyInstance) {
 
     const page = await prisma.landingPage.findUnique({ where: { slug } });
     if (!page || !page.published) {
-      return reply.status(404).send({ message: 'Página não encontrada.' });
+      return reply.status(404).send({ message: 'Página no encontrada.' });
     }
 
     const target = await prisma.$transaction(async (tx) => {
@@ -326,7 +326,7 @@ export async function pageRoutes(app: FastifyInstance) {
     });
 
     if (!target) {
-      return reply.status(409).send({ message: 'Nenhum grupo configurado nesta página.' });
+      return reply.status(409).send({ message: 'Ningún grupo configurado en esta página.' });
     }
 
     return { url: target.inviteUrl, group: target.name };
@@ -342,7 +342,7 @@ export async function pageRoutes(app: FastifyInstance) {
       where: { id, userId: request.user.sub },
       include: { groups: { orderBy: { order: 'asc' } } },
     });
-    if (!page) return reply.status(404).send({ message: 'Página não encontrada.' });
+    if (!page) return reply.status(404).send({ message: 'Página no encontrada.' });
 
     const days = query.range === '24h' ? 1 : query.range === '30d' ? 30 : query.range === 'all' ? 3650 : 7;
     const since = new Date(Date.now() - days * 86400_000);

@@ -14,17 +14,17 @@ export async function saveTemplate(
   const marketplace = String(formData.get('marketplace') || 'shopee');
   const body = String(formData.get('body') || '').trim();
 
-  if (name.length < 2) return { error: 'Dê um nome ao template.' };
-  if (body.length < 5) return { error: 'Escreva a mensagem.' };
+  if (name.length < 2) return { error: 'Ponle un nombre a la plantilla.' };
+  if (body.length < 5) return { error: 'Escribe el mensaje.' };
 
   try {
     const result = await apiFetch(id ? `/templates/${id}` : '/templates', {
       method: id ? 'PUT' : 'POST',
       body: JSON.stringify({ name, marketplace, body }),
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Não consegui salvar.' };
+    return { error: e instanceof Error ? e.message : 'No pude guardar.' };
   }
 
   revalidatePath('/templates');

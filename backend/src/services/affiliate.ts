@@ -85,7 +85,7 @@ export function buildAffiliateLink(
     const tag = account?.publicId?.trim();
     if (!tag) {
       throw new AffiliateError(
-        'Cadastre sua tag do Amazon Associates para gerar o link.',
+        'Registra tu tag de Amazon Associates para generar el enlace.',
         'NO_ACCOUNT',
       );
     }
@@ -94,8 +94,8 @@ export function buildAffiliateLink(
 
   throw new AffiliateError(
     marketplace === 'shopee'
-      ? 'A Shopee só emite link rastreável pelo painel de afiliados ou pela API. Conecte suas credenciais para liberar aqui.'
-      : 'O Mercado Livre só emite link rastreável pelo painel de afiliados ou pela API. Conecte suas credenciais para liberar aqui.',
+      ? 'Shopee solo emite enlace rastreable desde el panel de afiliados o la API. Conecta tus credenciales para habilitarlo aquí.'
+      : 'Mercado Libre solo emite enlace rastreable desde el panel de afiliados o la API. Conecta tus credenciales para habilitarlo aquí.',
     'NOT_SUPPORTED',
   );
 }

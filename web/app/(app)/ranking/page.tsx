@@ -35,7 +35,7 @@ export default async function RankingPage() {
 
   return (
     <>
-      <PageHeader title="Ranking" subtitle="Classificação dos membros por XP e vendas" />
+      <PageHeader title="Ranking" subtitle="Clasificación de los miembros por XP y ventas" />
 
       <div className="mx-auto max-w-[820px] px-5 pb-12 pt-2 sm:px-8">
         {podium.length > 0 && (
@@ -66,7 +66,7 @@ export default async function RankingPage() {
                     {user.name}
                   </p>
                   <p className="text-[12px] text-white/60">
-                    {user.xp.toLocaleString('pt-BR')} XP
+                    {user.xp.toLocaleString('es-419')} XP
                   </p>
                 </div>
               );
@@ -98,7 +98,7 @@ export default async function RankingPage() {
                     {user.name}
                     {isMe && (
                       <span className="rounded-full bg-[var(--violet-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--brand)]">
-                        Você
+                        Tú
                       </span>
                     )}
                   </p>
@@ -107,7 +107,7 @@ export default async function RankingPage() {
                   </p>
                 </div>
                 <span className="shrink-0 text-[13.5px] font-bold text-[var(--brand)]">
-                  {user.xp.toLocaleString('pt-BR')} XP
+                  {user.xp.toLocaleString('es-419')} XP
                 </span>
               </div>
             );
@@ -117,10 +117,10 @@ export default async function RankingPage() {
         {ranking.length === 0 && (
           <div className="rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-16 text-center">
             <p className="font-display text-lg font-semibold text-[var(--text)]">
-              Ranking vazio
+              Ranking vacío
             </p>
             <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">
-              Assim que os membros começarem a pontuar, eles aparecem aqui.
+              Cuando los miembros empiecen a puntuar, aparecerán aquí.
             </p>
           </div>
         )}

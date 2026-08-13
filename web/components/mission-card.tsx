@@ -18,7 +18,7 @@ function Submit({ disabled }: { disabled: boolean }) {
       disabled={pending || disabled}
       className="w-full rounded-xl bg-[var(--brand)] px-4 py-3 text-[14px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Enviando…' : 'Enviar comprovação'}
+      {pending ? 'Subiendo…' : 'Enviar comprobante'}
     </button>
   );
 }
@@ -89,12 +89,12 @@ export function MissionCard({ mission }: { mission: Mission }) {
           )}
           {mission.kind === 'proof' && (
             <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-faint)]">
-              Comprovação
+              Comprobante
             </span>
           )}
           {mission.repeatable && (
             <span className="rounded-full bg-[var(--bg-sunken)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-faint)]">
-              Repetível
+              Repetible
             </span>
           )}
         </div>
@@ -103,15 +103,15 @@ export function MissionCard({ mission }: { mission: Mission }) {
           {done ? (
             <p className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--money)]">
               <IconCheck className="h-4 w-4" />
-              Concluída
+              Completada
             </p>
           ) : pending ? (
             <p className="text-[13px] font-semibold text-amber-600 dark:text-amber-400">
-              Em análise
+              En revisión
             </p>
           ) : mission.kind === 'automatic' ? (
             <p className="text-[12.5px] text-[var(--text-faint)]">
-              Creditada automaticamente ao completar.
+              Se acredita automáticamente al completar.
             </p>
           ) : (
             <button
@@ -119,7 +119,7 @@ export function MissionCard({ mission }: { mission: Mission }) {
               onClick={() => setOpen(true)}
               className="w-full rounded-xl bg-[var(--brand)] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
             >
-              Enviar comprovação
+              Enviar comprobante
             </button>
           )}
         </div>
@@ -136,7 +136,7 @@ export function MissionCard({ mission }: { mission: Mission }) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Fechar"
+                aria-label="Cerrar"
                 className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--bg-sunken)]"
               >
                 <IconX className="h-4 w-4" />
@@ -162,11 +162,11 @@ export function MissionCard({ mission }: { mission: Mission }) {
 
               {proof ? (
                 <div className="relative overflow-hidden rounded-2xl bg-[var(--bg-sunken)]">
-                  <img src={proof} alt="Comprovação" className="max-h-[240px] w-full object-cover" />
+                  <img src={proof} alt="Comprobante" className="max-h-[240px] w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => setProof(null)}
-                    aria-label="Remover print"
+                    aria-label="Quitar captura"
                     className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/55 text-white transition hover:bg-black/75"
                   >
                     <IconX className="h-4 w-4" />
@@ -180,7 +180,7 @@ export function MissionCard({ mission }: { mission: Mission }) {
                   className="flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] py-8 text-[13px] font-semibold text-[var(--text-muted)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] disabled:opacity-60"
                 >
                   <IconUpload className="h-5 w-5" />
-                  {uploading ? 'Enviando…' : 'Escolher print'}
+                  {uploading ? 'Subiendo…' : 'Elegir captura'}
                 </button>
               )}
 
@@ -188,7 +188,7 @@ export function MissionCard({ mission }: { mission: Mission }) {
                 name="note"
                 rows={2}
                 maxLength={500}
-                placeholder="Quer explicar algo? (opcional)"
+                placeholder="¿Quieres explicar algo? (opcional)"
                 className="mt-3 w-full resize-none rounded-2xl border border-[var(--border)] bg-[var(--bg-sunken)] px-4 py-3 text-[14px] text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--brand)]"
               />
 
@@ -203,7 +203,7 @@ export function MissionCard({ mission }: { mission: Mission }) {
               </div>
 
               <p className="mt-2 text-center text-[11.5px] text-[var(--text-faint)]">
-                Os pontos entram depois da revisão.
+                Los puntos entran después de la revisión.
               </p>
             </form>
           </div>

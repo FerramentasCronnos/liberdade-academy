@@ -16,17 +16,17 @@ export async function createPost(
 
   // com foto, uma legenda curta basta
   const minLength = image ? 1 : 3;
-  if (content.length < minLength) return { error: 'Escreva um pouco mais.' };
-  if (content.length > 2000) return { error: 'Texto muito longo (máx. 2000).' };
+  if (content.length < minLength) return { error: 'Escribe un poco más.' };
+  if (content.length > 2000) return { error: 'Texto demasiado largo (máx. 2000).' };
 
   try {
     const result = await apiFetch<{ post: CommunityPost }>('/posts', {
       method: 'POST',
       body: JSON.stringify({ content, category, ...(image ? { image } : {}) }),
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch {
-    return { error: 'Não consegui publicar agora.' };
+    return { error: 'No pude publicar ahora.' };
   }
 
   revalidatePath('/comunidade');

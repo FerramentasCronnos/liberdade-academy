@@ -23,12 +23,12 @@ function RedeemButton({ reward }: { reward: Reward }) {
       }`}
     >
       {pending
-        ? 'Resgatando…'
+        ? 'Canjeando…'
         : reward.soldOut
-          ? 'Esgotado'
+          ? 'Agotado'
           : reward.affordable
-            ? 'Resgatar'
-            : 'Pontos insuficientes'}
+            ? 'Canjear'
+            : 'Puntos insuficientes'}
     </button>
   );
 }
@@ -78,7 +78,7 @@ export function RewardCard({ reward }: { reward: Reward }) {
         )}
         {state.ok && (
           <p className="text-[12px] font-medium text-[var(--money)]">
-            Resgate solicitado! Acompanhe em Meus resgates.
+            ¡Canje solicitado! Míralo en Mis canjes.
           </p>
         )}
       </div>

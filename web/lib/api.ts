@@ -77,7 +77,7 @@ export async function fetchProducts(params: FetchProductsParams = {}): Promise<P
 }
 
 export function formatPrice(value: number, currency = 'BRL') {
-  return value.toLocaleString(currency === 'USD' ? 'en-US' : 'pt-BR', {
+  return value.toLocaleString(currency === 'USD' ? 'en-US' : 'es-419', {
     style: 'currency',
     currency,
   });

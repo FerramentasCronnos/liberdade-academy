@@ -188,7 +188,7 @@ export function PresellRender({
                 className="shrink-0 whitespace-nowrap"
                 style={{ color: config.subtitleColor, fontSize: 10.5 * scale }}
               >
-                ● {seats <= config.scarcity.min ? 'Última vaga' : `${seats} vagas`}
+                ● {seats <= config.scarcity.min ? 'Último cupo' : `${seats} vagas`}
               </span>
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/10">
                 <div

@@ -21,11 +21,11 @@ export async function createPage(formData: FormData) {
       body: JSON.stringify({
         kind,
         template,
-        title: title || (kind === 'bio' ? 'Minha Bio' : 'Participe do nosso Grupo no WhatsApp!'),
+        title: title || (kind === 'bio' ? 'Mi Bio' : '¡Únete a nuestro Grupo de WhatsApp!'),
         subtitle:
           kind === 'bio'
-            ? 'Aqui você encontra as melhores ofertas!'
-            : 'Lá você recebe ofertas exclusivas direto no seu celular!',
+            ? '¡Aquí encuentras las mejores ofertas!'
+            : '¡Allí recibes ofertas exclusivas directo en tu celular!',
         ...(config ? { config: JSON.parse(config) } : {}),
       }),
     });
@@ -43,16 +43,16 @@ export async function createPage(formData: FormData) {
 export async function savePage(_prev: PageState, formData: FormData): Promise<PageState> {
   const id = String(formData.get('id') || '');
   const payload = String(formData.get('payload') || '');
-  if (!id || !payload) return { error: 'Dados inválidos.' };
+  if (!id || !payload) return { error: 'Datos inválidos.' };
 
   try {
     const result = await apiFetch(`/pages/${id}`, {
       method: 'PUT',
       body: payload,
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Não consegui salvar.' };
+    return { error: e instanceof Error ? e.message : 'No pude guardar.' };
   }
 
   revalidatePath('/paginas/presell');
@@ -102,9 +102,9 @@ export async function addGroup(_prev: GroupState, formData: FormData): Promise<G
   const inviteUrl = String(formData.get('inviteUrl') || '').trim();
   const limitRaw = String(formData.get('clickLimit') || '').trim();
 
-  if (!name) return { error: 'Dê um nome ao grupo.' };
+  if (!name) return { error: 'Ponle un nombre al grupo.' };
   if (!/^https:\/\/chat\.whatsapp\.com\//i.test(inviteUrl)) {
-    return { error: 'Use um link de convite do WhatsApp (chat.whatsapp.com).' };
+    return { error: 'Usa un enlace de invitación de WhatsApp (chat.whatsapp.com).' };
   }
 
   try {
@@ -116,9 +116,9 @@ export async function addGroup(_prev: GroupState, formData: FormData): Promise<G
         clickLimit: limitRaw ? Number(limitRaw) : null,
       }),
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Não consegui adicionar.' };
+    return { error: e instanceof Error ? e.message : 'No pude agregar.' };
   }
 
   revalidatePath('/paginas/presell');

@@ -23,7 +23,7 @@ export function canEncrypt() {
 
 export function encrypt(plain: string): string {
   const k = key();
-  if (!k) throw new Error('CREDENTIALS_KEY não configurada.');
+  if (!k) throw new Error('CREDENTIALS_KEY no está configurada.');
 
   const iv = randomBytes(12);
   const cipher = createCipheriv(ALGO, k, iv);

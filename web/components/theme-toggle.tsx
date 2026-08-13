@@ -44,7 +44,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={dark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+      aria-label={dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
       className="grid h-9 w-9 place-items-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]"
     >
       {/* antes de montar não sabemos o tema: renderiza a lua, sem piscar */}

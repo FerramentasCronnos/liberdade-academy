@@ -18,7 +18,7 @@ function RewardGrid({ rewards }: { rewards: Reward[] }) {
   if (rewards.length === 0) {
     return (
       <div className="mt-4 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-14 text-center text-[13.5px] text-[var(--text-muted)]">
-        Nenhuma recompensa cadastrada.
+        Ninguna recompensa registrada.
       </div>
     );
   }
@@ -36,7 +36,7 @@ function RedemptionList({ redemptions }: { redemptions: Redemption[] }) {
   if (redemptions.length === 0) {
     return (
       <div className="mt-4 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-14 text-center text-[13.5px] text-[var(--text-muted)]">
-        Você ainda não resgatou nada.
+        Aún no canjeaste nada.
       </div>
     );
   }
@@ -56,7 +56,7 @@ function RedemptionList({ redemptions }: { redemptions: Redemption[] }) {
               </p>
               <p className="text-[12px] text-[var(--text-faint)]">
                 {formatPoints(item.costPoints)} pts ·{' '}
-                {new Date(item.createdAt).toLocaleDateString('pt-BR')}
+                {new Date(item.createdAt).toLocaleDateString('es-419')}
               </p>
             </div>
             <span
@@ -89,13 +89,13 @@ export default async function RewardsPage() {
 
   return (
     <>
-      <PageHeader title="Recompensas" subtitle="Troque seus pontos por prêmios" />
+      <PageHeader title="Recompensas" subtitle="Cambia tus puntos por premios" />
 
       <div className="mx-auto max-w-[1240px] px-5 pb-12 pt-2 sm:px-8">
         <PointsHeader
           user={user}
           summary={summary}
-          action={{ href: '/missoes', label: 'Missões' }}
+          action={{ href: '/missoes', label: 'Misiones' }}
         />
 
         <div className="mt-8">
@@ -109,7 +109,7 @@ export default async function RewardsPage() {
               },
               {
                 id: 'resgates',
-                label: 'Meus resgates',
+                label: 'Mis canjes',
                 count: redemptions.length,
                 content: <RedemptionList redemptions={redemptions} />,
               },

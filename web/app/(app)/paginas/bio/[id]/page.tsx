@@ -28,7 +28,7 @@ export default async function BioEditorPage({ params }: { params: Params }) {
           className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--text-muted)] transition hover:text-[var(--text)]"
         >
           <IconArrowLeft className="h-4 w-4" />
-          Minhas bios
+          Mis bios
         </Link>
 
         <div className="mt-4 flex flex-wrap items-center gap-3 rounded-[22px] bg-[var(--bg-elevated)] px-5 py-4 shadow-[var(--shadow-soft)]">
@@ -39,7 +39,7 @@ export default async function BioEditorPage({ params }: { params: Params }) {
                 : 'bg-[var(--bg-sunken)] text-[var(--text-faint)]'
             }`}
           >
-            {page.published ? 'Publicada' : 'Rascunho'}
+            {page.published ? 'Publicada' : 'Borrador'}
           </span>
 
           <code className="rounded-lg bg-[var(--bg-sunken)] px-2.5 py-1 text-[12.5px] text-[var(--text-muted)]">
@@ -66,7 +66,7 @@ export default async function BioEditorPage({ params }: { params: Params }) {
               <input type="hidden" name="kind" value="bio" />
               <button
                 type="submit"
-                aria-label="Excluir bio"
+                aria-label="Eliminar bio"
                 className="grid h-9 w-9 place-items-center rounded-xl text-[var(--text-faint)] transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
               >
                 <IconX className="h-4 w-4" />

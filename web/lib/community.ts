@@ -13,10 +13,10 @@ export interface CommunityPost {
 }
 
 export const POST_CATEGORIES: Array<{ id: PostCategory; label: string; className: string }> = [
-  { id: 'dica', label: 'Dica', className: 'bg-[var(--violet-soft)] text-[var(--brand)]' },
+  { id: 'dica', label: 'Consejo', className: 'bg-[var(--violet-soft)] text-[var(--brand)]' },
   { id: 'resultado', label: 'Resultado', className: 'bg-[var(--money-soft)] text-[var(--money)]' },
-  { id: 'duvida', label: 'Dúvida', className: 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' },
-  { id: 'motivacao', label: 'Motivação', className: 'bg-pink-100 text-pink-700 dark:bg-pink-400/15 dark:text-pink-300' },
+  { id: 'duvida', label: 'Duda', className: 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' },
+  { id: 'motivacao', label: 'Motivación', className: 'bg-pink-100 text-pink-700 dark:bg-pink-400/15 dark:text-pink-300' },
 ];
 
 export function categoryStyle(id: string) {
@@ -36,7 +36,7 @@ export function relativeTime(iso: string) {
   const days = Math.round(hours / 24);
   if (days < 30) return `há ${days} ${days === 1 ? 'dia' : 'dias'}`;
 
-  return new Date(iso).toLocaleDateString('pt-BR');
+  return new Date(iso).toLocaleDateString('es-419');
 }
 
 /** Cor estável do avatar a partir do nome — mesma pessoa, mesma cor. */

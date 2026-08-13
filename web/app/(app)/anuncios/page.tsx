@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/page-header';
 import { AdVault, type AdCreative } from '@/components/ad-vault';
 import { apiFetch, getToken } from '@/lib/session';
 
-export const metadata = { title: 'Baú de Anúncios · Liberdade Academy' };
+export const metadata = { title: 'Baúl de Anuncios · Liberdade Academy' };
 
 type Search = Promise<{ categoria?: string }>;
 
@@ -21,8 +21,8 @@ export default async function AdsPage({ searchParams }: { searchParams: Search }
   return (
     <>
       <PageHeader
-        title="Baú de Anúncios"
-        subtitle="Criativos prontos para você usar nas suas campanhas"
+        title="Baúl de Anuncios"
+        subtitle="Creativos listos para usar en tus campañas"
       />
 
       <div className="mx-auto max-w-[1240px] px-5 pb-12 pt-2 sm:px-8">

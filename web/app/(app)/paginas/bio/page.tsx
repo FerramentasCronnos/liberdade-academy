@@ -18,16 +18,16 @@ export default async function BioListPage() {
     <>
       <PageHeader
         title="Página para BIO"
-        subtitle="Reúna seus links num endereço só para colocar na bio"
+        subtitle="Reúne tus enlaces en una sola dirección para tu bio"
       />
 
       <div className="mx-auto max-w-[1100px] px-5 pb-12 pt-2 sm:px-8">
         <section className="rounded-[24px] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-soft)]">
           <h2 className="font-display text-[17px] font-semibold text-[var(--text)]">
-            Escolha um modelo
+            Elige un modelo
           </h2>
           <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">
-            Selecione um modelo e veja o preview. Dá para mudar tudo depois.
+            Selecciona un modelo y mira la vista previa. Puedes cambiar todo después.
           </p>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -35,15 +35,15 @@ export default async function BioListPage() {
               <form key={model.id} action={createPage} className="flex flex-col">
                 <input type="hidden" name="kind" value="bio" />
                 <input type="hidden" name="template" value={model.id} />
-                <input type="hidden" name="title" value="Minha Bio" />
+                <input type="hidden" name="title" value="Mi Bio" />
                 <input type="hidden" name="config" value={JSON.stringify(model.config)} />
 
                 <div className="overflow-hidden rounded-2xl border border-[var(--border)]">
                   <div className="h-[230px] overflow-hidden">
                     <BioRender
                       data={{
-                        title: 'Minha Bio',
-                        subtitle: 'Aqui você encontra as melhores ofertas!',
+                        title: 'Mi Bio',
+                        subtitle: '¡Aquí encuentras las mejores ofertas!',
                         config: model.config,
                       }}
                       scale={0.68}
@@ -60,7 +60,7 @@ export default async function BioListPage() {
                   type="submit"
                   className="mt-2 rounded-xl bg-[var(--brand)] px-4 py-2 text-[12.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
                 >
-                  Criar bio
+                  Crear bio
                 </button>
               </form>
             ))}
@@ -70,7 +70,7 @@ export default async function BioListPage() {
         {pages.length > 0 && (
           <>
             <h2 className="mt-8 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-              Minhas bios
+              Mis bios
             </h2>
             <ul className="mt-3 divide-y divide-[var(--border)] rounded-[22px] bg-[var(--bg-elevated)] px-5 shadow-[var(--shadow-soft)]">
               {pages.map((page) => (
@@ -90,7 +90,7 @@ export default async function BioListPage() {
                         : 'bg-[var(--bg-sunken)] text-[var(--text-faint)]'
                     }`}
                   >
-                    {page.published ? 'Publicada' : 'Rascunho'}
+                    {page.published ? 'Publicada' : 'Borrador'}
                   </span>
                 </li>
               ))}

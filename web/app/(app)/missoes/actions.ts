@@ -13,17 +13,17 @@ export async function submitMission(
   const proofUrl = String(formData.get('proofUrl') || '').trim();
   const note = String(formData.get('note') || '').trim();
 
-  if (!missionId) return { error: 'Missão inválida.' };
-  if (!proofUrl) return { error: 'Envie o print da comprovação.' };
+  if (!missionId) return { error: 'Misión inválida.' };
+  if (!proofUrl) return { error: 'Envía la captura del comprobante.' };
 
   try {
     const result = await apiFetch(`/missions/${missionId}/submit`, {
       method: 'POST',
       body: JSON.stringify({ proofUrl, note: note || undefined }),
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Não consegui enviar.' };
+    return { error: e instanceof Error ? e.message : 'No pude enviar.' };
   }
 
   revalidatePath('/missoes');

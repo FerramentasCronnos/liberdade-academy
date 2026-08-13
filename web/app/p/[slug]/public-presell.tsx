@@ -46,7 +46,7 @@ export function PublicPresell({
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => ({}))) as { message?: string };
-        setError(payload.message ?? 'Não foi possível abrir o grupo agora.');
+        setError(payload.message ?? 'No fue posible abrir el grupo ahora.');
         setBusy(false);
         return;
       }
@@ -58,7 +58,7 @@ export function PublicPresell({
 
       window.location.href = url;
     } catch {
-      setError('Não foi possível abrir o grupo agora. Tente de novo.');
+      setError('No fue posible abrir el grupo ahora. Inténtalo de nuevo.');
       setBusy(false);
     }
   };

@@ -26,13 +26,13 @@ export async function uploadRoutes(app: FastifyInstance) {
 
   app.post('/uploads', { preHandler: [app.authenticate] }, async (request, reply) => {
     const file = await request.file();
-    if (!file) return reply.status(400).send({ message: 'Envie um arquivo.' });
+    if (!file) return reply.status(400).send({ message: 'Envía un archivo.' });
 
     const ext = ALLOWED.get(file.mimetype);
     if (!ext) {
       return reply
         .status(415)
-        .send({ message: 'Formato não suportado. Use JPG, PNG, WEBP ou GIF.' });
+        .send({ message: 'Formato no soportado. Usa JPG, PNG, WEBP o GIF.' });
     }
 
     // nome aleatório: evita colisão e impede que o nome original vire caminho
@@ -41,12 +41,12 @@ export async function uploadRoutes(app: FastifyInstance) {
     try {
       await pipeline(file.file, createWriteStream(join(UPLOAD_DIR, filename)));
     } catch {
-      return reply.status(500).send({ message: 'Falha ao gravar o arquivo.' });
+      return reply.status(500).send({ message: 'Falló al guardar el archivo.' });
     }
 
     // truncated = passou do limite configurado no multipart
     if (file.file.truncated) {
-      return reply.status(413).send({ message: 'Imagem muito grande (máx. 5 MB).' });
+      return reply.status(413).send({ message: 'Imagen demasiado grande (máx. 5 MB).' });
     }
 
     const base = (process.env.PUBLIC_URL || '').replace(/\/$/, '');

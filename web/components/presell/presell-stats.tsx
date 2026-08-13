@@ -23,9 +23,9 @@ export interface StatsData {
 
 const RANGES = [
   { id: '24h', label: '24h' },
-  { id: '7d', label: '7 dias' },
-  { id: '30d', label: '30 dias' },
-  { id: 'all', label: 'Tudo' },
+  { id: '7d', label: '7 días' },
+  { id: '30d', label: '30 días' },
+  { id: 'all', label: 'Todo' },
 ];
 
 function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -51,7 +51,7 @@ function Breakdown({
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
       <p className="text-[13px] font-semibold text-[var(--text)]">{title}</p>
       {rows.length === 0 ? (
-        <p className="mt-2 text-[12.5px] text-[var(--text-faint)]">Sem dados no período.</p>
+        <p className="mt-2 text-[12.5px] text-[var(--text-faint)]">Sin datos en el período.</p>
       ) : (
         <ul className="mt-2 flex flex-col gap-1.5">
           {rows.map((row) => (
@@ -72,7 +72,7 @@ function Chart({ series }: { series: Array<{ date: string; count: number }> }) {
 
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
-      <p className="text-[13px] font-semibold text-[var(--text)]">Cliques ao longo do tempo</p>
+      <p className="text-[13px] font-semibold text-[var(--text)]">Clics a lo largo del tiempo</p>
 
       <div className="mt-4 flex h-[160px] items-end gap-1">
         {series.map((point) => (
@@ -114,7 +114,7 @@ export function PresellStats({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="font-display text-[18px] font-semibold text-[var(--text)]">
-            Estatísticas
+            Estadísticas
           </h3>
           <p className="text-[12px] text-[var(--text-faint)]">
             /p/{slug} · id {pageId.slice(0, 8)}…
@@ -141,13 +141,13 @@ export function PresellStats({
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
-          label="Cliques no período"
+          label="Clics en el período"
           value={String(stats.clicksInRange)}
           hint={`Total: ${stats.total}`}
         />
         <Metric label="Últimas 24h" value={String(stats.last24h)} />
         <Metric label="Última hora" value={String(stats.lastHour)} />
-        <Metric label="Grupo ativo" value={stats.activeGroup ?? 'Nenhum'} />
+        <Metric label="Grupo activo" value={stats.activeGroup ?? 'Ninguno'} />
       </div>
 
       <Chart series={stats.series} />
@@ -157,17 +157,17 @@ export function PresellStats({
           Origens (UTM)
         </p>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <Breakdown title="Origem (utm_source)" rows={stats.utm.source ?? []} />
-          <Breakdown title="Mídia (utm_medium)" rows={stats.utm.medium ?? []} />
-          <Breakdown title="Campanha (utm_campaign)" rows={stats.utm.campaign ?? []} />
-          <Breakdown title="Conteúdo (utm_content)" rows={stats.utm.content ?? []} />
-          <Breakdown title="Termo (utm_term)" rows={stats.utm.term ?? []} />
+          <Breakdown title="Origen (utm_source)" rows={stats.utm.source ?? []} />
+          <Breakdown title="Medio (utm_medium)" rows={stats.utm.medium ?? []} />
+          <Breakdown title="Campaña (utm_campaign)" rows={stats.utm.campaign ?? []} />
+          <Breakdown title="Contenido (utm_content)" rows={stats.utm.content ?? []} />
+          <Breakdown title="Término (utm_term)" rows={stats.utm.term ?? []} />
         </div>
       </div>
 
       <div>
         <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-          Referrer, dispositivo e país
+          Referrer, dispositivo y país
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
           <Breakdown title="Referrer" rows={stats.referrer} />
@@ -177,17 +177,17 @@ export function PresellStats({
       </div>
 
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
-        <p className="text-[13px] font-semibold text-[var(--text)]">Últimos cliques</p>
+        <p className="text-[13px] font-semibold text-[var(--text)]">Últimos clics</p>
         {stats.recent.length === 0 ? (
           <p className="mt-2 text-[12.5px] text-[var(--text-faint)]">
-            Nenhum clique registrado ainda.
+            Aún no hay clics registrados.
           </p>
         ) : (
           <ul className="mt-2 divide-y divide-[var(--border)]">
             {stats.recent.map((click) => (
               <li key={click.id} className="flex items-center justify-between gap-3 py-2">
                 <span className="text-[12.5px] text-[var(--text-muted)]">
-                  {new Date(click.createdAt).toLocaleString('pt-BR', {
+                  {new Date(click.createdAt).toLocaleString('es-419', {
                     day: '2-digit',
                     month: '2-digit',
                     hour: '2-digit',

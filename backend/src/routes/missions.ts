@@ -64,16 +64,16 @@ export async function missionRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const parsed = submitSchema.safeParse(request.body ?? {});
     if (!parsed.success) {
-      return reply.status(400).send({ message: 'Dados inválidos.' });
+      return reply.status(400).send({ message: 'Datos inválidos.' });
     }
 
     const mission = await prisma.mission.findUnique({ where: { id } });
-    if (!mission?.active) return reply.status(404).send({ message: 'Missão não encontrada.' });
+    if (!mission?.active) return reply.status(404).send({ message: 'Misión no encontrada.' });
 
     if (mission.kind === 'automatic') {
       return reply
         .status(400)
-        .send({ message: 'Esta missão é creditada automaticamente pelo sistema.' });
+        .send({ message: 'Esta misión se acredita automáticamente por el sistema.' });
     }
 
     const existing = await prisma.missionCompletion.findFirst({
@@ -82,10 +82,10 @@ export async function missionRoutes(app: FastifyInstance) {
     });
 
     if (existing?.status === 'pending') {
-      return reply.status(409).send({ message: 'Você já tem um envio em análise.' });
+      return reply.status(409).send({ message: 'Ya tienes un envío en revisión.' });
     }
     if (existing?.status === 'approved' && !mission.repeatable) {
-      return reply.status(409).send({ message: 'Missão já concluída.' });
+      return reply.status(409).send({ message: 'Misión ya completada.' });
     }
 
     const completion = await prisma.missionCompletion.create({
@@ -104,7 +104,7 @@ export async function missionRoutes(app: FastifyInstance) {
   /** Fila de revisão — só admin. */
   app.get('/missions/reviews', { preHandler: [app.authenticate] }, async (request, reply) => {
     const me = await prisma.user.findUnique({ where: { id: request.user.sub } });
-    if (!me?.isAdmin) return reply.status(403).send({ message: 'Acesso restrito.' });
+    if (!me?.isAdmin) return reply.status(403).send({ message: 'Acceso restringido.' });
 
     const pending = await prisma.missionCompletion.findMany({
       where: { status: 'pending' },
@@ -129,19 +129,19 @@ export async function missionRoutes(app: FastifyInstance) {
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       const me = await prisma.user.findUnique({ where: { id: request.user.sub } });
-      if (!me?.isAdmin) return reply.status(403).send({ message: 'Acesso restrito.' });
+      if (!me?.isAdmin) return reply.status(403).send({ message: 'Acceso restringido.' });
 
       const { completionId } = request.params as { completionId: string };
       const parsed = reviewSchema.safeParse(request.body);
-      if (!parsed.success) return reply.status(400).send({ message: 'Status inválido.' });
+      if (!parsed.success) return reply.status(400).send({ message: 'Estado inválido.' });
 
       const completion = await prisma.missionCompletion.findUnique({
         where: { id: completionId },
         include: { mission: true },
       });
-      if (!completion) return reply.status(404).send({ message: 'Envio não encontrado.' });
+      if (!completion) return reply.status(404).send({ message: 'Envío no encontrado.' });
       if (completion.status !== 'pending') {
-        return reply.status(409).send({ message: 'Este envio já foi revisado.' });
+        return reply.status(409).send({ message: 'Este envío ya fue revisado.' });
       }
 
       await prisma.$transaction(async (tx) => {

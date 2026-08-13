@@ -42,7 +42,7 @@ export default async function ProductPage({ params }: { params: Params }) {
           className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--text-muted)] transition hover:text-[var(--text)]"
         >
           <IconArrowLeft className="h-4 w-4" />
-          Voltar ao catálogo
+          Volver al catálogo
         </Link>
 
         <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -101,7 +101,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </div>
 
                 <div className="mt-auto">
-                  <p className="text-[12.5px] text-[var(--text-faint)]">Preço no marketplace</p>
+                  <p className="text-[12.5px] text-[var(--text-faint)]">Precio en el marketplace</p>
                   <p className="font-display text-[30px] font-bold leading-tight tracking-tight text-[var(--text)]">
                     {formatPrice(product.price, product.currency)}
                   </p>
@@ -111,7 +111,7 @@ export default async function ProductPage({ params }: { params: Params }) {
 
             <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
               <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">
-                Descrição
+                Descripción
               </h3>
               <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-muted)]">
                 {product.description}
@@ -120,7 +120,7 @@ export default async function ProductPage({ params }: { params: Params }) {
 
             <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
               <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">
-                Fornecedor
+                Proveedor
               </h3>
               <div className="mt-3 flex items-center gap-3">
                 <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--violet-soft)] text-[var(--brand)]">
@@ -133,7 +133,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                   <p className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--text-muted)]">
                     <IconTruck className="h-3.5 w-3.5" />
                     {product.supplierShips
-                      ? 'Envio direto ao cliente — sem estoque'
+                      ? 'Envío directo al cliente — sin stock'
                       : 'Entrega digital'}
                   </p>
                 </div>
@@ -145,7 +145,7 @@ export default async function ProductPage({ params }: { params: Params }) {
           <aside className="flex flex-col gap-5">
             <div className="rounded-[24px] bg-[image:var(--sidebar-bg)] p-5 text-white shadow-[var(--shadow-lift)]">
               <p className="text-[12.5px] font-medium uppercase tracking-wider text-white/60">
-                Sua comissão
+                Tu comisión
               </p>
 
               {product.commissionValue != null && rate != null ? (
@@ -158,17 +158,17 @@ export default async function ProductPage({ params }: { params: Params }) {
                   </p>
                   {isEstimate && (
                     <p className="mt-3 rounded-xl bg-white/12 px-3 py-2 text-[11.5px] leading-relaxed text-white/80">
-                      Estimativa pela taxa configurada da categoria. O TikTok Shop não expõe a
-                      comissão por produto no Brasil — confirme no Affiliate Center antes de
-                      divulgar.
+                      Estimación según la tasa configurada de la categoría. TikTok Shop no expone la
+                      comisión por producto — confírmala en el Affiliate Center antes de
+                      promocionar.
                     </p>
                   )}
                 </>
               ) : (
                 <p className="mt-2 text-[13.5px] leading-relaxed text-white/75">
-                  A fonte não informa a taxa desta categoria. Configure em
+                  La fuente no informa la tasa de esta categoría. Configúrala en
                   <code className="mx-1 rounded bg-white/12 px-1">COMMISSION_RATES_BR</code>
-                  para exibir aqui.
+                  para mostrarla aquí.
                 </p>
               )}
             </div>
@@ -189,13 +189,13 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </>
               ) : (
                 <p className="text-[13px] text-[var(--text-muted)]">
-                  Este produto não tem link de origem registrado.
+                  Este producto no tiene enlace de origen registrado.
                 </p>
               )}
 
               <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--text-faint)]">
-                O link de afiliado com o seu código sai quando a integração de credenciais
-                estiver pronta. Por enquanto o botão leva ao produto original.
+                El enlace de afiliado con tu código saldrá cuando la integración de credenciales
+                esté lista. Por ahora el botón lleva al producto original.
               </p>
             </div>
           </aside>

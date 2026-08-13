@@ -16,11 +16,11 @@ export default async function LoginPage() {
 
         <div className="max-w-md">
           <h1 className="font-display text-[40px] font-semibold leading-[1.1] tracking-tight text-balance">
-            O catálogo que transforma conteúdo em comissão.
+            El catálogo que transforma contenido en comisión.
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-white/70">
-            Produtos virais validados, comunidade ativa e as ferramentas para você
-            vender sem estoque e sem logística.
+            Productos virales validados, comunidad activa y las herramientas para
+            vender sin stock y sin logística.
           </p>
         </div>
 
@@ -48,7 +48,7 @@ export default async function LoginPage() {
             Entrar
           </h2>
           <p className="mt-1 text-[14px] text-[var(--text-muted)]">
-            Use o e-mail cadastrado no curso.
+            Usa el correo registrado en el curso.
           </p>
 
           <LoginForm />

@@ -6,8 +6,8 @@ export default function Page() {
   return (
     <ComingSoon
       title="Analytics"
-      subtitle="Acompanhe cliques, vendas e comissões"
-      needs={['Integração com a API de relatórios da Shopee','Job de sincronização periódica dos resultados','Modelo de métricas por usuário e período']}
+      subtitle="Sigue clics, ventas y comisiones"
+      needs={['Integración con la API de reportes de Shopee','Job de sincronización periódica de los resultados','Modelo de métricas por usuario y período']}
     />
   );
 }

@@ -19,7 +19,7 @@ export async function sellingRoutes(app: FastifyInstance) {
   app.post('/me/selling/:productId', { preHandler: [app.authenticate] }, async (request, reply) => {
     const { productId } = request.params as { productId: string };
     const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product) return reply.status(404).send({ message: 'Produto não encontrado.' });
+    if (!product) return reply.status(404).send({ message: 'Producto no encontrado.' });
 
     await prisma.sellingProduct.upsert({
       where: {

@@ -95,9 +95,9 @@ export const PRESELL_TEMPLATES: Array<{
   label: string;
   description: string;
 }> = [
-  { id: 'countdown', label: 'Countdown', description: 'Contador regressivo e barra de vagas' },
-  { id: 'minimalista', label: 'Minimalista', description: 'Só o essencial, sem distração' },
-  { id: 'prova_social', label: 'Prova Social', description: 'Depoimento e escassez em destaque' },
+  { id: 'countdown', label: 'Countdown', description: 'Cuenta regresiva y barra de cupos' },
+  { id: 'minimalista', label: 'Minimalista', description: 'Solo lo esencial, sin distracción' },
+  { id: 'prova_social', label: 'Prova Social', description: 'Testimonio y escasez destacados' },
 ];
 
 export const BENEFIT_ICONS = ['🔥', '⚡', '🎁', '💸', '⭐', '✅', '🛒', '📦', '💎', '🏷️'];
@@ -105,8 +105,8 @@ export const BENEFIT_ICONS = ['🔥', '⚡', '🎁', '💸', '⭐', '✅', '🛒
 export const DEFAULT_PRESELL: PresellConfig = {
   titleColor: '#111111',
   subtitleColor: '#666666',
-  buttonText: 'ENTRAR NO GRUPO GRÁTIS',
-  footerText: 'É grátis e você pode sair quando quiser',
+  buttonText: 'ENTRAR AL GRUPO GRATIS',
+  footerText: 'Es gratis y puedes salir cuando quieras',
 
   primaryColor: '#22c55e',
   bgColor: '#ffffff',
@@ -115,28 +115,28 @@ export const DEFAULT_PRESELL: PresellConfig = {
   photoBorder: '',
 
   benefits: [
-    { icon: '🔥', label: 'Os produtos mais virais da internet' },
-    { icon: '⚡', label: 'Ofertas relâmpago em primeira mão' },
-    { icon: '🎁', label: 'Achadinhos com até 80% OFF' },
+    { icon: '🔥', label: 'Los productos más virales de internet' },
+    { icon: '⚡', label: 'Ofertas relámpago de primera mano' },
+    { icon: '🎁', label: 'Hallazgos con hasta 80% OFF' },
   ],
 
   countdown: {
     enabled: true,
     duration: 60,
-    message: '⏰ O convite para ENTRAR NO GRUPO tem tempo limitado e acaba em:',
+    message: '⏰ La invitación para ENTRAR AL GRUPO tiene tiempo limitado y termina en:',
     messageColor: '#7f3d4c',
     expiredMessage:
-      'Seu tempo se esgotou, mas quem me conhece sabe que eu acredito em segunda chance, clique no link, entre no grupo, tem uma surpresa te esperando lá!',
+      'Se te acabó el tiempo, pero quien me conoce sabe que creo en las segundas oportunidades: haz clic en el enlace, entra al grupo, ¡hay una sorpresa esperándote!',
     expiredColor: '#7f3d4c',
   },
 
   scarcity: { enabled: true, initial: 12, min: 1, total: 50 },
 
   proof: {
-    highlight: '👇 Clique para entrar no grupo VIP',
-    note: 'Vagas limitadas • Apenas para promoções selecionadas',
+    highlight: '👇 Haz clic para entrar al grupo VIP',
+    note: 'Cupos limitados • Solo para promociones seleccionadas',
     testimonial:
-      '"Entrei no grupo ontem e já consegui comprar um fone que tava R$ 299 por R$ 89. Vale demais!"',
+      '"Entré al grupo ayer y ya compré unos audífonos que estaban en $299 por $89. ¡Vale muchísimo!"',
   },
 
   tracking: { pixelId: '', capiToken: '', testEventCode: '' },
@@ -157,7 +157,7 @@ export const BIO_MODELS: Array<{
   {
     id: 'marketplaces',
     label: 'Marketplaces',
-    description: 'Links das principais lojas prontos',
+    description: 'Enlaces de las principales tiendas listos',
     config: {
       bgColor: '#ffffff',
       banner: false,
@@ -165,21 +165,21 @@ export const BIO_MODELS: Array<{
         { label: 'WhatsApp', url: '', bg: '#22c55e', fg: '#ffffff' },
         { label: 'Amazon', url: '', bg: '#60a5fa', fg: '#ffffff' },
         { label: 'Shopee', url: '', bg: '#f97316', fg: '#ffffff' },
-        { label: 'Mercado Livre', url: '', bg: '#fbd34d', fg: '#ffffff' },
+        { label: 'Mercado Libre', url: '', bg: '#fbd34d', fg: '#ffffff' },
         { label: 'Instagram', url: '', bg: '#ec4899', fg: '#ffffff' },
       ],
     },
   },
   {
     id: 'branco',
-    label: 'Em branco',
-    description: 'Começar do zero, sem links',
+    label: 'En blanco',
+    description: 'Empezar de cero, sin enlaces',
     config: { bgColor: '#ffffff', banner: false, links: [] },
   },
   {
     id: 'escuro',
-    label: 'Minimalista escuro',
-    description: 'Fundo escuro, visual sóbrio',
+    label: 'Minimalista oscuro',
+    description: 'Fondo oscuro, estilo sobrio',
     config: {
       bgColor: '#111827',
       banner: false,

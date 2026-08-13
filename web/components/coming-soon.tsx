@@ -22,15 +22,15 @@ export function ComingSoon({
       <div className="mx-auto max-w-[640px] px-5 pb-12 pt-6 sm:px-8">
         <div className="rounded-[24px] bg-[var(--bg-elevated)] p-8 text-center shadow-[var(--shadow-soft)]">
           <span className="inline-flex rounded-full bg-[var(--violet-soft)] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--brand)]">
-            Em construção
+            En construcción
           </span>
 
           <h2 className="mt-4 font-display text-[22px] font-semibold text-[var(--text)]">
-            Ainda não está pronto
+            Aún no está listo
           </h2>
 
           <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-[var(--text-muted)]">
-            Esta tela ainda não tem backend. O que falta para ela funcionar:
+            Esta pantalla aún no tiene backend. Lo que falta para que funcione:
           </p>
 
           <ul className="mx-auto mt-5 max-w-md space-y-2 text-left">

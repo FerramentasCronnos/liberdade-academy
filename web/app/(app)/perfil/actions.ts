@@ -11,7 +11,7 @@ export async function saveProfile(
   formData: FormData,
 ): Promise<ProfileState> {
   const name = String(formData.get('name') || '').trim();
-  if (name.length < 2) return { error: 'Informe seu nome.' };
+  if (name.length < 2) return { error: 'Indica tu nombre.' };
 
   const payload: Record<string, string | null> = {
     name,
@@ -28,9 +28,9 @@ export async function saveProfile(
       method: 'PUT',
       body: JSON.stringify(payload),
     });
-    if (!result) return { error: 'Sessão expirada. Entre novamente.' };
+    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
   } catch {
-    return { error: 'Não consegui salvar agora.' };
+    return { error: 'No pude guardar ahora.' };
   }
 
   revalidatePath('/perfil');
@@ -41,11 +41,11 @@ export async function saveProfile(
 /** Upload da foto. O arquivo vai direto pra API; devolvemos a URL pública. */
 export async function uploadAvatar(formData: FormData): Promise<{ url?: string; error?: string }> {
   const token = await getToken();
-  if (!token) return { error: 'Sessão expirada.' };
+  if (!token) return { error: 'Sesión expirada.' };
 
   const file = formData.get('file');
-  if (!(file instanceof File) || file.size === 0) return { error: 'Escolha uma imagem.' };
-  if (file.size > 5 * 1024 * 1024) return { error: 'Imagem maior que 5 MB.' };
+  if (!(file instanceof File) || file.size === 0) return { error: 'Elige una imagen.' };
+  if (file.size > 5 * 1024 * 1024) return { error: 'Imagen mayor a 5 MB.' };
 
   const body = new FormData();
   body.append('file', file);
@@ -59,12 +59,12 @@ export async function uploadAvatar(formData: FormData): Promise<{ url?: string; 
 
     if (!response.ok) {
       const data = (await response.json().catch(() => ({}))) as { message?: string };
-      return { error: data.message || 'Falha no upload.' };
+      return { error: data.message || 'Falló la subida.' };
     }
 
     const data = (await response.json()) as { path: string };
     return { url: `${API_URL}${data.path}` };
   } catch {
-    return { error: 'Não consegui enviar a imagem.' };
+    return { error: 'No pude subir la imagen.' };
   }
 }

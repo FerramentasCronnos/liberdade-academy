@@ -24,8 +24,8 @@ export default async function GenerateLinkPage() {
   return (
     <>
       <PageHeader
-        title="Gerar Link de Afiliado"
-        subtitle="Transforme a URL do produto no seu link rastreável"
+        title="Generar Enlace de Afiliado"
+        subtitle="Convierte la URL del producto en tu enlace rastreable"
       />
 
       <div className="mx-auto max-w-[860px] px-5 pb-12 pt-2 sm:px-8">

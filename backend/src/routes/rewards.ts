@@ -92,15 +92,15 @@ export async function rewardRoutes(app: FastifyInstance) {
     } catch (error) {
       const code = error instanceof Error ? error.message : '';
       if (code === 'REWARD_NOT_FOUND') {
-        return reply.status(404).send({ message: 'Recompensa não encontrada.' });
+        return reply.status(404).send({ message: 'Recompensa no encontrada.' });
       }
       if (code === 'OUT_OF_STOCK') {
-        return reply.status(409).send({ message: 'Recompensa esgotada.' });
+        return reply.status(409).send({ message: 'Recompensa agotada.' });
       }
       if (code === 'INSUFFICIENT_POINTS') {
-        return reply.status(422).send({ message: 'Pontos insuficientes.' });
+        return reply.status(422).send({ message: 'Puntos insuficientes.' });
       }
-      return reply.status(500).send({ message: 'Falha ao resgatar.' });
+      return reply.status(500).send({ message: 'Falló el canje.' });
     }
   });
 }

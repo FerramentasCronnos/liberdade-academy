@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Logo } from './logo';
 import { SidebarProfile } from './sidebar-profile';
 import type { SessionUser } from '@/lib/session';
+import { IconSettings as IconAdmin } from './icons';
 import {
   IconArchive,
   IconChart,
@@ -46,6 +47,9 @@ const TOOLS: Item[] = [
   { href: '/anuncios', label: 'Baúl de Anuncios', icon: IconArchive },
   { href: '/credenciais', label: 'Credenciales', icon: IconSettings, soon: true },
 ];
+
+/** Só aparece para administradoras. */
+const ADMIN_ITEM: Item = { href: '/admin', label: 'Administración', icon: IconAdmin };
 
 const STORAGE_KEY = 'la-sidebar-collapsed';
 
@@ -173,6 +177,16 @@ export function Sidebar({ user }: { user: SessionUser | null }) {
             />
           ))}
         </nav>
+
+        {user?.isAdmin && (
+          <nav className="mt-4 border-t border-white/12 pt-4">
+            <NavLink
+              item={ADMIN_ITEM}
+              active={isActive(ADMIN_ITEM.href)}
+              collapsed={collapsed}
+            />
+          </nav>
+        )}
       </div>
 
       <SidebarProfile user={user} collapsed={collapsed} active={isActive('/perfil')} />

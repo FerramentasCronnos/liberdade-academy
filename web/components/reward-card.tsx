@@ -6,7 +6,7 @@ import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { redeemReward, type RedeemState } from '@/app/(app)/recompensas/actions';
 import { formatPoints, type Reward } from '@/lib/gamification';
-import { IconGift } from './icons';
+import { RewardArt } from './reward-art';
 
 function RedeemButton({ reward }: { reward: Reward }) {
   const { pending } = useFormStatus();
@@ -42,7 +42,7 @@ export function RewardCard({ reward }: { reward: Reward }) {
         {reward.image ? (
           <img src={reward.image} alt={reward.title} className="h-full w-full object-cover" />
         ) : (
-          <IconGift className="h-12 w-12 text-[var(--brand)] opacity-40" />
+          <RewardArt slug={reward.slug} cost={reward.costPoints} className="h-full w-full" />
         )}
       </div>
 

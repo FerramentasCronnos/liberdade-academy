@@ -31,7 +31,7 @@ npx expo start
 
 Stack: API Fastify + Postgres + Redis + Caddy + Adminer.
 
-Guias: [`docs/PORTAINER.md`](docs/PORTAINER.md) · [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) (banco, TikTok, envs)
+Guias: [`docs/DEPLOY.md`](docs/DEPLOY.md) (passo a passo completo) · [`docs/PORTAINER.md`](docs/PORTAINER.md) · [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md)
 
 ```bash
 cp infra/.env.example infra/.env

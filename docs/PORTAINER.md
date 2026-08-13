@@ -1,5 +1,9 @@
 # Deploy Liberdade Academy no Portainer
 
+> Para o passo a passo completo de produção (HTTPS, segredos, catálogo,
+> Vercel e custos), veja [DEPLOY.md](DEPLOY.md). Este arquivo cobre só o
+> básico da stack no Portainer.
+
 Stack completa para deixar o app 100% funcional:
 
 | Serviço | Função |

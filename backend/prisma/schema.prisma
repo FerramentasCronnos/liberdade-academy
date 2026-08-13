@@ -45,7 +45,73 @@ model User {
   affiliateAccounts    AffiliateAccount[]
   offerTemplates       OfferTemplate[]
   affiliateLinks       AffiliateLink[]
+  landingPages         LandingPage[]
 }
+
+/// Página pública do membro (presell ou link na bio).
+/// `config` guarda cores, textos, contador, escassez e pixel — o formato varia
+/// por template e mudaria a cada ajuste de layout, então não vira coluna.
+model LandingPage {
+  id                String      @id @default(cuid())
+  userId            String
+  kind              String      @default("presell")
+  slug              String      @unique
+  template          String      @default("minimalista")
+  title             String
+  subtitle          String?
+  avatar            String?
+  config            Json?
+  /// Manda todos os cliques para um grupo até o limite, depois vai pro próximo.
+  rotationAuto      Boolean     @default(true)
+  defaultClickLimit Int?
+  published         Boolean     @default(false)
+  views             Int         @default(0)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groups            PageGroup[]
+  clicks            PageClick[]
+
+  @@index([userId, kind])
+}
+
+/// Grupo de WhatsApp para onde o botão da página envia.
+model PageGroup {
+  id         String      @id @default(cuid())
+  pageId     String
+  name       String
+  inviteUrl  String
+  clickLimit Int?
+  clicks     Int         @default(0)
+  active     Boolean     @default(true)
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+  page       LandingPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  pageClicks PageClick[]
+
+  @@index([pageId, order])
+}
+
+/// Um clique no botão. Guarda origem para as estatísticas.
+model PageClick {
+  id          String      @id @default(cuid())
+  pageId      String
+  groupId     String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  referrer    String?
+  device      String?
+  country     String?
+  createdAt   DateTime    @default(now())
+  page        LandingPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  group       PageGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([pageId, createdAt])
+}
+
 
 /// Conta de afiliado do membro em cada marketplace.
 /// `secret` guarda credenciais cifradas (AES-256-GCM); `publicId` é a tag ou

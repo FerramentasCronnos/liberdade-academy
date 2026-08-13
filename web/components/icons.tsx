@@ -252,3 +252,18 @@ export const IconWallet = (p: P) => (
     <circle cx="16.5" cy="14.5" r="1.4" fill="currentColor" />
   </svg>
 );
+
+export const IconMegaphone = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M3 11v2a1 1 0 0 0 1 1h3l7 4.5V5.5L7 10H4a1 1 0 0 0-1 1Z" />
+    <path d="M17.5 8.5a5 5 0 0 1 0 7M7 14v5.5" />
+  </svg>
+);
+
+export const IconIdCard = (p: P) => (
+  <svg {...base} {...p}>
+    <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+    <circle cx="8.5" cy="11" r="2.2" />
+    <path d="M5.5 16.2a3.4 3.4 0 0 1 6 0M14 10h4M14 13.5h4" />
+  </svg>
+);

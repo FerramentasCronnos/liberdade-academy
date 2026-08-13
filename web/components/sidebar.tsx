@@ -14,6 +14,8 @@ import {
   IconMedal,
   IconMessage,
   IconPages,
+  IconIdCard,
+  IconMegaphone,
   IconPanelLeft,
   IconSettings,
   IconTrophy,
@@ -39,6 +41,8 @@ const TOOLS: Item[] = [
   { href: '/gerar-link', label: 'Gerar Link', icon: IconLink },
   { href: '/analytics', label: 'Analytics', icon: IconChart, soon: true },
   { href: '/templates', label: 'Templates', icon: IconPages },
+  { href: '/paginas/presell', label: 'Página de Presell', icon: IconMegaphone },
+  { href: '/paginas/bio', label: 'Página para BIO', icon: IconIdCard, soon: true },
   { href: '/credenciais', label: 'Credenciais', icon: IconSettings, soon: true },
 ];
 

@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { fetchProduct, formatCompact, formatPrice } from '@/lib/api';
+import { formatCompact, formatPrice, toProduct } from '@/lib/api';
+import { getProduct } from '@/lib/queries';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { CopyLinkButton } from '@/components/copy-link-button';
@@ -19,14 +20,15 @@ type Params = Promise<{ id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }) {
   const { id } = await params;
-  const product = await fetchProduct(id).catch(() => null);
-  return { title: product ? `${product.name} · Liberdade Academy` : 'Produto' };
+  const product = await getProduct(id).catch(() => null);
+  return { title: product ? `${product.name} · Liberdade Academy` : 'Producto' };
 }
 
 export default async function ProductPage({ params }: { params: Params }) {
   const { id } = await params;
-  const product = await fetchProduct(id).catch(() => null);
-  if (!product) notFound();
+  const raw = await getProduct(id).catch(() => null);
+  if (!raw) notFound();
+  const product = toProduct(raw);
 
   const marketplace = MARKETPLACE_BY_ID[product.marketplace];
   const rate = product.commission ?? product.commissionEstimated;

@@ -1,6 +1,7 @@
 import { CatalogView } from '@/components/catalog-view';
 import { PageHeader } from '@/components/page-header';
-import { CATALOG_REGION, fetchProducts } from '@/lib/api';
+import { CATALOG_REGION, toProduct } from '@/lib/api';
+import { listProducts } from '@/lib/queries';
 import type { Product } from '@/lib/types';
 
 export const metadata = {
@@ -12,7 +13,7 @@ export default async function CatalogPage() {
   let error: string | null = null;
 
   try {
-    products = await fetchProducts({ region: CATALOG_REGION });
+    products = (await listProducts({ region: CATALOG_REGION })).map(toProduct);
   } catch (e) {
     // API fora do ar não derruba a página; mostramos o aviso e a tela vazia,
     // nunca produto fictício.

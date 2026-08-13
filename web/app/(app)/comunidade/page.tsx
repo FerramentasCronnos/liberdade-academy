@@ -2,21 +2,21 @@ import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { PostComposer } from '@/components/post-composer';
 import { PostCard } from '@/components/post-card';
-import { apiFetch, getToken } from '@/lib/session';
+import { getUserId } from '@/lib/session';
+import { listPosts } from '@/lib/queries';
 import type { CommunityPost } from '@/lib/community';
 
 export const metadata = { title: 'Comunidad · Liberdade Academy' };
 
 export default async function CommunityPage() {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
   let posts: CommunityPost[] = [];
   let error: string | null = null;
 
   try {
-    const data = await apiFetch<{ posts: CommunityPost[] }>('/posts');
-    if (!data) redirect('/login');
-    posts = data.posts;
+    posts = (await listPosts(userId)) as CommunityPost[];
   } catch (e) {
     error = e instanceof Error ? e.message : 'Falha ao carregar o feed.';
   }

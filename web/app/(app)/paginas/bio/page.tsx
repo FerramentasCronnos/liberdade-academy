@@ -3,16 +3,17 @@ import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { createPage } from '@/app/(app)/paginas/actions';
 import { BioRender } from '@/components/bio/bio-render';
-import { apiFetch, getToken } from '@/lib/session';
+import { getUserId } from '@/lib/session';
+import { listPages } from '@/lib/queries';
 import { BIO_MODELS, type LandingPage } from '@/lib/pages';
 
 export const metadata = { title: 'Página para BIO · Liberdade Academy' };
 
 export default async function BioListPage() {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
-  const data = await apiFetch<{ pages: LandingPage[] }>('/pages?kind=bio').catch(() => null);
-  const pages = data?.pages ?? [];
+  const pages = (await listPages(userId, 'bio').catch(() => [])) as LandingPage[];
 
   return (
     <>

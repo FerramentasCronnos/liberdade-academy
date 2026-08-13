@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiFetch } from '@/lib/session';
+import { DomainError, submitMissionProof } from '@/lib/mutations';
+import { getUserId } from '@/lib/session';
 
 export type SubmitState = { error?: string; ok?: boolean };
 
@@ -9,6 +10,9 @@ export async function submitMission(
   _prev: SubmitState,
   formData: FormData,
 ): Promise<SubmitState> {
+  const userId = await getUserId();
+  if (!userId) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+
   const missionId = String(formData.get('missionId') || '');
   const proofUrl = String(formData.get('proofUrl') || '').trim();
   const note = String(formData.get('note') || '').trim();
@@ -17,13 +21,9 @@ export async function submitMission(
   if (!proofUrl) return { error: 'Envía la captura del comprobante.' };
 
   try {
-    const result = await apiFetch(`/missions/${missionId}/submit`, {
-      method: 'POST',
-      body: JSON.stringify({ proofUrl, note: note || undefined }),
-    });
-    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+    await submitMissionProof(userId, missionId, proofUrl, note || undefined);
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'No pude enviar.' };
+    return { error: e instanceof DomainError ? e.message : 'No pude enviar.' };
   }
 
   revalidatePath('/missoes');

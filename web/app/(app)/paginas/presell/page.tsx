@@ -2,16 +2,17 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { createPage } from '@/app/(app)/paginas/actions';
-import { apiFetch, getToken } from '@/lib/session';
+import { getUserId } from '@/lib/session';
+import { listPages } from '@/lib/queries';
 import { PRESELL_TEMPLATES, type LandingPage } from '@/lib/pages';
 
 export const metadata = { title: 'Página de Presell · Liberdade Academy' };
 
 export default async function PresellListPage() {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
-  const data = await apiFetch<{ pages: LandingPage[] }>('/pages?kind=presell').catch(() => null);
-  const pages = data?.pages ?? [];
+  const pages = (await listPages(userId, 'presell').catch(() => [])) as LandingPage[];
 
   return (
     <>

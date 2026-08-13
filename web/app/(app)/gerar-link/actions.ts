@@ -1,28 +1,39 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiFetch } from '@/lib/session';
+import {
+  createAffiliateLink,
+  deleteAffiliateLink,
+  DomainError,
+  saveAffiliateAccount,
+} from '@/lib/mutations';
+import { getUserId } from '@/lib/session';
 import type { AffiliateLink } from '@/lib/affiliate';
 
 export type LinkState = { error?: string; link?: AffiliateLink };
 
 export async function generateLink(_prev: LinkState, formData: FormData): Promise<LinkState> {
+  const userId = await getUserId();
+  if (!userId) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+
   const url = String(formData.get('url') || '').trim();
   const marketplace = String(formData.get('marketplace') || '').trim();
-
   if (!url) return { error: 'Pega la URL del producto.' };
 
   try {
-    const result = await apiFetch<{ link: AffiliateLink }>('/affiliate/links', {
-      method: 'POST',
-      body: JSON.stringify({ url, ...(marketplace ? { marketplace } : {}) }),
-    });
-    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
-
+    const created = await createAffiliateLink(userId, url, marketplace || undefined);
     revalidatePath('/gerar-link');
-    return { link: result.link };
+    return {
+      link: {
+        id: created.id,
+        marketplace: created.marketplace,
+        originalUrl: created.originalUrl,
+        affiliateUrl: created.affiliateUrl,
+        createdAt: created.createdAt.toISOString(),
+      },
+    };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'No pude generar el enlace.' };
+    return { error: e instanceof DomainError ? e.message : 'No pude generar el enlace.' };
   }
 }
 
@@ -32,19 +43,17 @@ export async function saveAccount(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
+  const userId = await getUserId();
+  if (!userId) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+
   const marketplace = String(formData.get('marketplace') || '');
   const publicId = String(formData.get('publicId') || '').trim();
-
   if (!marketplace) return { error: 'Marketplace inválido.' };
 
   try {
-    const result = await apiFetch('/affiliate/accounts', {
-      method: 'PUT',
-      body: JSON.stringify({ marketplace, publicId: publicId || null }),
-    });
-    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+    await saveAffiliateAccount(userId, marketplace, publicId || null);
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'No pude guardar.' };
+    return { error: e instanceof DomainError ? e.message : 'No pude guardar.' };
   }
 
   revalidatePath('/gerar-link');
@@ -52,13 +61,10 @@ export async function saveAccount(
 }
 
 export async function deleteLink(formData: FormData) {
+  const userId = await getUserId();
   const id = String(formData.get('id') || '');
-  if (!id) return;
+  if (!userId || !id) return;
 
-  try {
-    await apiFetch(`/affiliate/links/${id}`, { method: 'DELETE' });
-    revalidatePath('/gerar-link');
-  } catch {
-    // já sumiu ou falhou: a lista recarrega no próximo load
-  }
+  await deleteAffiliateLink(userId, id);
+  revalidatePath('/gerar-link');
 }

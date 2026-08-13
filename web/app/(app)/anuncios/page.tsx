@@ -1,22 +1,23 @@
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { AdVault, type AdCreative } from '@/components/ad-vault';
-import { apiFetch, getToken } from '@/lib/session';
+import { getUserId, isAdmin } from '@/lib/session';
+import { AD_CATEGORIES, listAds } from '@/lib/queries';
 
 export const metadata = { title: 'Baúl de Anuncios · Liberdade Academy' };
 
 type Search = Promise<{ categoria?: string }>;
 
 export default async function AdsPage({ searchParams }: { searchParams: Search }) {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
   const { categoria = 'todos' } = await searchParams;
 
-  const data = await apiFetch<{
-    isAdmin: boolean;
-    categories: string[];
-    ads: AdCreative[];
-  }>(`/ads?category=${encodeURIComponent(categoria)}`).catch(() => null);
+  const [ads, admin] = await Promise.all([
+    listAds(categoria).catch(() => [] as AdCreative[]),
+    isAdmin(userId).catch(() => false),
+  ]);
 
   return (
     <>
@@ -27,9 +28,9 @@ export default async function AdsPage({ searchParams }: { searchParams: Search }
 
       <div className="mx-auto max-w-[1240px] px-5 pb-12 pt-2 sm:px-8">
         <AdVault
-          ads={data?.ads ?? []}
-          isAdmin={data?.isAdmin ?? false}
-          categories={data?.categories ?? []}
+          ads={ads}
+          isAdmin={admin}
+          categories={AD_CATEGORIES}
           activeCategory={categoria}
         />
       </div>

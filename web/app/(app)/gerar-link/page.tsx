@@ -2,24 +2,23 @@ import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { LinkGenerator } from '@/components/link-generator';
 import { LinkHistory } from '@/components/link-history';
-import { apiFetch, getToken } from '@/lib/session';
+import { getUserId } from '@/lib/session';
+import { listAffiliateAccounts, listAffiliateLinks } from '@/lib/queries';
 import type { AffiliateAccount, AffiliateLink } from '@/lib/affiliate';
 
 export const metadata = { title: 'Gerar Link · Liberdade Academy' };
 
 export default async function GenerateLinkPage() {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
-  const [accountsData, linksData] = await Promise.all([
-    apiFetch<{ ready: string[]; accounts: AffiliateAccount[] }>('/affiliate/accounts').catch(
-      () => null,
-    ),
-    apiFetch<{ links: AffiliateLink[] }>('/affiliate/links').catch(() => null),
+  const [accounts, links] = await Promise.all([
+    listAffiliateAccounts(userId).catch(() => [] as AffiliateAccount[]),
+    listAffiliateLinks(userId).catch(() => [] as AffiliateLink[]),
   ]);
 
-  const accounts = accountsData?.accounts ?? [];
-  const ready = accountsData?.ready ?? [];
-  const links = linksData?.links ?? [];
+  // só a Amazon monta link sem credencial de API
+  const ready = ['amazon'];
 
   return (
     <>

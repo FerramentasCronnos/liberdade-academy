@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiFetch } from '@/lib/session';
+import { DomainError, redeemReward as redeem } from '@/lib/mutations';
+import { getUserId } from '@/lib/session';
 
 export type RedeemState = { error?: string; ok?: boolean };
 
@@ -9,15 +10,16 @@ export async function redeemReward(
   _prev: RedeemState,
   formData: FormData,
 ): Promise<RedeemState> {
+  const userId = await getUserId();
+  if (!userId) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+
   const rewardId = String(formData.get('rewardId') || '');
   if (!rewardId) return { error: 'Recompensa inválida.' };
 
   try {
-    const result = await apiFetch(`/rewards/${rewardId}/redeem`, { method: 'POST' });
-    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+    await redeem(userId, rewardId);
   } catch (e) {
-    // a API devolve "Pontos insuficientes", "Recompensa esgotada" etc.
-    return { error: e instanceof Error ? e.message : 'No pude canjear.' };
+    return { error: e instanceof DomainError ? e.message : 'No pude canjear.' };
   }
 
   revalidatePath('/recompensas');

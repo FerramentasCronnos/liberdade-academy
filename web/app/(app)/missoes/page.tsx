@@ -3,7 +3,8 @@ import { PageHeader } from '@/components/page-header';
 import { PointsHeader } from '@/components/points-header';
 import { MissionCard } from '@/components/mission-card';
 import { Tabs } from '@/components/tabs';
-import { apiFetch, getCurrentUser, getToken } from '@/lib/session';
+import { getCurrentUser, getUserId } from '@/lib/session';
+import { listMissions, listPointsEntries, pointsSummary } from '@/lib/queries';
 import {
   formatPoints,
   type Mission,
@@ -32,20 +33,19 @@ function MissionGrid({ missions, empty }: { missions: Mission[]; empty: string }
 }
 
 export default async function MissionsPage() {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const [missionsData, entriesData, summaryData] = await Promise.all([
-    apiFetch<{ missions: Mission[] }>('/missions').catch(() => null),
-    apiFetch<{ entries: PointsEntry[] }>('/points/entries').catch(() => null),
-    apiFetch<PointsSummary>('/points/summary').catch(() => null),
+  const [missions, entries, summary] = await Promise.all([
+    listMissions(userId).catch(() => [] as Mission[]) as Promise<Mission[]>,
+    listPointsEntries(userId).catch(() => [] as PointsEntry[]),
+    pointsSummary(userId).catch(
+      () => ({ balance: user.points, accumulated: 0, redeemed: 0 }) as PointsSummary,
+    ),
   ]);
-
-  const missions = missionsData?.missions ?? [];
-  const entries = entriesData?.entries ?? [];
-  const summary = summaryData ?? { balance: user.points, accumulated: 0, redeemed: 0 };
 
   const available = missions.filter((m) => !m.locked && m.status !== 'pending');
   const pending = missions.filter((m) => m.status === 'pending');

@@ -3,12 +3,12 @@ import { PageHeader } from '@/components/page-header';
 import { ProfileForm } from '@/components/profile-form';
 import { AppearanceCard } from '@/components/appearance-card';
 import { LogoutButton } from '@/components/logout-button';
-import { getCurrentUser, getToken } from '@/lib/session';
+import { getCurrentUser, getUserId } from '@/lib/session';
 
 export const metadata = { title: 'Perfil · Liberdade Academy' };
 
 export default async function ProfilePage() {
-  if (!(await getToken())) redirect('/login');
+  if (!(await getUserId())) redirect('/login');
 
   const user = await getCurrentUser();
   if (!user) redirect('/login');

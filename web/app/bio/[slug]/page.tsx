@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { API_URL } from '@/lib/api';
+import { prisma } from '@/lib/db';
 import { bioConfig } from '@/lib/pages';
 import { BioRender } from '@/components/bio/bio-render';
 
@@ -15,13 +15,23 @@ interface PublicPage {
 
 async function fetchPage(slug: string): Promise<PublicPage | null> {
   try {
-    const response = await fetch(`${API_URL}/public/pages/${encodeURIComponent(slug)}`, {
-      next: { revalidate: 30 },
-    });
-    if (!response.ok) return null;
+    const page = await prisma.landingPage.findUnique({ where: { slug } });
+    if (!page || !page.published) return null;
 
-    const data = (await response.json()) as { page: PublicPage };
-    return data.page;
+    // contador best-effort: falhar aqui não pode impedir a página de abrir
+    prisma.landingPage
+      .update({ where: { id: page.id }, data: { views: { increment: 1 } } })
+      .catch(() => undefined);
+
+    return {
+      kind: page.kind,
+      slug: page.slug,
+      template: page.template,
+      title: page.title,
+      subtitle: page.subtitle ?? undefined,
+      avatar: page.avatar ?? undefined,
+      config: (page.config ?? {}) as Record<string, unknown>,
+    } as PublicPage;
   } catch {
     return null;
   }

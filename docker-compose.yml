@@ -11,6 +11,9 @@ services:
       POSTGRES_DB: liberdade_academy
       POSTGRES_USER: liberdade
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-liberdade}
+    ports:
+      # 5433 no host: a 5432 costuma estar tomada por um Postgres nativo
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:

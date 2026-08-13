@@ -3,7 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { PostCard } from '@/components/post-card';
 import { Avatar } from '@/components/avatar';
-import { apiFetch, getCurrentUser, getToken, type SessionUser } from '@/lib/session';
+import { getCurrentUser, getUserId, type SessionUser } from '@/lib/session';
+import { getMemberProfile } from '@/lib/queries';
 import { avatarColor, initials, type CommunityPost } from '@/lib/community';
 import {
   IconArrowLeft,
@@ -24,8 +25,8 @@ interface ProfileResponse {
 
 export async function generateMetadata({ params }: { params: Params }) {
   const { id } = await params;
-  const data = await apiFetch<ProfileResponse>(`/users/${id}/profile`).catch(() => null);
-  return { title: data ? `${data.user.name} · Comunidade` : 'Perfil de la Comunidad' };
+  const data = await getMemberProfile(id, id).catch(() => null);
+  return { title: data ? `${data.user.name} · Comunidad` : 'Perfil de la Comunidad' };
 }
 
 function Stat({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
@@ -41,11 +42,12 @@ function Stat({ label, value, icon }: { label: string; value: string; icon?: Rea
 }
 
 export default async function MemberProfilePage({ params }: { params: Params }) {
-  if (!(await getToken())) redirect('/login');
+  const viewerId = await getUserId();
+  if (!viewerId) redirect('/login');
 
   const { id } = await params;
   const [data, me] = await Promise.all([
-    apiFetch<ProfileResponse>(`/users/${id}/profile`).catch(() => null),
+    getMemberProfile(id, viewerId).catch(() => null) as Promise<ProfileResponse | null>,
     getCurrentUser(),
   ]);
 

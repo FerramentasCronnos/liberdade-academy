@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
-import { apiFetch, getCurrentUser, getToken } from '@/lib/session';
+import { getCurrentUser, getUserId } from '@/lib/session';
+import { listRanking } from '@/lib/queries';
 import { avatarColor, initials } from '@/lib/community';
 
 export const metadata = { title: 'Ranking · Liberdade Academy' };
@@ -22,14 +23,12 @@ const PODIUM_STYLE = [
 ];
 
 export default async function RankingPage() {
-  if (!(await getToken())) redirect('/login');
+  if (!(await getUserId())) redirect('/login');
 
-  const [data, me] = await Promise.all([
-    apiFetch<{ ranking: RankingUser[] }>('/ranking').catch(() => null),
+  const [ranking, me] = await Promise.all([
+    listRanking().catch(() => [] as RankingUser[]),
     getCurrentUser(),
   ]);
-
-  const ranking = data?.ranking ?? [];
   const podium = ranking.slice(0, 3);
   const rest = ranking.slice(3);
 

@@ -3,7 +3,8 @@ import { PageHeader } from '@/components/page-header';
 import { PointsHeader } from '@/components/points-header';
 import { RewardCard } from '@/components/reward-card';
 import { Tabs } from '@/components/tabs';
-import { apiFetch, getCurrentUser, getToken } from '@/lib/session';
+import { getCurrentUser, getUserId } from '@/lib/session';
+import { listRedemptions, listRewards, pointsSummary } from '@/lib/queries';
 import {
   REDEMPTION_STATUS,
   formatPoints,
@@ -72,20 +73,19 @@ function RedemptionList({ redemptions }: { redemptions: Redemption[] }) {
 }
 
 export default async function RewardsPage() {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const [rewardsData, redemptionsData, summaryData] = await Promise.all([
-    apiFetch<{ balance: number; rewards: Reward[] }>('/rewards').catch(() => null),
-    apiFetch<{ redemptions: Redemption[] }>('/rewards/redemptions').catch(() => null),
-    apiFetch<PointsSummary>('/points/summary').catch(() => null),
+  const [rewards, redemptions, summary] = await Promise.all([
+    listRewards(userId).catch(() => [] as Reward[]),
+    listRedemptions(userId).catch(() => [] as Redemption[]),
+    pointsSummary(userId).catch(
+      () => ({ balance: user.points, accumulated: 0, redeemed: 0 }) as PointsSummary,
+    ),
   ]);
-
-  const rewards = rewardsData?.rewards ?? [];
-  const redemptions = redemptionsData?.redemptions ?? [];
-  const summary = summaryData ?? { balance: user.points, accumulated: 0, redeemed: 0 };
 
   return (
     <>

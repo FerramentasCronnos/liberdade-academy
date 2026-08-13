@@ -4,18 +4,20 @@ import { PageHeader } from '@/components/page-header';
 import { BioEditor } from '@/components/bio/bio-editor';
 import { CopyLinkButton } from '@/components/copy-link-button';
 import { deletePage, togglePublish } from '@/app/(app)/paginas/actions';
-import { apiFetch, getToken } from '@/lib/session';
+import { getUserId } from '@/lib/session';
+import { listPages } from '@/lib/queries';
 import type { LandingPage } from '@/lib/pages';
 import { IconArrowLeft, IconExternal, IconX } from '@/components/icons';
 
 type Params = Promise<{ id: string }>;
 
 export default async function BioEditorPage({ params }: { params: Params }) {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
   const { id } = await params;
-  const data = await apiFetch<{ pages: LandingPage[] }>('/pages?kind=bio').catch(() => null);
-  const page = data?.pages.find((p) => p.id === id);
+  const pages = (await listPages(userId, 'bio').catch(() => [])) as LandingPage[];
+  const page = pages.find((p) => p.id === id);
   if (!page) notFound();
 
   return (

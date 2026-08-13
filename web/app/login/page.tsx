@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation';
-import { getToken } from '@/lib/session';
+import { getUserId } from '@/lib/session';
 import { LoginForm } from './login-form';
 import { Logo } from '@/components/logo';
 
 export const metadata = { title: 'Entrar · Liberdade Academy' };
 
 export default async function LoginPage() {
-  if (await getToken()) redirect('/catalogo');
+  if (await getUserId()) redirect('/catalogo');
 
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">

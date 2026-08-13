@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiFetch } from '@/lib/session';
+import { DomainError, deleteTemplate as removeTemplate, saveTemplate as persist } from '@/lib/mutations';
+import { getUserId } from '@/lib/session';
 
 export type TemplateState = { error?: string; ok?: boolean };
 
@@ -9,6 +10,9 @@ export async function saveTemplate(
   _prev: TemplateState,
   formData: FormData,
 ): Promise<TemplateState> {
+  const userId = await getUserId();
+  if (!userId) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+
   const id = String(formData.get('id') || '').trim();
   const name = String(formData.get('name') || '').trim();
   const marketplace = String(formData.get('marketplace') || 'shopee');
@@ -18,13 +22,9 @@ export async function saveTemplate(
   if (body.length < 5) return { error: 'Escribe el mensaje.' };
 
   try {
-    const result = await apiFetch(id ? `/templates/${id}` : '/templates', {
-      method: id ? 'PUT' : 'POST',
-      body: JSON.stringify({ name, marketplace, body }),
-    });
-    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+    await persist(userId, { id: id || undefined, name, marketplace, body });
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'No pude guardar.' };
+    return { error: e instanceof DomainError ? e.message : 'No pude guardar.' };
   }
 
   revalidatePath('/templates');
@@ -32,13 +32,10 @@ export async function saveTemplate(
 }
 
 export async function deleteTemplate(formData: FormData) {
+  const userId = await getUserId();
   const id = String(formData.get('id') || '');
-  if (!id) return;
+  if (!userId || !id) return;
 
-  try {
-    await apiFetch(`/templates/${id}`, { method: 'DELETE' });
-    revalidatePath('/templates');
-  } catch {
-    // já removido: a lista recarrega
-  }
+  await removeTemplate(userId, id);
+  revalidatePath('/templates');
 }

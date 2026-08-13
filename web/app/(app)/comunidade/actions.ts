@@ -1,30 +1,28 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiFetch } from '@/lib/session';
-import type { CommunityPost } from '@/lib/community';
+import { createPost, togglePostLike } from '@/lib/mutations';
+import { getUserId } from '@/lib/session';
 
 export type ComposerState = { error?: string; ok?: boolean };
 
-export async function createPost(
+export async function createPostAction(
   _prev: ComposerState,
   formData: FormData,
 ): Promise<ComposerState> {
+  const userId = await getUserId();
+  if (!userId) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+
   const content = String(formData.get('content') || '').trim();
   const category = String(formData.get('category') || 'dica');
   const image = String(formData.get('image') || '').trim();
 
   // com foto, uma legenda curta basta
-  const minLength = image ? 1 : 3;
-  if (content.length < minLength) return { error: 'Escribe un poco más.' };
+  if (content.length < (image ? 1 : 3)) return { error: 'Escribe un poco más.' };
   if (content.length > 2000) return { error: 'Texto demasiado largo (máx. 2000).' };
 
   try {
-    const result = await apiFetch<{ post: CommunityPost }>('/posts', {
-      method: 'POST',
-      body: JSON.stringify({ content, category, ...(image ? { image } : {}) }),
-    });
-    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+    await createPost(userId, content, category, image || undefined);
   } catch {
     return { error: 'No pude publicar ahora.' };
   }
@@ -33,11 +31,16 @@ export async function createPost(
   return { ok: true };
 }
 
+export { createPostAction as createPost };
+
 export async function toggleLike(postId: string) {
+  const userId = await getUserId();
+  if (!userId) return;
+
   try {
-    await apiFetch(`/posts/${postId}/like`, { method: 'POST' });
+    await togglePostLike(userId, postId);
     revalidatePath('/comunidade');
   } catch {
-    // silencioso: a UI já mostrou o estado otimista e volta no próximo load
+    // a UI já mostrou o estado otimista e corrige no próximo load
   }
 }

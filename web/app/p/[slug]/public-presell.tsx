@@ -3,7 +3,6 @@
 import Script from 'next/script';
 import { useState } from 'react';
 import { PresellRender, type PresellData } from '@/components/presell/presell-render';
-import { API_URL } from '@/lib/api';
 
 /**
  * Página pública de presell.
@@ -31,7 +30,7 @@ export function PublicPresell({
     const params = new URLSearchParams(window.location.search);
 
     try {
-      const response = await fetch(`${API_URL}/public/pages/${slug}/click`, {
+      const response = await fetch(`/api/public/pages/${slug}/click`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

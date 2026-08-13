@@ -1,13 +1,18 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { apiFetch } from '@/lib/session';
+import { countAdDownload, createAd as persistAd, deleteAd as removeAd } from '@/lib/mutations';
+import { getUserId, isAdmin } from '@/lib/session';
 
 export type AdState = { error?: string; ok?: boolean };
 
 export async function createAd(_prev: AdState, formData: FormData): Promise<AdState> {
+  const userId = await getUserId();
+  if (!userId) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
+  // o baú é curadoria: só a administração publica
+  if (!(await isAdmin(userId))) return { error: 'Acceso restringido.' };
+
   const title = String(formData.get('title') || '').trim();
-  const category = String(formData.get('category') || 'geral');
   const image = String(formData.get('image') || '').trim();
   const notes = String(formData.get('notes') || '').trim();
 
@@ -15,13 +20,14 @@ export async function createAd(_prev: AdState, formData: FormData): Promise<AdSt
   if (title.length < 2) return { error: 'Ponle un nombre al anuncio.' };
 
   try {
-    const result = await apiFetch('/ads', {
-      method: 'POST',
-      body: JSON.stringify({ title, category, image, notes: notes || null }),
+    await persistAd(userId, {
+      title,
+      category: String(formData.get('category') || 'geral'),
+      image,
+      notes: notes || null,
     });
-    if (!result) return { error: 'Sesión expirada. Inicia sesión de nuevo.' };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : 'No pude publicar.' };
+  } catch {
+    return { error: 'No pude publicar.' };
   }
 
   revalidatePath('/anuncios');
@@ -29,21 +35,14 @@ export async function createAd(_prev: AdState, formData: FormData): Promise<AdSt
 }
 
 export async function deleteAd(formData: FormData) {
+  const userId = await getUserId();
   const id = String(formData.get('id') || '');
-  if (!id) return;
+  if (!userId || !id || !(await isAdmin(userId))) return;
 
-  try {
-    await apiFetch(`/ads/${id}`, { method: 'DELETE' });
-    revalidatePath('/anuncios');
-  } catch {
-    // já removido
-  }
+  await removeAd(id);
+  revalidatePath('/anuncios');
 }
 
 export async function countDownload(id: string) {
-  try {
-    await apiFetch(`/ads/${id}/download`, { method: 'POST' });
-  } catch {
-    // contador é secundário: nunca bloqueia o download
-  }
+  await countAdDownload(id);
 }

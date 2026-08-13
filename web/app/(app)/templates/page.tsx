@@ -1,16 +1,17 @@
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { TemplateStudio } from '@/components/template-studio';
-import { apiFetch, getToken } from '@/lib/session';
+import { getUserId } from '@/lib/session';
+import { listTemplates } from '@/lib/queries';
 import type { OfferTemplate } from '@/lib/affiliate';
 
 export const metadata = { title: 'Plantillas de Ofertas · Liberdade Academy' };
 
 export default async function TemplatesPage() {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
-  const data = await apiFetch<{ templates: OfferTemplate[] }>('/templates').catch(() => null);
-  const templates = data?.templates ?? [];
+  const templates = await listTemplates(userId).catch(() => [] as OfferTemplate[]);
 
   return (
     <>

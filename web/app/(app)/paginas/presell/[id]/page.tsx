@@ -5,7 +5,8 @@ import { PresellEditor } from '@/components/presell/presell-editor';
 import { PresellGroups } from '@/components/presell/presell-groups';
 import { PresellStats, type StatsData } from '@/components/presell/presell-stats';
 import { deletePage, togglePublish } from '@/app/(app)/paginas/actions';
-import { apiFetch, getToken } from '@/lib/session';
+import { getUserId } from '@/lib/session';
+import { listPages, pageStats } from '@/lib/queries';
 import type { LandingPage } from '@/lib/pages';
 import { IconArrowLeft, IconExternal, IconX } from '@/components/icons';
 
@@ -25,18 +26,19 @@ export default async function PresellEditorPage({
   params: Params;
   searchParams: Search;
 }) {
-  if (!(await getToken())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
   const { id } = await params;
   const { tab = 'page', range = '7d' } = await searchParams;
 
-  const data = await apiFetch<{ pages: LandingPage[] }>('/pages?kind=presell').catch(() => null);
-  const page = data?.pages.find((p) => p.id === id);
+  const pages = (await listPages(userId, 'presell').catch(() => [])) as LandingPage[];
+  const page = pages.find((p) => p.id === id);
   if (!page) notFound();
 
   const stats =
     tab === 'stats'
-      ? await apiFetch<StatsData>(`/pages/${id}/stats?range=${range}`).catch(() => null)
+      ? ((await pageStats(id, range).catch(() => null)) as StatsData | null)
       : null;
 
   return (

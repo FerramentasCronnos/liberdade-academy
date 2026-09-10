@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { getUserId } from '@/lib/session';
 import { CatalogView } from '@/components/catalog-view';
 import { PageHeader } from '@/components/page-header';
 import { CATALOG_REGION, toProduct } from '@/lib/api';
@@ -9,6 +11,8 @@ export const metadata = {
 };
 
 export default async function CatalogPage() {
+  if (!(await getUserId())) redirect('/login');
+
   let products: Product[] = [];
   let error: string | null = null;
 

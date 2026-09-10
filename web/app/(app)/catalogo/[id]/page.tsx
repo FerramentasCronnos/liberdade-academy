@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { getUserId } from '@/lib/session';
 import { formatCompact, formatPrice, toProduct } from '@/lib/api';
 import { getProduct } from '@/lib/queries';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
@@ -25,6 +26,8 @@ export async function generateMetadata({ params }: { params: Params }) {
 }
 
 export default async function ProductPage({ params }: { params: Params }) {
+  if (!(await getUserId())) redirect('/login');
+
   const { id } = await params;
   const raw = await getProduct(id).catch(() => null);
   if (!raw) notFound();

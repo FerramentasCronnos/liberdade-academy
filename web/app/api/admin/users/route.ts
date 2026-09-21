@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
+import { sendAccessEmail } from '@/lib/email';
 
 /**
  * Criação de membro pela administração.
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
     email?: string;
     password?: string;
     isAdmin?: boolean;
+    /** Envia o e-mail de boas-vindas com as credenciais. */
+    sendEmail?: boolean;
   };
 
   const email = body.email?.trim().toLowerCase();
@@ -46,9 +49,14 @@ export async function POST(request: Request) {
     },
   });
 
+  const mail = body.sendEmail
+    ? await sendAccessEmail({ name: user.name, email, password: body.password })
+    : null;
+
   return NextResponse.json({
     ok: true,
     user: { id: user.id, name: user.name, email: user.email, isAdmin: user.isAdmin },
+    ...(mail ? { emailSent: mail.ok, emailError: mail.error } : {}),
   });
 }
 

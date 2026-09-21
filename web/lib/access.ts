@@ -2,11 +2,17 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 
 /**
- * Concessão de acesso a um comprador.
+ * Concessão e bloqueio de acesso de compradores.
  *
- * Usada pelo webhook de checkout e pela administração. Se já existe conta
- * com o e-mail, não mexe na senha: a pessoa pode estar usando a atual.
+ * Usado pelo webhook de checkout e pela administração. Se já existe conta
+ * com o e-mail, a senha não muda: a pessoa pode estar usando a atual. A
+ * exceção é a conta bloqueada por reembolso, que ganha senha nova ao
+ * comprar de novo.
+ *
+ * O bloqueio troca a senha por um hash aleatório em vez de apagar a conta:
+ * posts, pontos e histórico ficam preservados para uma eventual volta.
  */
+const REVOKED = 'kiwify_refunded';
 
 /** Senha legível, sem caracteres que se confundem (0/O, 1/l/I). */
 export function generatePassword(length = 10) {
@@ -27,27 +33,44 @@ export async function grantAccess(input: {
 }): Promise<GrantResult> {
   const email = input.email.trim().toLowerCase();
   const name = input.name?.trim() || email.split('@')[0];
+  const stamp = { planSource: input.source, planUpdatedAt: new Date(), planExpiresAt: null };
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: { planSource: input.source, planUpdatedAt: new Date() },
-    });
+
+  if (existing && existing.planSource !== REVOKED) {
+    await prisma.user.update({ where: { id: existing.id }, data: stamp });
     return { created: false, userId: existing.id, name: existing.name, email };
   }
 
   const password = generatePassword();
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  if (existing) {
+    // voltou depois de um reembolso: reativa com senha nova
+    await prisma.user.update({ where: { id: existing.id }, data: { passwordHash, ...stamp } });
+    return { created: true, userId: existing.id, name: existing.name, email, password };
+  }
+
   const user = await prisma.user.create({
+    data: { name, email, passwordHash, onboardingCompleted: true, ...stamp },
+  });
+  return { created: true, userId: user.id, name, email, password };
+}
+
+/** Bloqueia o login sem apagar a conta. Admins nunca são bloqueados por webhook. */
+export async function revokeAccess(email: string) {
+  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+  if (!user || user.isAdmin) return { revoked: false as const };
+
+  await prisma.user.update({
+    where: { id: user.id },
     data: {
-      name,
-      email,
-      passwordHash: await bcrypt.hash(password, 10),
-      onboardingCompleted: true,
-      planSource: input.source,
+      passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
+      plan: 'free',
+      planSource: REVOKED,
+      planExpiresAt: new Date(),
       planUpdatedAt: new Date(),
     },
   });
-
-  return { created: true, userId: user.id, name, email, password };
+  return { revoked: true as const };
 }

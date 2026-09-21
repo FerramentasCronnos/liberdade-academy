@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { grantAccess } from '@/lib/access';
+import { grantAccess, revokeAccess } from '@/lib/access';
 import { sendAccessEmail } from '@/lib/email';
 
 /**
@@ -10,9 +10,8 @@ import { sendAccessEmail } from '@/lib/email';
  * definido ao criar o webhook, e manda o resultado no parâmetro `signature`
  * da URL. Por isso o corpo é lido como texto antes de qualquer parse.
  *
- * Só o evento de compra aprovada cria conta. Os outros (pix gerado, reembolso,
- * chargeback) são aceitos com 200 para a Kiwify não ficar reenviando, mas não
- * fazem nada por enquanto.
+ * Compra aprovada cria a conta; reembolso e chargeback bloqueiam o login.
+ * Os demais eventos são aceitos com 200 para a Kiwify não ficar reenviando.
  */
 interface KiwifyPayload {
   order_id?: string;
@@ -49,12 +48,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'JSON inválido.' }, { status: 400 });
   }
 
-  const approved =
-    payload.webhook_event_type === 'order_approved' || payload.order_status === 'paid';
+  const event = payload.webhook_event_type ?? '';
+  const status = payload.order_status ?? '';
   const email = payload.Customer?.email?.trim().toLowerCase();
 
+  const approved = event === 'order_approved' || status === 'paid';
+  const revoked =
+    ['order_refunded', 'chargeback'].includes(event) ||
+    ['refunded', 'chargedback'].includes(status);
+
+  if (email && revoked) {
+    const result = await revokeAccess(email);
+    return NextResponse.json({ ok: true, revoked: result.revoked, email });
+  }
+
   if (!approved || !email) {
-    return NextResponse.json({ ok: true, ignored: payload.webhook_event_type ?? 'sem evento' });
+    return NextResponse.json({ ok: true, ignored: event || 'sem evento' });
   }
 
   const result = await grantAccess({

@@ -3,8 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Migrações pela conexão direta: no pooler o advisory lock do Prisma
+  // pode ficar preso numa sessão antiga e travar o build.
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {

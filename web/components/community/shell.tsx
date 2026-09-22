@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { Space } from '@/lib/community';
-import { IconMessage, IconUser } from '@/components/icons';
+import { spaceColor, type Space } from '@/lib/community';
 
 /**
- * Coluna de espaços da comunidade, no espírito do Circle: grupos de espaços
- * à esquerda, conteúdo à direita. No celular vira uma fila de chips rolável.
+ * Barra lateral da comunidade, como no Circle: "Feed" no topo e os espaços
+ * agrupados, cada um com sua bolinha de cor. No celular vira chips roláveis.
  */
 export function CommunityShell({
   spaces,
@@ -24,86 +23,70 @@ export function CommunityShell({
   const active = (href: string) =>
     href === '/comunidade' ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
-  const link = (href: string, label: React.ReactNode, badge?: React.ReactNode) => (
+  const community = spaces.filter((s) => s.kind !== 'chat');
+  const support = spaces.filter((s) => s.kind === 'chat');
+
+  const item = (href: string, label: string, opts: { dot?: string; icon?: string; badge?: number } = {}) => (
     <Link
       key={href}
       href={href}
       aria-current={active(href) ? 'page' : undefined}
-      className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] font-medium transition ${
+      className={`flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition ${
         active(href)
-          ? 'bg-[var(--violet-soft)] text-[var(--brand)]'
-          : 'text-[var(--text-muted)] hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]'
+          ? 'bg-[var(--bg-sunken)] font-semibold text-[var(--text)]'
+          : 'font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sunken)]/70 hover:text-[var(--text)]'
       }`}
     >
+      {opts.dot ? (
+        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: opts.dot }} aria-hidden />
+      ) : (
+        <span className="w-3 shrink-0 text-center text-[13px]" aria-hidden>{opts.icon}</span>
+      )}
       <span className="flex-1 truncate">{label}</span>
-      {badge}
+      {opts.badge ? (
+        <span className="rounded-full bg-[var(--brand)] px-1.5 py-0.5 text-[10px] font-bold text-white">{opts.badge}</span>
+      ) : null}
     </Link>
   );
 
   const group = (title: string) => (
-    <p className="px-3 pb-1 pt-4 text-[10.5px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">
-      {title}
-    </p>
+    <p className="px-3 pb-1.5 pt-5 text-[13px] font-semibold text-[var(--text)]">{title}</p>
   );
 
-  const supportLabel = isAdmin ? 'Tickets' : 'Mi soporte';
-  const supportBadge =
-    openTickets > 0 ? (
-      <span className="rounded-full bg-[var(--brand)] px-1.5 py-0.5 text-[10px] font-bold text-white">
-        {openTickets}
-      </span>
-    ) : undefined;
+  const supportLabel = isAdmin ? 'Tickets' : 'Mis tickets';
 
   return (
-    <div className="mx-auto flex max-w-[1120px] gap-6 px-5 pb-12 pt-2 sm:px-8">
-      <aside className="sticky top-6 hidden w-[232px] shrink-0 self-start lg:block">
-        <nav className="rounded-[22px] bg-[var(--bg-elevated)] p-2 shadow-[var(--shadow-soft)]">
-          {link(
-            '/comunidade',
-            <span className="inline-flex items-center gap-2">
-              <IconMessage className="h-4 w-4" /> Inicio
-            </span>,
-          )}
-          {group('Espacios')}
-          {spaces.map((s) =>
-            link(
-              `/comunidade/e/${s.slug}`,
-              <span className="inline-flex items-center gap-2">
-                <span aria-hidden>{s.emoji}</span> {s.name}
-              </span>,
-              <span className="text-[11px] text-[var(--text-faint)]">{s.postCount}</span>,
-            ),
-          )}
-          {group('Ayuda')}
-          {link('/comunidade/soporte', <span>🎧 {supportLabel}</span>, supportBadge)}
+    <div className="flex min-h-[calc(100dvh-0px)]">
+      <aside className="sticky top-0 hidden h-dvh w-[260px] shrink-0 overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-5 lg:block">
+        <nav>
+          {item('/comunidade', 'Feed', { icon: '☰' })}
+          {group('Comunidad')}
+          {community.map((s) => item(`/comunidade/e/${s.slug}`, s.name, { dot: spaceColor(s.slug).dot }))}
+          {group('Soporte')}
+          {support.map((s) => item(`/comunidade/e/${s.slug}`, s.name, { dot: spaceColor(s.slug).dot }))}
+          {item('/comunidade/soporte', supportLabel, { icon: '🎧', badge: openTickets })}
           {group('Personas')}
-          {link(
-            '/comunidade/miembros',
-            <span className="inline-flex items-center gap-2">
-              <IconUser className="h-4 w-4" /> Miembros
-            </span>,
-          )}
+          {item('/comunidade/miembros', 'Miembros', { icon: '👥' })}
         </nav>
       </aside>
 
       <div className="min-w-0 flex-1">
-        <div className="-mx-5 mb-3 flex gap-2 overflow-x-auto px-5 pb-1 sm:-mx-8 sm:px-8 lg:hidden [scrollbar-width:none]">
+        <div className="flex gap-2 overflow-x-auto border-b border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-2.5 lg:hidden [scrollbar-width:none]">
           {[
-            { href: '/comunidade', label: 'Inicio' },
-            ...spaces.map((s) => ({ href: `/comunidade/e/${s.slug}`, label: `${s.emoji} ${s.name}` })),
-            { href: '/comunidade/soporte', label: `🎧 ${supportLabel}` },
+            { href: '/comunidade', label: 'Feed' },
+            ...spaces.map((s) => ({ href: `/comunidade/e/${s.slug}`, label: s.name, dot: spaceColor(s.slug).dot })),
+            { href: '/comunidade/soporte', label: supportLabel },
             { href: '/comunidade/miembros', label: 'Miembros' },
-          ].map((item) => (
+          ].map((c) => (
             <Link
-              key={item.href}
-              href={item.href}
-              className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition ${
-                active(item.href)
-                  ? 'bg-[var(--brand)] text-white'
-                  : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] shadow-[var(--shadow-soft)]'
+              key={c.href}
+              href={c.href}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition ${
+                active(c.href) ? 'bg-[var(--text)] text-[var(--bg-elevated)]' : 'bg-[var(--bg-sunken)] text-[var(--text-muted)]'
               }`}
             >
-              {item.label}
+              {'dot' in c && c.dot && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.dot }} />}
+              {c.label}
             </Link>
           ))}
         </div>

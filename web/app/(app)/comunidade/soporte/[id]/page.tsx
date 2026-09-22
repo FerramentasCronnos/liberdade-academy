@@ -20,8 +20,8 @@ export default async function TicketPage({ params }: { params: Params }) {
 
   return (
     <>
-      <PageHeader flush title="Soporte" />
-      <div className="mx-auto max-w-[720px]">
+      <PageHeader title="Soporte" />
+      <div className="mx-auto max-w-[760px] px-5 pb-12 sm:px-8">
         <Link href="/comunidade/soporte" className="mb-3 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--text-muted)] transition hover:text-[var(--text)]">
           <IconArrowLeft className="h-4 w-4" />
           {user.isAdmin ? 'Todos los tickets' : 'Mis tickets'}

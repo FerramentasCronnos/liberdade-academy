@@ -34,7 +34,21 @@ export interface CommunityPost {
   createdAt: string;
   category: PostCategory | string;
   tags: string[];
-  space?: { slug: string; name: string; emoji: string };
+  attachments: string[];
+  space?: { slug: string; name: string; emoji: string; kind: string };
+}
+
+/** Cor de cada espaço na barra lateral e na capa. Por slug, sem coluna no banco. */
+export const SPACE_COLOR: Record<string, { dot: string; cover: string; ink: string }> = {
+  presentaciones:    { dot: '#7cc7a1', cover: 'linear-gradient(135deg,#c9e9d6 0%,#a9dcc0 100%)', ink: '#1f3d2e' },
+  anuncios:          { dot: '#8b7cf0', cover: 'linear-gradient(135deg,#ded8fb 0%,#c3b8f7 100%)', ink: '#2c2260' },
+  'soporte-general': { dot: '#f0a35c', cover: 'linear-gradient(135deg,#fde7cf 0%,#f8cfa3 100%)', ink: '#5a3410' },
+  trafico:           { dot: '#5ea8f0', cover: 'linear-gradient(135deg,#d6e8fb 0%,#b4d3f5 100%)', ink: '#163b63' },
+  resultados:        { dot: '#3fc48a', cover: 'linear-gradient(135deg,#d3f3e3 0%,#a8e8c8 100%)', ink: '#134a31' },
+};
+
+export function spaceColor(slug: string) {
+  return SPACE_COLOR[slug] ?? { dot: '#9aa9c2', cover: 'linear-gradient(135deg,#e4e9f2 0%,#c6d0e0 100%)', ink: '#22304a' };
 }
 
 /** Sugestões do compositor. A pessoa pode escrever qualquer outra. */
@@ -62,6 +76,7 @@ export interface CommunityComment {
   id: string;
   author: PostAuthor;
   content: string;
+  attachments: string[];
   createdAt: string;
   parentId?: string;
   replies: CommunityComment[];

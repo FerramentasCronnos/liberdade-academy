@@ -15,7 +15,7 @@ export default async function SupportPage() {
 
   return (
     <>
-      <PageHeader flush
+      <PageHeader
         title={user.isAdmin ? 'Tickets de soporte' : 'Soporte'}
         subtitle={
           user.isAdmin
@@ -24,7 +24,7 @@ export default async function SupportPage() {
         }
         action={<NewTicket />}
       />
-      <div className="mx-auto max-w-[720px]">
+      <div className="mx-auto max-w-[760px] px-5 pb-12 sm:px-8">
         <TicketList tickets={tickets} forSupport={user.isAdmin} />
       </div>
     </>

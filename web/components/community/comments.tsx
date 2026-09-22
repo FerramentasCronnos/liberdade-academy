@@ -7,6 +7,7 @@ import { comment, type FormState } from '@/app/(app)/comunidade/actions';
 import { avatarColor, initials, relativeTime, type CommunityComment } from '@/lib/community';
 import { Avatar } from '@/components/avatar';
 import { TeamBadge } from '@/components/post-card';
+import { AttachmentList, AttachmentsField } from './attachments';
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -56,6 +57,7 @@ function CommentForm({
         placeholder={placeholder}
         className="w-full resize-none rounded-2xl border border-[var(--border)] bg-[var(--bg-sunken)] px-4 py-3 text-[14px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--brand)]"
       />
+      {!parentId && <AttachmentsField />}
       <div className="flex items-center gap-3">
         <Submit label={parentId ? 'Responder' : 'Comentar'} />
         {onDone && (
@@ -85,7 +87,8 @@ function CommentItem({ c, postId, depth = 0 }: { c: CommunityComment; postId: st
               {c.author.isAdmin && <TeamBadge />}
               <span className="text-[12px] font-normal text-[var(--text-faint)]">{relativeTime(c.createdAt)}</span>
             </p>
-            <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]">{c.content}</p>
+            {c.content && <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]">{c.content}</p>}
+            <AttachmentList urls={c.attachments} />
           </div>
           {!replying ? (
             <button type="button" onClick={() => setReplying(true)} className="mt-1 px-2 text-[12.5px] font-semibold text-[var(--text-muted)] transition hover:text-[var(--brand)]">

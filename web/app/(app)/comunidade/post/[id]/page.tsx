@@ -29,9 +29,9 @@ export default async function PostPage({ params }: { params: Params }) {
 
   return (
     <>
-      <PageHeader flush title={post.space ? `${post.space.emoji} ${post.space.name}` : 'Publicación'} />
+      <PageHeader title={post.space ? `${post.space.emoji} ${post.space.name}` : 'Publicación'} />
 
-      <div className="mx-auto max-w-[720px]">
+      <div className="mx-auto max-w-[760px] px-5 pb-12 sm:px-8">
         <Link href={back} className="mb-3 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--text-muted)] transition hover:text-[var(--text)]">
           <IconArrowLeft className="h-4 w-4" />
           Volver

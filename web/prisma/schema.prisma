@@ -308,6 +308,8 @@ model Post {
   pinned    Boolean    @default(false)
   /// Etiquetas livres para dar contexto (tiktok, meta ads, primera venta…).
   tags      String[]   @default([])
+  /// Fotos, áudios e arquivos (espaços em modo chat).
+  attachments String[] @default([])
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   authorId  String
@@ -321,7 +323,7 @@ model Post {
 }
 
 /// Espaço da comunidade (como no Circle): cada um tem seu feed.
-/// kind: posts | intro | announcements (só admins publicam)
+/// kind: posts | intro | announcements (só admins publicam) | chat (linha do tempo contínua)
 model Space {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -348,6 +350,7 @@ model PostLike {
 model Comment {
   id        String    @id @default(cuid())
   content   String
+  attachments String[] @default([])
   postId    String
   authorId  String
   parentId  String?

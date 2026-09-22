@@ -15,8 +15,8 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageHeader flush title="Miembros" subtitle={`${members.length} ${members.length === 1 ? 'persona' : 'personas'} en la comunidad`} />
-      <div className="mx-auto max-w-[720px]">
+      <PageHeader title="Miembros" subtitle={`${members.length} ${members.length === 1 ? 'persona' : 'personas'} en la comunidad`} />
+      <div className="mx-auto max-w-[900px] px-5 pb-12 sm:px-8">
         <MembersGrid members={members} q={q} />
       </div>
     </>

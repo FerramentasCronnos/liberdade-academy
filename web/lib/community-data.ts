@@ -89,8 +89,9 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
     createdAt: post.createdAt.toISOString(),
     category: post.category,
     tags: post.tags,
+    attachments: post.attachments,
     space: post.space
-      ? { slug: post.space.slug, name: post.space.name, emoji: post.space.emoji }
+      ? { slug: post.space.slug, name: post.space.name, emoji: post.space.emoji, kind: post.space.kind }
       : undefined,
   };
 }
@@ -107,6 +108,33 @@ export async function listFeed(viewerId: string, spaceSlug?: string, tag?: strin
     include: postInclude,
   });
   return posts.map((p) => serializePost(p, viewerId));
+}
+
+export interface ChatMessage extends CommunityPost {
+  replies: CommunityComment[];
+}
+
+/** Espaço em modo chat: as últimas 100 mensagens, da mais antiga à mais nova. */
+export async function listChat(viewerId: string, spaceSlug: string): Promise<ChatMessage[]> {
+  const rows = await prisma.post.findMany({
+    where: { space: { slug: spaceSlug } },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+    include: { ...postInclude, comments: { orderBy: { createdAt: 'asc' }, include: { author: true } } },
+  });
+
+  return rows.reverse().map((p) => ({
+    ...serializePost(p, viewerId),
+    replies: p.comments.map((c) => ({
+      id: c.id,
+      author: author(c.author),
+      content: c.content,
+      attachments: c.attachments,
+      createdAt: c.createdAt.toISOString(),
+      parentId: c.parentId ?? undefined,
+      replies: [],
+    })),
+  }));
 }
 
 export async function getPost(id: string, viewerId: string) {
@@ -127,6 +155,7 @@ export async function getPost(id: string, viewerId: string) {
       id: c.id,
       author: author(c.author),
       content: c.content,
+      attachments: c.attachments,
       createdAt: c.createdAt.toISOString(),
       parentId: c.parentId ?? undefined,
       replies: [],
@@ -149,6 +178,7 @@ export async function createSpacePost(input: {
   category: string;
   image?: string;
   tags?: string[];
+  attachments?: string[];
 }) {
   const [space, user] = await Promise.all([
     prisma.space.findUnique({ where: { slug: input.spaceSlug } }),
@@ -166,6 +196,7 @@ export async function createSpacePost(input: {
       category: input.category,
       image: input.image,
       tags: input.tags ?? [],
+      attachments: input.attachments ?? [],
       authorId: input.userId,
       spaceId: space.id,
     },
@@ -206,6 +237,7 @@ export async function addComment(input: {
   postId: string;
   content: string;
   parentId?: string;
+  attachments?: string[];
 }) {
   const post = await prisma.post.findUnique({
     where: { id: input.postId },
@@ -222,7 +254,7 @@ export async function addComment(input: {
   }
 
   const comment = await prisma.comment.create({
-    data: { content: input.content, postId: post.id, authorId: input.userId, parentId },
+    data: { content: input.content, attachments: input.attachments ?? [], postId: post.id, authorId: input.userId, parentId },
     include: { author: true },
   });
 

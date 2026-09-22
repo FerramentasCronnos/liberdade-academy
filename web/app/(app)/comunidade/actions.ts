@@ -51,12 +51,13 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
   const image = String(formData.get('image') || '').trim();
   const category = String(formData.get('category') || SPACE_CATEGORY[spaceSlug] || 'dica');
   const tags = parseTags(String(formData.get('tags') || ''));
+  const attachments = parseAttachments(String(formData.get('attachments') || ''));
 
-  if (content.length < (image ? 1 : 3)) return { error: 'Escribe un poco más.' };
+  if (content.length < (image || attachments.length ? 0 : 3)) return { error: 'Escribe un poco más.' };
   if (content.length > 4000) return { error: 'Texto demasiado largo (máx. 4000).' };
 
   try {
-    await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined, tags });
+    await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined, tags, attachments });
   } catch (e) {
     return { error: message(e, 'No pude publicar ahora.') };
   }
@@ -83,11 +84,12 @@ export async function comment(_prev: FormState, formData: FormData): Promise<For
   const postId = String(formData.get('postId') || '');
   const parentId = String(formData.get('parentId') || '') || undefined;
   const content = String(formData.get('content') || '').trim();
-  if (content.length < 2) return { error: 'Escribe un poco más.' };
+  const attachments = parseAttachments(String(formData.get('attachments') || ''));
+  if (content.length < 2 && attachments.length === 0) return { error: 'Escribe un poco más.' };
   if (content.length > 2000) return { error: 'Comentario demasiado largo.' };
 
   try {
-    await addComment({ userId, postId, content, parentId });
+    await addComment({ userId, postId, content, parentId, attachments });
   } catch (e) {
     return { error: message(e, 'No pude comentar ahora.') };
   }

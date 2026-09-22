@@ -204,6 +204,10 @@ export async function POST(request: Request) {
     report.members += 1;
   }
 
+  const spaceIds = Object.fromEntries(
+    (await prisma.space.findMany({ select: { id: true, slug: true } })).map((s) => [s.slug, s.id]),
+  );
+
   for (const item of POSTS) {
     const authorId = ids[item.author];
     const exists = await prisma.post.findFirst({
@@ -216,8 +220,9 @@ export async function POST(request: Request) {
     }
 
     const createdAt = new Date(Date.now() - item.daysAgo * 86_400_000 - Math.floor(Math.random() * 6) * 3_600_000);
+    const spaceSlug = { dica: 'consejos', resultado: 'resultados', duvida: 'dudas', motivacao: 'motivacion' }[item.category];
     const post = await prisma.post.create({
-      data: { content: item.content, category: item.category, authorId, createdAt },
+      data: { content: item.content, category: item.category, authorId, createdAt, spaceId: spaceIds[spaceSlug] ?? null },
     });
     report.posts += 1;
 

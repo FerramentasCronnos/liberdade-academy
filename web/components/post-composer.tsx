@@ -2,14 +2,14 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { createPost, type ComposerState } from '@/app/(app)/comunidade/actions';
+import { createPost } from '@/app/(app)/comunidade/actions';
 import { uploadAvatar } from '@/app/(app)/perfil/actions';
-import { POST_CATEGORIES } from '@/lib/community';
+import type { Space } from '@/lib/community';
 import { IconImage, IconX } from './icons';
 
-function Submit({ disabled }: { disabled: boolean }) {
+function Submit({ disabled, label }: { disabled: boolean; label: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -17,60 +17,108 @@ function Submit({ disabled }: { disabled: boolean }) {
       disabled={pending || disabled}
       className="rounded-xl bg-[var(--brand)] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60"
     >
-      {pending ? 'Publicando…' : 'Publicar'}
+      {pending ? 'Publicando…' : label}
     </button>
   );
 }
 
-export function PostComposer() {
-  const [state, formAction] = useActionState<ComposerState, FormData>(createPost, {});
-  const [category, setCategory] = useState('dica');
+const INTRO_TEMPLATE = `¡Hola! Soy … y vivo en …
+
+Mi nicho: …
+Cómo empecé: …
+Mi meta con la comunidad: …`;
+
+/**
+ * Compositor de publicações.
+ *
+ * No feed geral escolhe-se o espaço; dentro de um espaço ele vem fixo.
+ * O espaço de apresentações traz um modelo para ninguém travar na página
+ * em branco; o de anúncios só aparece para a equipe.
+ */
+export function PostComposer({
+  spaces,
+  space,
+  userName,
+  isAdmin = false,
+}: {
+  spaces: Space[];
+  /** Espaço fixo (página de espaço). */
+  space?: Space;
+  userName?: string;
+  isAdmin?: boolean;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const available = spaces.filter((s) => s.kind !== 'announcements' || isAdmin);
+  const [slug, setSlug] = useState(space?.slug ?? available.find((s) => s.kind === 'posts')?.slug ?? 'consejos');
   const [image, setImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [open, setOpen] = useState(Boolean(space));
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // limpa tudo só quando o servidor confirma a publicação
-  useEffect(() => {
-    if (state.ok) {
-      formRef.current?.reset();
-      setImage(null);
+  const current = spaces.find((s) => s.slug === slug);
+  const isIntro = current?.kind === 'intro';
+
+  // ação envolvida para limpar o formulário só quando o servidor confirmar
+  const formAction = async (formData: FormData) => {
+    const result = await createPost({}, formData);
+    if (!result.ok) {
+      setError(result.error ?? 'No pude publicar ahora.');
+      return;
     }
-  }, [state.ok]);
+    setError(null);
+    formRef.current?.reset();
+    setImage(null);
+    if (!space) setOpen(false);
+  };
+
+  if (space?.kind === 'announcements' && !isAdmin) return null;
 
   const onPickFile = async (file: File) => {
     setUploading(true);
     setUploadError(null);
-
     const body = new FormData();
     body.append('file', file);
-    // mesma rota de upload do avatar
     const result = await uploadAvatar(body);
-
     if (result.error) setUploadError(result.error);
     else setImage(result.url ?? null);
-
     setUploading(false);
     if (fileRef.current) fileRef.current.value = '';
   };
+
+  const placeholder = isIntro
+    ? INTRO_TEMPLATE.replace('Soy …', `Soy ${userName?.split(' ')[0] ?? '…'}`)
+    : current?.kind === 'announcements'
+      ? 'Escribe el anuncio para toda la comunidad…'
+      : `Comparte algo en ${current?.name ?? 'la comunidad'}…`;
 
   return (
     <form
       ref={formRef}
       action={formAction}
+      onFocus={() => setOpen(true)}
       className="rounded-[22px] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-soft)]"
     >
+      <input type="hidden" name="space" value={slug} />
+      <input type="hidden" name="image" value={image ?? ''} />
+
+      {open && (
+        <input
+          name="title"
+          maxLength={120}
+          placeholder={isIntro ? 'Un título para tu presentación (opcional)' : 'Título (opcional)'}
+          className="mb-2 w-full bg-transparent font-display text-[18px] font-semibold text-[var(--text)] outline-none placeholder:font-sans placeholder:text-[15px] placeholder:font-normal placeholder:text-[var(--text-faint)]"
+        />
+      )}
+
       <textarea
         name="content"
-        rows={3}
-        maxLength={2000}
-        placeholder="Comparte un consejo, un resultado o haz una pregunta…"
-        className="w-full resize-none bg-transparent text-[14.5px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--text-faint)]"
+        rows={open ? (isIntro ? 6 : 4) : 2}
+        maxLength={4000}
+        placeholder={placeholder}
+        className="w-full resize-none bg-transparent text-[14.5px] leading-relaxed text-[var(--text)] outline-none placeholder:whitespace-pre-line placeholder:text-[var(--text-faint)]"
       />
-
-      <input type="hidden" name="category" value={category} />
-      <input type="hidden" name="image" value={image ?? ''} />
 
       {image && (
         <div className="relative mt-2 overflow-hidden rounded-2xl bg-[var(--bg-sunken)]">
@@ -97,42 +145,48 @@ export function PostComposer() {
         }}
       />
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          aria-label="Agregar foto"
-          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-sunken)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-muted)] transition hover:text-[var(--brand)] disabled:opacity-60"
-        >
-          <IconImage className="h-4 w-4" />
-          {uploading ? 'Subiendo…' : 'Foto'}
-        </button>
-
-        {POST_CATEGORIES.map((cat) => (
+      {open && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">
           <button
-            key={cat.id}
             type="button"
-            onClick={() => setCategory(cat.id)}
-            aria-pressed={category === cat.id}
-            className={`rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
-              category === cat.id
-                ? cat.className
-                : 'bg-[var(--bg-sunken)] text-[var(--text-faint)] hover:text-[var(--text-muted)]'
-            }`}
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-sunken)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-muted)] transition hover:text-[var(--brand)] disabled:opacity-60"
           >
-            {cat.label}
+            <IconImage className="h-4 w-4" />
+            {uploading ? 'Subiendo…' : 'Foto'}
           </button>
-        ))}
 
-        <div className="ml-auto">
-          <Submit disabled={uploading} />
+          {space ? (
+            <span className="rounded-full bg-[var(--violet-soft)] px-3 py-1.5 text-[12px] font-semibold text-[var(--brand)]">
+              {space.emoji} {space.name}
+            </span>
+          ) : (
+            <label className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-sunken)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-muted)]">
+              Publicar en
+              <select
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                className="bg-transparent font-semibold text-[var(--brand)] outline-none"
+              >
+                {available.map((s) => (
+                  <option key={s.slug} value={s.slug}>
+                    {s.emoji} {s.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          <div className="ml-auto">
+            <Submit disabled={uploading} label={isIntro ? 'Presentarme' : 'Publicar'} />
+          </div>
         </div>
-      </div>
+      )}
 
-      {(state.error || uploadError) && (
+      {(error || uploadError) && (
         <p role="alert" className="mt-2 text-[12.5px] font-medium text-red-600 dark:text-red-400">
-          {state.error || uploadError}
+          {error || uploadError}
         </p>
       )}
     </form>

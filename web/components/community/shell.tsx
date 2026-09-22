@@ -57,7 +57,7 @@ export function CommunityShell({
 
   return (
     <div className="flex min-h-[calc(100dvh-0px)]">
-      <aside className="sticky top-0 hidden h-dvh w-[260px] shrink-0 overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-5 lg:block">
+      <aside className="sticky top-0 hidden h-dvh w-[260px] shrink-0 scroll-subtle scroll-subtle-light overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-5 lg:block">
         <nav>
           {item('/comunidade', 'Feed', { icon: '☰' })}
           {group('Comunidad')}

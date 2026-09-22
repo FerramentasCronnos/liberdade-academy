@@ -188,3 +188,33 @@
     text-wrap: balance;
   }
 }
+
+/* Rolagem discreta nas barras laterais: fina, translúcida e só ao passar o mouse.
+   Sem isto o WebKit desenha uma barra branca larga sobre o fundo escuro. */
+.scroll-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+}
+.scroll-subtle:hover {
+  scrollbar-color: rgb(255 255 255 / 0.28) transparent;
+}
+.scroll-subtle::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-subtle::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-subtle::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+.scroll-subtle:hover::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.28);
+}
+.scroll-subtle-light:hover {
+  scrollbar-color: rgb(14 23 41 / 0.2) transparent;
+}
+.scroll-subtle-light:hover::-webkit-scrollbar-thumb {
+  background: rgb(14 23 41 / 0.2);
+}

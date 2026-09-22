@@ -88,6 +88,7 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
     isLiked: post.likes.some((like) => like.userId === viewerId),
     createdAt: post.createdAt.toISOString(),
     category: post.category,
+    tags: post.tags,
     space: post.space
       ? { slug: post.space.slug, name: post.space.name, emoji: post.space.emoji }
       : undefined,
@@ -95,9 +96,12 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
 }
 
 /** Feed geral (todos os espaços) ou de um espaço. Fixados vêm primeiro. */
-export async function listFeed(viewerId: string, spaceSlug?: string) {
+export async function listFeed(viewerId: string, spaceSlug?: string, tag?: string) {
   const posts = await prisma.post.findMany({
-    where: spaceSlug ? { space: { slug: spaceSlug } } : {},
+    where: {
+      ...(spaceSlug ? { space: { slug: spaceSlug } } : {}),
+      ...(tag ? { tags: { has: tag } } : {}),
+    },
     orderBy: spaceSlug ? [{ pinned: 'desc' }, { createdAt: 'desc' }] : { createdAt: 'desc' },
     take: 60,
     include: postInclude,
@@ -144,6 +148,7 @@ export async function createSpacePost(input: {
   content: string;
   category: string;
   image?: string;
+  tags?: string[];
 }) {
   const [space, user] = await Promise.all([
     prisma.space.findUnique({ where: { slug: input.spaceSlug } }),
@@ -160,6 +165,7 @@ export async function createSpacePost(input: {
       content: input.content,
       category: input.category,
       image: input.image,
+      tags: input.tags ?? [],
       authorId: input.userId,
       spaceId: space.id,
     },
@@ -321,6 +327,7 @@ export async function getTicket(id: string, userId: string, forSupport: boolean)
     messages: t.messages.map((m) => ({
       id: m.id,
       content: m.content,
+      attachments: m.attachments,
       createdAt: m.createdAt.toISOString(),
       fromSupport: m.fromSupport,
       author: { id: m.author.id, name: m.author.name, avatar: m.author.avatar ?? undefined },
@@ -328,12 +335,12 @@ export async function getTicket(id: string, userId: string, forSupport: boolean)
   };
 }
 
-export async function createTicket(userId: string, subject: string, content: string) {
+export async function createTicket(userId: string, subject: string, content: string, attachments: string[] = []) {
   const ticket = await prisma.ticket.create({
     data: {
       subject,
       userId,
-      messages: { create: { content, authorId: userId, fromSupport: false } },
+      messages: { create: { content, attachments, authorId: userId, fromSupport: false } },
     },
   });
 
@@ -353,7 +360,7 @@ export async function createTicket(userId: string, subject: string, content: str
   return ticket;
 }
 
-export async function replyTicket(ticketId: string, userId: string, content: string) {
+export async function replyTicket(ticketId: string, userId: string, content: string, attachments: string[] = []) {
   const [ticket, user] = await Promise.all([
     prisma.ticket.findUnique({ where: { id: ticketId } }),
     prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true, name: true } }),
@@ -364,7 +371,7 @@ export async function replyTicket(ticketId: string, userId: string, content: str
   const fromSupport = user.isAdmin && ticket.userId !== userId;
 
   await prisma.$transaction([
-    prisma.ticketMessage.create({ data: { ticketId, authorId: userId, content, fromSupport } }),
+    prisma.ticketMessage.create({ data: { ticketId, authorId: userId, content, attachments, fromSupport } }),
     prisma.ticket.update({
       where: { id: ticketId },
       data: {

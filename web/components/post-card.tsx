@@ -116,6 +116,20 @@ export function PostCard({
         </div>
       )}
 
+      {post.tags?.length > 0 && (
+        <p className="mt-3 flex flex-wrap gap-1.5">
+          {post.tags.map((t) => (
+            <Link
+              key={t}
+              href={`${post.space ? `/comunidade/e/${post.space.slug}` : '/comunidade'}?tag=${encodeURIComponent(t)}`}
+              className="rounded-full bg-[var(--bg-sunken)] px-2.5 py-1 text-[11.5px] font-semibold text-[var(--text-muted)] transition hover:bg-[var(--violet-soft)] hover:text-[var(--brand)]"
+            >
+              #{t}
+            </Link>
+          ))}
+        </p>
+      )}
+
       <footer className="mt-4 flex items-center gap-1 border-t border-[var(--border)] pt-3">
         <button
           type="button"

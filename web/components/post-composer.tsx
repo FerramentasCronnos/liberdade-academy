@@ -6,7 +6,7 @@ import { useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { createPost } from '@/app/(app)/comunidade/actions';
 import { uploadAvatar } from '@/app/(app)/perfil/actions';
-import type { Space } from '@/lib/community';
+import { normalizeTag, SUGGESTED_TAGS, type Space } from '@/lib/community';
 import { IconImage, IconX } from './icons';
 
 function Submit({ disabled, label }: { disabled: boolean; label: string }) {
@@ -54,6 +54,8 @@ export function PostComposer({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [open, setOpen] = useState(Boolean(space));
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagDraft, setTagDraft] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -70,7 +72,16 @@ export function PostComposer({
     setError(null);
     formRef.current?.reset();
     setImage(null);
+    setTags([]);
+    setTagDraft('');
     if (!space) setOpen(false);
+  };
+
+  const addTag = (raw: string) => {
+    const tag = normalizeTag(raw);
+    if (!tag || tags.includes(tag) || tags.length >= 5) return;
+    setTags((prev) => [...prev, tag]);
+    setTagDraft('');
   };
 
   if (space?.kind === 'announcements' && !isAdmin) return null;
@@ -102,6 +113,7 @@ export function PostComposer({
     >
       <input type="hidden" name="space" value={slug} />
       <input type="hidden" name="image" value={image ?? ''} />
+      <input type="hidden" name="tags" value={tags.join(',')} />
 
       {open && (
         <input
@@ -144,6 +156,40 @@ export function PostComposer({
           if (file) void onPickFile(file);
         }}
       />
+
+      {open && (
+        <div className="mt-3 border-t border-[var(--border)] pt-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {tags.map((t) => (
+              <button key={t} type="button" onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="inline-flex items-center gap-1 rounded-full bg-[var(--violet-soft)] px-2.5 py-1 text-[12px] font-semibold text-[var(--brand)]" title="Quitar">
+                #{t} <IconX className="h-3 w-3" />
+              </button>
+            ))}
+            <input
+              value={tagDraft}
+              onChange={(e) => setTagDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                  e.preventDefault();
+                  addTag(tagDraft);
+                }
+              }}
+              onBlur={() => tagDraft && addTag(tagDraft)}
+              placeholder={tags.length ? 'Otra etiqueta…' : 'Etiquetas: tiktok, primera venta… (Enter para agregar)'}
+              className="min-w-[200px] flex-1 bg-transparent px-1 py-1 text-[12.5px] text-[var(--text)] outline-none placeholder:text-[var(--text-faint)]"
+            />
+          </div>
+          {tags.length < 5 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {SUGGESTED_TAGS.filter((t) => !tags.includes(t)).slice(0, 8).map((t) => (
+                <button key={t} type="button" onClick={() => addTag(t)} className="rounded-full px-2 py-0.5 text-[11.5px] text-[var(--text-faint)] transition hover:bg-[var(--bg-sunken)] hover:text-[var(--brand)]">
+                  #{t}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {open && (
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">

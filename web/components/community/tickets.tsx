@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
+import { useActionState, useRef, useState, useTransition } from 'react';
 import { useFormStatus } from 'react-dom';
 import { answerTicket, changeTicketStatus, openTicket, type FormState } from '@/app/(app)/comunidade/actions';
 import { avatarColor, initials, relativeTime, TICKET_STATUS, type TicketDetail, type TicketSummary } from '@/lib/community';
 import { Avatar } from '@/components/avatar';
 import { TeamBadge } from '@/components/post-card';
+import { AttachmentList, AttachmentsField } from './attachments';
 
 const input =
   'w-full rounded-2xl border border-[var(--border)] bg-[var(--bg-sunken)] px-4 py-3 text-[14px] text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--brand)]';
@@ -44,7 +45,8 @@ export function NewTicket() {
       <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">Solo tú y el equipo ven esta conversación.</p>
       <div className="mt-4 flex flex-col gap-3">
         <input name="subject" maxLength={120} placeholder="Asunto (ej.: no puedo generar mi enlace)" className={input} autoFocus />
-        <textarea name="content" rows={5} maxLength={4000} placeholder="Cuéntanos qué pasó, qué esperabas y, si puedes, desde qué dispositivo." className={`${input} resize-none`} />
+        <textarea name="content" rows={5} maxLength={4000} placeholder="Cuéntanos qué pasó, qué esperabas y, si puedes, desde qué dispositivo. También puedes grabar un audio." className={`${input} resize-none`} />
+        <AttachmentsField />
       </div>
       <div className="mt-3 flex items-center gap-3">
         <Submit label="Abrir ticket" />
@@ -101,13 +103,22 @@ export function TicketList({ tickets, forSupport }: { tickets: TicketSummary[]; 
 }
 
 export function TicketThread({ ticket, viewerId, forSupport }: { ticket: TicketDetail; viewerId: string; forSupport: boolean }) {
-  const [state, action] = useActionState<FormState, FormData>(answerTicket, {});
+  const [error, setError] = useState<string | null>(null);
+  const [resetKey, setResetKey] = useState(0);
   const [, startTransition] = useTransition();
   const ref = useRef<HTMLFormElement>(null);
 
-  useEffect(() => {
-    if (state.ok) ref.current?.reset();
-  }, [state.ok]);
+  // envolve a action para limpar texto e anexos só quando o servidor confirma
+  const action = async (formData: FormData) => {
+    const result = await answerTicket({}, formData);
+    if (!result.ok) {
+      setError(result.error ?? 'No pude enviar la respuesta.');
+      return;
+    }
+    setError(null);
+    ref.current?.reset();
+    setResetKey((k) => k + 1);
+  };
 
   return (
     <>
@@ -149,7 +160,8 @@ export function TicketThread({ ticket, viewerId, forSupport }: { ticket: TicketD
                     {m.fromSupport && <TeamBadge />}
                     <span className="font-normal text-[var(--text-faint)]">{relativeTime(m.createdAt)}</span>
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]">{m.content}</p>
+                  {m.content && <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]">{m.content}</p>}
+                  <AttachmentList urls={m.attachments} />
                 </div>
               </li>
             );
@@ -160,9 +172,12 @@ export function TicketThread({ ticket, viewerId, forSupport }: { ticket: TicketD
       <form ref={ref} action={action} className="mt-4 rounded-[22px] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-soft)]">
         <input type="hidden" name="ticketId" value={ticket.id} />
         <textarea name="content" rows={3} maxLength={4000} placeholder={forSupport ? 'Responder como equipo…' : ticket.status === 'resuelto' ? 'Escribe si necesitas algo más; el ticket se reabre.' : 'Escribe tu respuesta…'} className={`${input} resize-none`} />
+        <div className="mt-3">
+          <AttachmentsField resetKey={resetKey} />
+        </div>
         <div className="mt-3 flex items-center gap-3">
           <Submit label="Enviar" />
-          {state.error && <p role="alert" className="text-[12.5px] font-medium text-red-600 dark:text-red-400">{state.error}</p>}
+          {error && <p role="alert" className="text-[12.5px] font-medium text-red-600 dark:text-red-400">{error}</p>}
         </div>
       </form>
     </>

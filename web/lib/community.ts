@@ -33,7 +33,29 @@ export interface CommunityPost {
   isLiked: boolean;
   createdAt: string;
   category: PostCategory | string;
+  tags: string[];
   space?: { slug: string; name: string; emoji: string };
+}
+
+/** Sugestões do compositor. A pessoa pode escrever qualquer outra. */
+export const SUGGESTED_TAGS = [
+  'tiktok', 'shopee', 'amazon', 'meta ads', 'video', 'presell', 'whatsapp',
+  'comisiones', 'primera venta', 'duda', 'consejo', 'motivación',
+];
+
+export function normalizeTag(raw: string) {
+  return raw.trim().toLowerCase().replace(/^#/, '').replace(/\s+/g, ' ').slice(0, 24);
+}
+
+export type AttachmentKind = 'image' | 'audio' | 'video' | 'file';
+
+/** Deduz o tipo pela extensão: é o que a URL do Blob preserva. */
+export function attachmentKind(url: string): AttachmentKind {
+  const ext = url.split('?')[0].split('.').pop()?.toLowerCase() ?? '';
+  if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) return 'image';
+  if (['webm', 'm4a', 'mp3', 'ogg', 'wav', 'aac', 'opus', 'weba'].includes(ext)) return 'audio';
+  if (['mp4', 'mov'].includes(ext)) return 'video';
+  return 'file';
 }
 
 export interface CommunityComment {
@@ -62,6 +84,7 @@ export interface TicketSummary {
 export interface TicketMessage {
   id: string;
   content: string;
+  attachments: string[];
   createdAt: string;
   fromSupport: boolean;
   author: { id: string; name: string; avatar?: string };

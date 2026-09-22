@@ -22,7 +22,7 @@ export default async function SupportPage() {
             ? waiting ? `${waiting} ${waiting === 1 ? 'ticket espera' : 'tickets esperan'} respuesta` : 'Todo respondido'
             : 'Habla directo con el equipo. Solo tú ves tus tickets.'
         }
-        action={user.isAdmin ? undefined : <NewTicket />}
+        action={<NewTicket />}
       />
       <div className="mx-auto max-w-[720px]">
         <TicketList tickets={tickets} forSupport={user.isAdmin} />

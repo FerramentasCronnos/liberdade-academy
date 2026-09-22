@@ -9,13 +9,14 @@ import { listFeed, listSpaces } from '@/lib/community-data';
 
 export const metadata = { title: 'Comunidad · Liberdade Academy' };
 
-export default async function CommunityHome() {
+export default async function CommunityHome({ searchParams }: { searchParams: Promise<{ tag?: string }> }) {
+  const { tag } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
   const [spaces, posts, me] = await Promise.all([
     listSpaces(),
-    listFeed(user.id),
+    listFeed(user.id, undefined, tag || undefined),
     prisma.user.findUnique({ where: { id: user.id }, select: { introducedAt: true } }),
   ]);
 
@@ -39,6 +40,13 @@ export default async function CommunityHome() {
         )}
 
         <PostComposer spaces={spaces} userName={user.name} isAdmin={user.isAdmin} />
+
+        {tag && (
+          <p className="mt-4 flex items-center gap-2 text-[13px] text-[var(--text-muted)]">
+            Mostrando <span className="rounded-full bg-[var(--violet-soft)] px-2.5 py-1 font-semibold text-[var(--brand)]">#{tag}</span>
+            <Link href="/comunidade" className="font-semibold text-[var(--text-muted)] underline-offset-2 hover:underline">Quitar filtro</Link>
+          </p>
+        )}
 
         <div className="mt-4 flex flex-col gap-4">
           {posts.map((post) => (

@@ -85,6 +85,7 @@ export function serializePost(post: PostFull, currentUserId?: string) {
     },
     title: post.title ?? undefined,
     pinned: post.pinned,
+    tags: post.tags,
     content: post.content,
     image: post.image ?? undefined,
     likes: post.likes.length,

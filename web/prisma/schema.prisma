@@ -306,6 +306,8 @@ model Post {
   category  String
   image     String?
   pinned    Boolean    @default(false)
+  /// Etiquetas livres para dar contexto (tiktok, meta ads, primera venta…).
+  tags      String[]   @default([])
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   authorId  String
@@ -380,6 +382,8 @@ model TicketMessage {
   ticketId    String
   authorId    String
   content     String
+  /// URLs no Blob: fotos, áudios gravados, vídeos ou PDFs.
+  attachments String[] @default([])
   fromSupport Boolean  @default(false)
   createdAt   DateTime @default(now())
   ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)

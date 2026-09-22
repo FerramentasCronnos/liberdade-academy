@@ -13,11 +13,29 @@ import {
   setTicketStatus,
   CommunityError,
 } from '@/lib/community-data';
-import { SPACE_CATEGORY } from '@/lib/community';
+import { normalizeTag, SPACE_CATEGORY } from '@/lib/community';
 import { getUserId, isAdmin } from '@/lib/session';
 
 export type ComposerState = { error?: string; ok?: boolean };
 export type FormState = { error?: string; ok?: boolean };
+
+/** Só aceita o que veio do nosso Blob: evita gravar link arbitrário. */
+function parseAttachments(raw: string) {
+  try {
+    const list = JSON.parse(raw || '[]') as unknown;
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter((u): u is string => typeof u === 'string')
+      .filter((u) => /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//.test(u))
+      .slice(0, 10);
+  } catch {
+    return [];
+  }
+}
+
+function parseTags(raw: string) {
+  return Array.from(new Set(raw.split(',').map(normalizeTag).filter(Boolean))).slice(0, 5);
+}
 
 function message(e: unknown, fallback: string) {
   return e instanceof CommunityError ? e.message : fallback;
@@ -32,12 +50,13 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
   const content = String(formData.get('content') || '').trim();
   const image = String(formData.get('image') || '').trim();
   const category = String(formData.get('category') || SPACE_CATEGORY[spaceSlug] || 'dica');
+  const tags = parseTags(String(formData.get('tags') || ''));
 
   if (content.length < (image ? 1 : 3)) return { error: 'Escribe un poco más.' };
   if (content.length > 4000) return { error: 'Texto demasiado largo (máx. 4000).' };
 
   try {
-    await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined });
+    await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined, tags });
   } catch (e) {
     return { error: message(e, 'No pude publicar ahora.') };
   }
@@ -105,12 +124,15 @@ export async function openTicket(_prev: FormState, formData: FormData): Promise<
 
   const subject = String(formData.get('subject') || '').trim().slice(0, 120);
   const content = String(formData.get('content') || '').trim();
+  const attachments = parseAttachments(String(formData.get('attachments') || ''));
   if (subject.length < 3) return { error: 'Ponle un asunto al ticket.' };
-  if (content.length < 10) return { error: 'Cuéntanos un poco más para poder ayudarte.' };
+  if (content.length < 10 && attachments.length === 0) {
+    return { error: 'Cuéntanos un poco más, o adjunta un audio o una foto.' };
+  }
 
   let id: string;
   try {
-    id = (await createTicket(userId, subject, content)).id;
+    id = (await createTicket(userId, subject, content, attachments)).id;
   } catch {
     return { error: 'No pude abrir el ticket ahora.' };
   }
@@ -125,10 +147,11 @@ export async function answerTicket(_prev: FormState, formData: FormData): Promis
 
   const ticketId = String(formData.get('ticketId') || '');
   const content = String(formData.get('content') || '').trim();
-  if (content.length < 2) return { error: 'Escribe un poco más.' };
+  const attachments = parseAttachments(String(formData.get('attachments') || ''));
+  if (content.length < 2 && attachments.length === 0) return { error: 'Escribe algo o adjunta un archivo.' };
 
   try {
-    await replyTicket(ticketId, userId, content);
+    await replyTicket(ticketId, userId, content, attachments);
   } catch (e) {
     return { error: message(e, 'No pude enviar la respuesta.') };
   }

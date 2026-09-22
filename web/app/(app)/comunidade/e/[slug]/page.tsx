@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { PostComposer } from '@/components/post-composer';
@@ -13,7 +14,8 @@ export async function generateMetadata({ params }: { params: Params }) {
   return { title: space ? `${space.name} · Comunidad` : 'Comunidad' };
 }
 
-export default async function SpacePage({ params }: { params: Params }) {
+export default async function SpacePage({ params, searchParams }: { params: Params; searchParams: Promise<{ tag?: string }> }) {
+  const { tag } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
@@ -21,7 +23,7 @@ export default async function SpacePage({ params }: { params: Params }) {
   const [space, spaces] = await Promise.all([getSpace(slug), listSpaces()]);
   if (!space) notFound();
 
-  const posts = await listFeed(user.id, slug);
+  const posts = await listFeed(user.id, slug, tag || undefined);
   const backTo = `/comunidade/e/${slug}`;
 
   return (
@@ -30,6 +32,13 @@ export default async function SpacePage({ params }: { params: Params }) {
 
       <div className="mx-auto max-w-[720px]">
         <PostComposer spaces={spaces} space={space} userName={user.name} isAdmin={user.isAdmin} />
+
+        {tag && (
+          <p className="mt-4 flex items-center gap-2 text-[13px] text-[var(--text-muted)]">
+            Mostrando <span className="rounded-full bg-[var(--violet-soft)] px-2.5 py-1 font-semibold text-[var(--brand)]">#{tag}</span>
+            <Link href={backTo} className="font-semibold text-[var(--text-muted)] underline-offset-2 hover:underline">Quitar filtro</Link>
+          </p>
+        )}
 
         <div className="mt-4 flex flex-col gap-4">
           {posts.map((post) => (

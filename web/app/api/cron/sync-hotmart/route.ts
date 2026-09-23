@@ -7,8 +7,9 @@ import { listSales } from '@/lib/hotmart';
  * Sincroniza compras da Hotmart com os acessos.
  *
  * A Hotmart oferece webhook, mas ele depende de configurar o hottok no
- * painel. Consultar a API a cada meia hora funciona só com as credenciais
- * e cobre também o que o webhook tiver perdido. Compra aprovada vira conta
+ * painel. Consultar a API funciona só com as credenciais e cobre também o
+ * que o webhook tiver perdido. No plano Hobby o cron é diário; para acesso
+ * na hora, configure o webhook (hottok) ou chame esta rota de fora. Compra aprovada vira conta
  * (com e-mail); reembolso, chargeback e cancelamento bloqueiam o login.
  *
  * O Vercel envia o header Authorization com CRON_SECRET.

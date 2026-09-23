@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     const lost = [
       ...(await listSales('REFUNDED', since)),
       ...(await listSales('CHARGEBACK', since)),
-      ...(await listSales('CANCELED', since)),
+      ...(await listSales('CANCELLED', since)),
     ];
     for (const sale of lost) {
       // quem comprou de novo depois do reembolso continua com acesso

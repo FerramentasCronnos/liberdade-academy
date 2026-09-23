@@ -26,7 +26,7 @@ async function token() {
   return cached.token;
 }
 
-export type HotmartStatus = 'APPROVED' | 'COMPLETE' | 'REFUNDED' | 'CHARGEBACK' | 'CANCELED';
+export type HotmartStatus = 'APPROVED' | 'COMPLETE' | 'REFUNDED' | 'CHARGEBACK' | 'CANCELLED';
 
 export interface HotmartSale {
   transaction: string;

@@ -57,10 +57,15 @@ export async function grantAccess(input: {
   return { created: true, userId: user.id, name, email, password };
 }
 
-/** Bloqueia o login sem apagar a conta. Admins nunca são bloqueados por webhook. */
-export async function revokeAccess(email: string) {
+/**
+ * Bloqueia o login sem apagar a conta. Admins nunca são bloqueados por webhook.
+ * Com `onlySource`, só bloqueia quem entrou por aquela plataforma: um reembolso
+ * na Hotmart não derruba quem comprou pela Kiwify.
+ */
+export async function revokeAccess(email: string, onlySource?: string) {
   const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
   if (!user || user.isAdmin) return { revoked: false as const };
+  if (onlySource && user.planSource !== onlySource) return { revoked: false as const };
 
   await prisma.user.update({
     where: { id: user.id },

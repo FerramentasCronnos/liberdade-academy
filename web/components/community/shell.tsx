@@ -65,8 +65,8 @@ export function CommunityShell({
           {group('Soporte')}
           {support.map((s) => item(`/comunidade/e/${s.slug}`, s.name, { dot: spaceColor(s.slug).dot }))}
           {item('/comunidade/soporte', supportLabel, { icon: '🎧', badge: openTickets })}
-          {group('Personas')}
-          {item('/comunidade/miembros', 'Miembros', { icon: '👥' })}
+          {isAdmin && group('Personas')}
+          {isAdmin && item('/comunidade/miembros', 'Miembros', { icon: '👥' })}
         </nav>
       </aside>
 
@@ -76,7 +76,7 @@ export function CommunityShell({
             { href: '/comunidade', label: 'Feed' },
             ...spaces.map((s) => ({ href: `/comunidade/e/${s.slug}`, label: s.name, dot: spaceColor(s.slug).dot })),
             { href: '/comunidade/soporte', label: supportLabel },
-            { href: '/comunidade/miembros', label: 'Miembros' },
+            ...(isAdmin ? [{ href: '/comunidade/miembros', label: 'Miembros' }] : []),
           ].map((c) => (
             <Link
               key={c.href}

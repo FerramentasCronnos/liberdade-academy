@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { MembersGrid } from '@/components/community/members';
-import { getUserId } from '@/lib/session';
+import { getUserId, isAdmin } from '@/lib/session';
 import { listMembers } from '@/lib/community-data';
 
 export const metadata = { title: 'Miembros · Comunidad' };
@@ -9,6 +9,8 @@ export const metadata = { title: 'Miembros · Comunidad' };
 export default async function MembersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const userId = await getUserId();
   if (!userId) redirect('/login');
+  // diretório só para a equipe: o membro não precisa ver a lista de todos
+  if (!(await isAdmin(userId))) redirect('/comunidade');
 
   const { q = '' } = await searchParams;
   const members = await listMembers(q.trim() || undefined);

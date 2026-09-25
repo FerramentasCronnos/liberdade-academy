@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useActionState, useRef, useState, useTransition } from 'react';
 import { useFormStatus } from 'react-dom';
 import { answerTicket, changeTicketStatus, openTicket, type FormState } from '@/app/(app)/comunidade/actions';
-import { avatarColor, initials, relativeTime, TICKET_STATUS, type TicketDetail, type TicketSummary } from '@/lib/community';
+import { avatarColor, initials, relativeTime, ticketCategory, TICKET_CATEGORIES, TICKET_STATUS, type TicketDetail, type TicketSummary } from '@/lib/community';
+import { IconX } from '@/components/icons';
 import { Avatar } from '@/components/avatar';
 import { TeamBadge } from '@/components/post-card';
 import { AttachmentList, AttachmentsField } from './attachments';
@@ -26,34 +27,91 @@ export function StatusChip({ status }: { status: string }) {
   return <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ${s.className}`}>{s.label}</span>;
 }
 
-/** Formulário de abertura, recolhido até clicar. */
+/**
+ * Abertura de ticket em janela própria: primeiro o tema, depois o relato.
+ * É o único lugar com gravação de áudio: explicar um problema falando é
+ * mais fácil do que escrever, e a equipe ouve com contexto.
+ */
 export function NewTicket() {
   const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState<string | null>(null);
   const [state, action] = useActionState<FormState, FormData>(openTicket, {});
 
-  if (!open) {
-    return (
-      <button type="button" onClick={() => setOpen(true)} className="rounded-xl bg-[var(--brand)] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)]">
-        Nuevo ticket
-      </button>
-    );
-  }
+  const close = () => {
+    setOpen(false);
+    setCategory(null);
+  };
 
   return (
-    <form action={action} className="rounded-[22px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
-      <h3 className="font-display text-[17px] font-semibold text-[var(--text)]">¿En qué te ayudamos?</h3>
-      <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">Solo tú y el equipo ven esta conversación.</p>
-      <div className="mt-4 flex flex-col gap-3">
-        <input name="subject" maxLength={120} placeholder="Asunto (ej.: no puedo generar mi enlace)" className={input} autoFocus />
-        <textarea name="content" rows={5} maxLength={4000} placeholder="Cuéntanos qué pasó, qué esperabas y, si puedes, desde qué dispositivo. También puedes grabar un audio." className={`${input} resize-none`} />
-        <AttachmentsField />
-      </div>
-      <div className="mt-3 flex items-center gap-3">
-        <Submit label="Abrir ticket" />
-        <button type="button" onClick={() => setOpen(false)} className="text-[13px] font-medium text-[var(--text-muted)]">Cancelar</button>
-        {state.error && <p role="alert" className="text-[12.5px] font-medium text-red-600 dark:text-red-400">{state.error}</p>}
-      </div>
-    </form>
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="rounded-xl bg-[var(--text)] px-5 py-2.5 text-[13.5px] font-semibold text-[var(--bg-elevated)] transition hover:opacity-90">
+        Nuevo ticket
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="new-ticket-title" className="flex max-h-[92dvh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[26px] bg-[var(--bg-elevated)] shadow-[var(--shadow-lift)] sm:rounded-[26px]">
+            <header className="flex items-center gap-3 border-b border-[var(--border)] px-6 py-4">
+              <div className="min-w-0 flex-1">
+                <h2 id="new-ticket-title" className="font-display text-[20px] font-semibold text-[var(--text)]">
+                  {category ? `${ticketCategory(category).emoji} ${ticketCategory(category).label}` : '¿Sobre qué es tu ticket?'}
+                </h2>
+                <p className="text-[12.5px] text-[var(--text-muted)]">
+                  {category ? 'Solo tú y el equipo ven esta conversación.' : 'Elige el tema para que te atienda la persona correcta.'}
+                </p>
+              </div>
+              {category && (
+                <button type="button" onClick={() => setCategory(null)} className="text-[12.5px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]">
+                  Cambiar tema
+                </button>
+              )}
+              <button type="button" onClick={close} aria-label="Cerrar" className="grid h-8 w-8 place-items-center rounded-full text-[var(--text-faint)] hover:bg-[var(--bg-sunken)]">
+                <IconX className="h-4 w-4" />
+              </button>
+            </header>
+
+            {!category ? (
+              <ul className="grid gap-2 overflow-y-auto p-5 sm:grid-cols-2">
+                {TICKET_CATEGORIES.map((c) => (
+                  <li key={c.id}>
+                    <button type="button" onClick={() => setCategory(c.id)} className="flex h-full w-full items-start gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-sunken)]/60 p-4 text-left transition hover:border-[var(--brand)] hover:bg-[var(--violet-soft)]/50">
+                      <span className="text-[22px]" aria-hidden>{c.emoji}</span>
+                      <span>
+                        <span className="block text-[14.5px] font-semibold text-[var(--text)]">{c.label}</span>
+                        <span className="block text-[12.5px] text-[var(--text-muted)]">{c.hint}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <form action={action} className="flex min-h-0 flex-1 flex-col">
+                <input type="hidden" name="category" value={category} />
+                <div className="flex flex-col gap-3 overflow-y-auto px-6 py-5">
+                  <label className="text-[12.5px] font-semibold text-[var(--text-muted)]">
+                    Asunto
+                    <input name="subject" maxLength={120} autoFocus placeholder="En pocas palabras, qué pasa" className={`${input} mt-1`} />
+                  </label>
+                  <label className="text-[12.5px] font-semibold text-[var(--text-muted)]">
+                    Cuéntanos más
+                    <textarea name="content" rows={5} maxLength={4000} placeholder="Qué intentaste, qué esperabas y qué viste. Si prefieres, graba un audio explicando." className={`${input} mt-1 resize-none`} />
+                  </label>
+                  <div className="rounded-2xl border border-dashed border-[var(--border-strong)] p-3">
+                    <p className="mb-2 text-[12.5px] font-semibold text-[var(--text-muted)]">Adjuntos y audio</p>
+                    <AttachmentsField allowAudio />
+                  </div>
+                </div>
+                <footer className="flex items-center gap-3 border-t border-[var(--border)] px-6 py-4">
+                  <Submit label="Abrir ticket" />
+                  <button type="button" onClick={close} className="text-[13px] font-medium text-[var(--text-muted)]">Cancelar</button>
+                  {state.error && <p role="alert" className="text-[12.5px] font-medium text-red-600 dark:text-red-400">{state.error}</p>}
+                </footer>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -85,9 +143,12 @@ export function TicketList({ tickets, forSupport }: { tickets: TicketSummary[]; 
               <Link href={`/comunidade/soporte/${t.id}`} className="flex items-center gap-3 rounded-[18px] bg-[var(--bg-elevated)] px-4 py-3.5 shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]">
                 {forSupport && <Avatar name={t.user.name} src={t.user.avatar} size={36} color={avatarColor(t.user.name)} fallback={initials(t.user.name)} />}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14.5px] font-semibold text-[var(--text)]">{t.subject}</p>
+                  <p className="truncate text-[14.5px] font-semibold text-[var(--text)]">
+                    <span className="mr-1.5" aria-hidden>{ticketCategory(t.category).emoji}</span>
+                    {t.subject}
+                  </p>
                   <p className="text-[12.5px] text-[var(--text-faint)]">
-                    {forSupport && <>{t.user.name} · </>}
+                    {ticketCategory(t.category).label} · {forSupport && <>{t.user.name} · </>}
                     {t.messageCount} {t.messageCount === 1 ? 'mensaje' : 'mensajes'} · {relativeTime(t.lastMessageAt)}
                   </p>
                 </div>

@@ -35,6 +35,8 @@ export interface CommunityPost {
   category: PostCategory | string;
   tags: string[];
   attachments: string[];
+  /** Chat de suporte: atendimento finalizado. */
+  resolvedAt?: string;
   space?: { slug: string; name: string; emoji: string; kind: string };
 }
 
@@ -84,9 +86,22 @@ export interface CommunityComment {
 
 export type TicketStatus = 'abierto' | 'en_progreso' | 'resuelto';
 
+export const TICKET_CATEGORIES: Array<{ id: string; label: string; emoji: string; hint: string }> = [
+  { id: 'acceso', label: 'Acceso', emoji: '🔑', hint: 'No puedo entrar, contraseña, correo' },
+  { id: 'herramientas', label: 'Herramientas', emoji: '🧰', hint: 'Enlaces, presell, plantillas, catálogo' },
+  { id: 'ventas', label: 'Ventas y comisiones', emoji: '💸', hint: 'Dudas sobre cómo vender o cobrar' },
+  { id: 'pagos', label: 'Mi compra', emoji: '🧾', hint: 'Pago, factura, reembolso' },
+  { id: 'otro', label: 'Otro', emoji: '💬', hint: 'Cualquier otra cosa' },
+];
+
+export function ticketCategory(id: string) {
+  return TICKET_CATEGORIES.find((c) => c.id === id) ?? TICKET_CATEGORIES[TICKET_CATEGORIES.length - 1];
+}
+
 export interface TicketSummary {
   id: string;
   subject: string;
+  category: string;
   status: TicketStatus | string;
   createdAt: string;
   lastMessageAt: string;

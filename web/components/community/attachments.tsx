@@ -13,7 +13,7 @@ import { IconImage, IconX } from '@/components/icons';
  * O upload vai direto do navegador ao Blob (rota /api/upload só assina).
  * As URLs ficam num input oculto que a Server Action lê.
  */
-export function AttachmentsField({ name = 'attachments', resetKey }: { name?: string; resetKey?: number }) {
+export function AttachmentsField({ name = 'attachments', resetKey, allowAudio = false }: { name?: string; resetKey?: number; allowAudio?: boolean }) {
   const [urls, setUrls] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -127,7 +127,7 @@ export function AttachmentsField({ name = 'attachments', resetKey }: { name?: st
           <IconImage className="h-4 w-4" />
           Foto o archivo
         </button>
-        {!recording ? (
+        {!allowAudio ? null : !recording ? (
           <button type="button" onClick={startRecording} disabled={Boolean(busy)} className={chip}>
             🎙️ Grabar audio
           </button>

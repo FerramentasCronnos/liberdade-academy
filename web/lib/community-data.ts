@@ -90,6 +90,7 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
     category: post.category,
     tags: post.tags,
     attachments: post.attachments,
+    resolvedAt: post.resolvedAt?.toISOString(),
     space: post.space
       ? { slug: post.space.slug, name: post.space.name, emoji: post.space.emoji, kind: post.space.kind }
       : undefined,
@@ -215,6 +216,19 @@ export async function createSpacePost(input: {
   return post;
 }
 
+/** Finaliza ou reabre a atención de uma mensagem do chat. Equipe ou autor. */
+export async function setResolved(postId: string, userId: string, resolved: boolean) {
+  const [post, user] = await Promise.all([
+    prisma.post.findUnique({ where: { id: postId }, select: { authorId: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true } }),
+  ]);
+  if (!post || !user) throw new CommunityError('Mensaje no encontrado.');
+  if (!user.isAdmin && post.authorId !== userId) throw new CommunityError('Sin permiso.');
+  // só a equipe reabre
+  if (!resolved && !user.isAdmin) throw new CommunityError('Solo el equipo reabre una atención.');
+  return prisma.post.update({ where: { id: postId }, data: { resolvedAt: resolved ? new Date() : null } });
+}
+
 export async function setPinned(postId: string, pinned: boolean) {
   return prisma.post.update({ where: { id: postId }, data: { pinned } });
 }
@@ -241,9 +255,25 @@ export async function addComment(input: {
 }) {
   const post = await prisma.post.findUnique({
     where: { id: input.postId },
-    select: { id: true, authorId: true, title: true, content: true },
+    select: {
+      id: true, authorId: true, title: true, content: true, resolvedAt: true,
+      space: { select: { kind: true } },
+      _count: { select: { comments: true } },
+    },
   });
   if (!post) throw new CommunityError('Publicación no encontrada.');
+
+  // Chat de suporte: a equipe abre a thread; o autor responde dentro dela;
+  // ninguém escreve numa atención finalizada.
+  if (post.space?.kind === 'chat') {
+    const user = await prisma.user.findUnique({ where: { id: input.userId }, select: { isAdmin: true } });
+    const isAuthor = post.authorId === input.userId;
+    if (!user?.isAdmin && !isAuthor) throw new CommunityError('Solo el equipo responde en este espacio.');
+    if (post.resolvedAt) throw new CommunityError('Esta atención ya fue finalizada.');
+    if (!user?.isAdmin && post._count.comments === 0) {
+      throw new CommunityError('Espera la respuesta del equipo para continuar aquí.');
+    }
+  }
 
   // resposta de resposta vira resposta do comentário raiz: só um nível
   let parentId = input.parentId ?? null;
@@ -318,6 +348,7 @@ function serializeTicket(t: TicketRow, forSupport: boolean): TicketSummary {
   return {
     id: t.id,
     subject: t.subject,
+    category: t.category,
     status: t.status,
     createdAt: t.createdAt.toISOString(),
     lastMessageAt: t.lastMessageAt.toISOString(),
@@ -367,10 +398,11 @@ export async function getTicket(id: string, userId: string, forSupport: boolean)
   };
 }
 
-export async function createTicket(userId: string, subject: string, content: string, attachments: string[] = []) {
+export async function createTicket(userId: string, subject: string, content: string, attachments: string[] = [], category = 'otro') {
   const ticket = await prisma.ticket.create({
     data: {
       subject,
+      category,
       userId,
       messages: { create: { content, attachments, authorId: userId, fromSupport: false } },
     },

@@ -10,10 +10,11 @@ import {
   deletePost,
   replyTicket,
   setPinned,
+  setResolved,
   setTicketStatus,
   CommunityError,
 } from '@/lib/community-data';
-import { normalizeTag, SPACE_CATEGORY } from '@/lib/community';
+import { normalizeTag, SPACE_CATEGORY, TICKET_CATEGORIES } from '@/lib/community';
 import { getUserId, isAdmin } from '@/lib/session';
 
 export type ComposerState = { error?: string; ok?: boolean };
@@ -99,6 +100,18 @@ export async function comment(_prev: FormState, formData: FormData): Promise<For
   return { ok: true };
 }
 
+export async function resolveThread(postId: string, resolved: boolean): Promise<FormState> {
+  const userId = await getUserId();
+  if (!userId) return { error: 'Sesión expirada.' };
+  try {
+    await setResolved(postId, userId, resolved);
+  } catch (e) {
+    return { error: message(e, 'No pude actualizar.') };
+  }
+  revalidatePath('/comunidade', 'layout');
+  return { ok: true };
+}
+
 export async function pinPost(postId: string, pinned: boolean) {
   const userId = await getUserId();
   if (!userId || !(await isAdmin(userId))) return;
@@ -127,6 +140,8 @@ export async function openTicket(_prev: FormState, formData: FormData): Promise<
   const subject = String(formData.get('subject') || '').trim().slice(0, 120);
   const content = String(formData.get('content') || '').trim();
   const attachments = parseAttachments(String(formData.get('attachments') || ''));
+  const rawCategory = String(formData.get('category') || 'otro');
+  const category = TICKET_CATEGORIES.some((c) => c.id === rawCategory) ? rawCategory : 'otro';
   if (subject.length < 3) return { error: 'Ponle un asunto al ticket.' };
   if (content.length < 10 && attachments.length === 0) {
     return { error: 'Cuéntanos un poco más, o adjunta un audio o una foto.' };
@@ -134,7 +149,7 @@ export async function openTicket(_prev: FormState, formData: FormData): Promise<
 
   let id: string;
   try {
-    id = (await createTicket(userId, subject, content, attachments)).id;
+    id = (await createTicket(userId, subject, content, attachments, category)).id;
   } catch {
     return { error: 'No pude abrir el ticket ahora.' };
   }

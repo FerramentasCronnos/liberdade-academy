@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { comment, createPost, pinPost, removePost } from '@/app/(app)/comunidade/actions';
+import { comment, createPost, pinPost, removePost, resolveThread } from '@/app/(app)/comunidade/actions';
 import type { ChatMessage } from '@/lib/community-data';
 import { avatarColor, initials, spaceColor, type CommunityComment, type Space } from '@/lib/community';
 import { Avatar } from '@/components/avatar';
@@ -106,6 +106,59 @@ function Reply({ c }: { c: CommunityComment }) {
   );
 }
 
+/**
+ * Rodapé da thread. A equipe abre a conversa; o autor da mensagem responde
+ * dentro dela; qualquer um dos dois finaliza. Só a equipe reabre.
+ */
+function ThreadFooter({ thread, viewerId, viewerIsAdmin }: { thread: ChatMessage; viewerId: string; viewerIsAdmin: boolean }) {
+  const [error, setError] = useState<string | null>(null);
+  const isAuthor = thread.author.id === viewerId;
+  const resolved = Boolean(thread.resolvedAt);
+  const started = thread.replies.length > 0;
+  const canReply = !resolved && (viewerIsAdmin || (isAuthor && started));
+  const canResolve = started && !resolved && (viewerIsAdmin || isAuthor);
+
+  const toggle = async (value: boolean) => {
+    const r = await resolveThread(thread.id, value);
+    setError(r.error ?? null);
+  };
+
+  return (
+    <div className="border-t border-[var(--border)] px-4 py-3">
+      {canReply ? (
+        <Composer
+          placeholder={viewerIsAdmin ? 'Responder como equipo…' : 'Responder al equipo…'}
+          onSubmit={(fd) => comment({}, fd)}
+          hidden={<input type="hidden" name="postId" value={thread.id} />}
+        />
+      ) : (
+        <p className="rounded-2xl bg-[var(--bg-sunken)] px-4 py-3 text-center text-[13px] text-[var(--text-muted)]">
+          {resolved
+            ? 'Atención finalizada.'
+            : isAuthor
+              ? 'El equipo te responderá aquí. Te avisamos cuando lo haga.'
+              : 'Solo el equipo responde en este espacio.'}
+        </p>
+      )}
+      {(canResolve || (resolved && viewerIsAdmin)) && (
+        <div className="mt-2 flex items-center justify-end gap-3">
+          {canResolve && (
+            <button type="button" onClick={() => toggle(true)} className="rounded-full bg-[var(--money-soft)] px-3.5 py-1.5 text-[12.5px] font-semibold text-[var(--money)] transition hover:opacity-90">
+              ✓ Finalizar atención
+            </button>
+          )}
+          {resolved && viewerIsAdmin && (
+            <button type="button" onClick={() => toggle(false)} className="text-[12.5px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]">
+              Reabrir
+            </button>
+          )}
+        </div>
+      )}
+      {error && <p role="alert" className="mt-2 text-[12.5px] font-medium text-red-600 dark:text-red-400">{error}</p>}
+    </div>
+  );
+}
+
 export function ChatSpace({
   space,
   messages,
@@ -191,22 +244,32 @@ export function ChatSpace({
                       </p>
                       {m.content && <p className="mt-0.5 whitespace-pre-wrap text-[14.5px] leading-relaxed text-[var(--text)]">{m.content}</p>}
                       <AttachmentList urls={m.attachments} />
-                      <button
-                        type="button"
-                        onClick={() => setThreadId(m.id)}
-                        className={`mt-1.5 inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[12.5px] font-semibold transition ${
-                          m.replies.length ? 'bg-[var(--bg-elevated)] text-[var(--brand)] shadow-[var(--shadow-soft)]' : 'text-[var(--text-faint)] hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]'
-                        }`}
-                      >
-                        {m.replies.length > 0 && (
-                          <span className="flex -space-x-1.5">
-                            {m.replies.slice(0, 3).map((r) => (
-                              <Avatar key={r.id} name={r.author.name} src={r.author.avatar} size={18} color={avatarColor(r.author.name)} fallback={initials(r.author.name)} className="ring-2 ring-[var(--bg-elevated)]" />
-                            ))}
-                          </span>
-                        )}
-                        {m.replies.length ? `${m.replies.length} ${m.replies.length === 1 ? 'respuesta' : 'respuestas'}` : 'Responder'}
-                      </button>
+                      {(m.replies.length > 0 || viewerIsAdmin) && (
+                        <span className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setThreadId(m.id)}
+                            className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[12.5px] font-semibold transition ${
+                              m.replies.length ? 'bg-[var(--bg-elevated)] text-[var(--brand)] shadow-[var(--shadow-soft)]' : 'text-[var(--text-faint)] hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]'
+                            }`}
+                          >
+                            {m.replies.length > 0 && (
+                              <span className="flex -space-x-1.5">
+                                {m.replies.slice(0, 3).map((r) => (
+                                  <Avatar key={r.id} name={r.author.name} src={r.author.avatar} size={18} color={avatarColor(r.author.name)} fallback={initials(r.author.name)} className="ring-2 ring-[var(--bg-elevated)]" />
+                                ))}
+                              </span>
+                            )}
+                            {m.replies.length ? `${m.replies.length} ${m.replies.length === 1 ? 'respuesta' : 'respuestas'}` : 'Responder como equipo'}
+                          </button>
+                          {m.resolvedAt && (
+                            <span className="rounded-full bg-[var(--money-soft)] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-[var(--money)]">Resuelto</span>
+                          )}
+                          {!m.resolvedAt && m.replies.length > 0 && (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">En atención</span>
+                          )}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </li>
@@ -256,13 +319,7 @@ export function ChatSpace({
               ))}
             </ul>
           </div>
-          <div className="border-t border-[var(--border)] px-4 py-3">
-            <Composer
-              placeholder="Responder…"
-              onSubmit={(fd) => comment({}, fd)}
-              hidden={<input type="hidden" name="postId" value={thread.id} />}
-            />
-          </div>
+          <ThreadFooter thread={thread} viewerId={viewerId} viewerIsAdmin={viewerIsAdmin} />
         </aside>
       )}
     </div>

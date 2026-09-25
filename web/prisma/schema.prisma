@@ -313,6 +313,8 @@ model Post {
   tags      String[]   @default([])
   /// Fotos, áudios e arquivos (espaços em modo chat).
   attachments String[] @default([])
+  /// Em espaços de chat: atendimento finalizado (pela equipe ou pelo autor).
+  resolvedAt DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   authorId  String
@@ -371,6 +373,8 @@ model Comment {
 model Ticket {
   id            String          @id @default(cuid())
   subject       String
+  /// acceso | pagos | herramientas | ventas | otro
+  category      String          @default("otro")
   status        String          @default("abierto")
   userId        String
   user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)

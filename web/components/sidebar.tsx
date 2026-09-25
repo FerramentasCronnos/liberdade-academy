@@ -147,7 +147,7 @@ export function Sidebar({ user }: { user: SessionUser | null }) {
       </div>
 
       {/* rolagem só na navegação: o perfil fica fixo no rodapé */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="scroll-subtle -mr-2 flex-1 overflow-y-auto pr-2">
         <nav className="flex flex-col gap-1">
           {MAIN.map((item) => (
             <NavLink

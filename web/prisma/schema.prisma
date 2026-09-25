@@ -3,8 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Migrações pela conexão direta: no pooler o advisory lock do Prisma
+  // pode ficar preso numa sessão antiga e travar o build.
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
@@ -48,6 +51,10 @@ model User {
   missionCompletions   MissionCompletion[]
   redemptions          Redemption[]
   pointsEntries        PointsEntry[]
+  tickets              Ticket[]
+  ticketMessages       TicketMessage[]
+  /// Quando se apresentou no espaço de presentaciones.
+  introducedAt         DateTime?
   affiliateAccounts    AffiliateAccount[]
   offerTemplates       OfferTemplate[]
   affiliateLinks       AffiliateLink[]
@@ -297,15 +304,41 @@ model Product {
 
 model Post {
   id        String     @id @default(cuid())
+  title     String?
   content   String
   category  String
   image     String?
+  pinned    Boolean    @default(false)
+  /// Etiquetas livres para dar contexto (tiktok, meta ads, primera venta…).
+  tags      String[]   @default([])
+  /// Fotos, áudios e arquivos (espaços em modo chat).
+  attachments String[] @default([])
+  /// Em espaços de chat: atendimento finalizado (pela equipe ou pelo autor).
+  resolvedAt DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   authorId  String
   author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  spaceId   String?
+  space     Space?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   likes     PostLike[]
   comments  Comment[]
+
+  @@index([spaceId, pinned, createdAt])
+}
+
+/// Espaço da comunidade (como no Circle): cada um tem seu feed.
+/// kind: posts | intro | announcements (só admins publicam) | chat (linha do tempo contínua)
+model Space {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  emoji       String
+  kind        String   @default("posts")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  posts       Post[]
 }
 
 model PostLike {
@@ -320,13 +353,53 @@ model PostLike {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   content   String
+  attachments String[] @default([])
   postId    String
   authorId  String
-  createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String?
+  createdAt DateTime  @default(now())
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@index([postId, createdAt])
+}
+
+/// Ticket de suporte: conversa privada entre o membro e a equipe.
+/// status: abierto | en_progreso | resuelto
+model Ticket {
+  id            String          @id @default(cuid())
+  subject       String
+  /// acceso | pagos | herramientas | ventas | otro
+  category      String          @default("otro")
+  status        String          @default("abierto")
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  lastMessageAt DateTime        @default(now())
+  messages      TicketMessage[]
+
+  @@index([userId, lastMessageAt])
+  @@index([status, lastMessageAt])
+}
+
+model TicketMessage {
+  id          String   @id @default(cuid())
+  ticketId    String
+  authorId    String
+  content     String
+  /// URLs no Blob: fotos, áudios gravados, vídeos ou PDFs.
+  attachments String[] @default([])
+  fromSupport Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
 }
 
 model SellingProduct {

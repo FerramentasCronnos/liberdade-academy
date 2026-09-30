@@ -7,6 +7,7 @@ import type { CatalogProvider } from '../types';
  */
 export const seedProvider: CatalogProvider = {
   name: 'seed',
+  marketplace: 'tiktok_shop',
   supportedRegions: ['BR', 'US'],
   isConfigured: () => true,
   missingConfigMessage: () => '',

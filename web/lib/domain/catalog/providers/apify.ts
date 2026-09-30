@@ -181,6 +181,7 @@ function mapItem(
 
 export const apifyProvider: CatalogProvider = {
   name: 'apify',
+  marketplace: 'tiktok_shop',
   supportedRegions: ['BR', 'US'],
 
   isConfigured() {

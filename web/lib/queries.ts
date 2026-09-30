@@ -13,6 +13,7 @@ import { nextAvailableAt } from './domain/missions';
 /* ------------------------------------------------------------------ catálogo */
 
 export async function listProducts(params: {
+  /** Só vale para o TikTok Shop; Amazon e Shopee têm região própria. */
   region?: string;
   category?: string;
   q?: string;
@@ -26,7 +27,9 @@ export async function listProducts(params: {
       active: true,
       // produto sem foto não vai pra vitrine — card vazio parece bug
       image: { startsWith: 'http' },
-      ...(params.region ? { region: params.region } : {}),
+      ...(params.region
+        ? { OR: [{ marketplace: 'tiktok_shop', region: params.region }, { marketplace: { not: 'tiktok_shop' } }] }
+        : {}),
       ...(params.category && params.category !== 'todos' ? { category: params.category } : {}),
       ...(params.viral ? { isViral: true } : {}),
       ...(params.q
@@ -38,7 +41,7 @@ export async function listProducts(params: {
           }
         : {}),
     },
-    orderBy: [{ isViral: 'desc' }, { salesCount: 'desc' }],
+    orderBy: [{ createdAt: 'desc' }, { isViral: 'desc' }, { salesCount: 'desc' }],
     take,
   });
 

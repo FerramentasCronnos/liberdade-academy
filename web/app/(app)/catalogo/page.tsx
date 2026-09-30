@@ -28,7 +28,7 @@ export default async function CatalogPage() {
     <>
       <PageHeader
         title="Catálogo"
-        subtitle="Productos virales validados de TikTok Shop"
+        subtitle="Productos validados de TikTok Shop, Amazon y Shopee"
       />
 
       {error && (

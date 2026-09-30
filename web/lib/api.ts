@@ -13,8 +13,9 @@ export const CATALOG_REGION = process.env.NEXT_PUBLIC_CATALOG_REGION || 'US';
  * entrarem Shopee / Mercado Livre / Amazon, isto vira um campo do banco
  * (`Product.marketplace`) e esta função some.
  */
-function resolveMarketplace(_product: ApiProduct): Marketplace {
-  return 'tiktok_shop';
+function resolveMarketplace(product: ApiProduct): Marketplace {
+  const known: Marketplace[] = ['tiktok_shop', 'amazon', 'shopee', 'mercado_livre'];
+  return known.includes(product.marketplace as Marketplace) ? (product.marketplace as Marketplace) : 'tiktok_shop';
 }
 
 export function toProduct(raw: ApiProduct): Product {

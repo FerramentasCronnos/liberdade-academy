@@ -17,7 +17,7 @@ import {
 export function CatalogView({ products }: { products: Product[] }) {
   const [category, setCategory] = useState<CategoryId>('todos');
   const [marketplace, setMarketplace] = useState<Marketplace | 'todos'>('todos');
-  const [sort, setSort] = useState<SortId>('vendas');
+  const [sort, setSort] = useState<SortId>('novedades');
   const [query, setQuery] = useState('');
   const [sortOpen, setSortOpen] = useState(false);
 
@@ -44,6 +44,14 @@ export function CatalogView({ products }: { products: Product[] }) {
       case 'comissao':
         // produtos sem comissão informada vão pro fim, não pro topo
         sorted.sort((a, b) => (b.commissionValue ?? -1) - (a.commissionValue ?? -1));
+        break;
+      case 'novedades':
+        // recém-chegados no topo (mais novo primeiro); o resto por vendas
+        sorted.sort((a, b) => {
+          if (Boolean(a.isNew) !== Boolean(b.isNew)) return a.isNew ? -1 : 1;
+          if (a.isNew && b.isNew) return (b.createdAt ?? '').localeCompare(a.createdAt ?? '');
+          return b.salesCount - a.salesCount;
+        });
         break;
       default:
         sorted.sort((a, b) => b.salesCount - a.salesCount);

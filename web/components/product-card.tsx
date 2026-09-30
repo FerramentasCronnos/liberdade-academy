@@ -31,12 +31,16 @@ export function ProductCard({ product }: { product: Product }) {
           {marketplace.label}
         </span>
 
-        {product.isViral && (
+        {product.isViral ? (
           <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[var(--color-gold-400)] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--color-ink-900)] shadow-sm">
             <IconFlame className="h-3 w-3" />
             Viral
           </span>
-        )}
+        ) : product.isNew ? (
+          <span className="absolute right-2.5 top-2.5 rounded-lg bg-[var(--money)] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+            Nuevo
+          </span>
+        ) : null}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">

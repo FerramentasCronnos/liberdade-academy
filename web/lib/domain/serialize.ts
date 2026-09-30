@@ -64,6 +64,10 @@ export function serializeProduct(product: Product) {
     region: product.region,
     currency: product.currency,
     productUrl: product.productUrl ?? undefined,
+    marketplace: product.marketplace,
+    /** Entrou no catálogo nos últimos 14 dias. */
+    isNew: Date.now() - product.createdAt.getTime() < 14 * 86_400_000,
+    createdAt: product.createdAt.toISOString(),
   };
 }
 

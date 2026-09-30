@@ -11,9 +11,9 @@ export interface MarketplaceInfo {
 
 export const MARKETPLACES: MarketplaceInfo[] = [
   { id: 'tiktok_shop', label: 'TikTok Shop', color: '#111827', available: true },
-  { id: 'shopee', label: 'Shopee', color: '#ee4d2d', available: false },
+  { id: 'amazon', label: 'Amazon', color: '#ff9900', available: true },
+  { id: 'shopee', label: 'Shopee', color: '#ee4d2d', available: true },
   { id: 'mercado_livre', label: 'Mercado Libre', color: '#ffe600', available: false },
-  { id: 'amazon', label: 'Amazon', color: '#ff9900', available: false },
 ];
 
 export const MARKETPLACE_BY_ID = Object.fromEntries(
@@ -81,6 +81,9 @@ export interface ApiProduct {
   region?: string;
   currency?: string;
   productUrl?: string;
+  marketplace?: string;
+  isNew?: boolean;
+  createdAt?: string;
 }
 
 export interface Product extends ApiProduct {
@@ -89,9 +92,10 @@ export interface Product extends ApiProduct {
   commissionValue: number | null;
 }
 
-export type SortId = 'vendas' | 'preco_asc' | 'preco_desc' | 'avaliacao' | 'comissao';
+export type SortId = 'novedades' | 'vendas' | 'preco_asc' | 'preco_desc' | 'avaliacao' | 'comissao';
 
 export const SORTS: Array<{ id: SortId; label: string }> = [
+  { id: 'novedades', label: 'Novedades primero' },
   { id: 'vendas', label: 'Más vendidos' },
   { id: 'comissao', label: 'Mayor comisión' },
   { id: 'preco_asc', label: 'Menor precio' },

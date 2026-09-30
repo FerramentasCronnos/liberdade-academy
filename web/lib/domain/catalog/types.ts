@@ -55,9 +55,14 @@ export interface FetchOptions {
   terms?: string[];
 }
 
+export type Marketplace = 'tiktok_shop' | 'amazon' | 'shopee' | 'mercado_livre';
+
 export interface CatalogProvider {
   /** Valor aceito em CATALOG_PROVIDER. */
   readonly name: string;
+
+  /** Loja que este provider alimenta. */
+  readonly marketplace: Marketplace;
 
   /** Regiões que este provider consegue atender. */
   readonly supportedRegions: Region[];

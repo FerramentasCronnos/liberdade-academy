@@ -63,6 +63,7 @@ const VIRAL_SALES_THRESHOLD: Record<Region, number> = {
 export interface NormalizedProduct {
   externalId: string;
   provider: string;
+  marketplace: string;
   region: Region;
   currency: string;
   productUrl: string | null;
@@ -92,6 +93,7 @@ export function normalizeProduct(
   raw: RawCatalogProduct,
   provider: string,
   region: Region,
+  marketplace = 'tiktok_shop',
 ): NormalizedProduct | null {
   const externalId = String(raw.externalId || '').trim();
   const name = String(raw.name || '').trim();
@@ -110,6 +112,7 @@ export function normalizeProduct(
   return {
     externalId,
     provider,
+    marketplace,
     region,
     currency: raw.currency || CURRENCY_BY_REGION[region],
     productUrl: raw.productUrl?.trim() || null,
@@ -117,7 +120,7 @@ export function normalizeProduct(
     image,
     price: Math.max(0, toNumber(raw.price)),
     category: mapCategory(raw.category),
-    supplier: (raw.supplier || 'TikTok Shop').slice(0, 200),
+    supplier: (raw.supplier || { amazon: 'Amazon', shopee: 'Shopee' }[marketplace] || 'TikTok Shop').slice(0, 200),
     rating: clamp(toNumber(raw.rating, 4.5), 0, 5),
     salesCount,
     tiktokViews,

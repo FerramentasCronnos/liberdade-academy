@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/db';
 import { normalizeProduct } from './normalize';
 import { apifyProvider } from './providers/apify';
+import { apifyAmazonProvider } from './providers/apify-amazon';
+import { apifyShopeeProvider } from './providers/apify-shopee';
 import { kalodataProvider } from './providers/kalodata';
 import { seedProvider } from './providers/seed';
 import {
@@ -27,7 +29,16 @@ const PROVIDERS: Record<string, CatalogProvider> = {
   [seedProvider.name]: seedProvider,
   [apifyProvider.name]: apifyProvider,
   [kalodataProvider.name]: kalodataProvider,
+  [apifyAmazonProvider.name]: apifyAmazonProvider,
+  [apifyShopeeProvider.name]: apifyShopeeProvider,
 };
+
+/** Provider padrão de cada loja. TikTok segue CATALOG_PROVIDER. */
+export function providerForMarketplace(marketplace?: string): CatalogProvider {
+  if (marketplace === 'amazon') return apifyAmazonProvider;
+  if (marketplace === 'shopee') return apifyShopeeProvider;
+  return getProvider();
+}
 
 export const AVAILABLE_PROVIDERS = Object.keys(PROVIDERS);
 
@@ -58,6 +69,8 @@ export function configuredRegions(): Region[] {
 
 export interface SyncOptions {
   provider?: string;
+  /** tiktok_shop (padrão) | amazon | shopee — escolhe o provider da loja. */
+  marketplace?: string;
   regions?: Region[];
   limit?: number;
   category?: string;
@@ -90,7 +103,7 @@ export interface SyncResult {
  * resultado daquela região. Assim um actor US quebrado não impede o BR.
  */
 export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult> {
-  const provider = getProvider(options.provider);
+  const provider = options.marketplace ? providerForMarketplace(options.marketplace) : getProvider(options.provider);
   const limit = Math.min(Math.max(options.limit ?? Number(process.env.CATALOG_SYNC_LIMIT || 100), 1), 1000);
 
   if (provider.name === 'seed') {
@@ -129,7 +142,7 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
         terms: options.terms,
       });
       const normalized = raw
-        .map((item) => normalizeProduct(item, provider.name, region))
+        .map((item) => normalizeProduct(item, provider.name, region, provider.marketplace))
         .filter((item): item is NonNullable<typeof item> => item !== null);
 
       let saved = 0;

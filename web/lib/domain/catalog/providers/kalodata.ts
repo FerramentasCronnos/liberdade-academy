@@ -25,6 +25,7 @@ type KalodataProduct = {
 
 export const kalodataProvider: CatalogProvider = {
   name: 'kalodata',
+  marketplace: 'tiktok_shop',
   supportedRegions: ['BR', 'US'],
 
   isConfigured() {

@@ -276,6 +276,8 @@ model Product {
   id            String           @id @default(cuid())
   externalId    String?
   provider      String           @default("seed")
+  /// tiktok_shop | amazon | shopee | mercado_livre
+  marketplace   String           @default("tiktok_shop")
   region        String           @default("BR")
   currency      String           @default("BRL")
   productUrl    String?
@@ -299,6 +301,7 @@ model Product {
 
   @@unique([provider, region, externalId])
   @@index([region, category, active])
+  @@index([marketplace, active, createdAt])
   @@index([region, isViral, salesCount])
 }
 

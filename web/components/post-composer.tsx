@@ -5,7 +5,7 @@
 import { useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { createPost } from '@/app/(app)/comunidade/actions';
-import { uploadAvatar } from '@/app/(app)/perfil/actions';
+import { upload } from '@vercel/blob/client';
 import { avatarColor, initials, normalizeTag, SUGGESTED_TAGS, type Space } from '@/lib/community';
 import { Avatar } from './avatar';
 import { IconImage, IconX } from './icons';
@@ -63,7 +63,12 @@ export function PostComposer({
   if (space?.kind === 'announcements' && !user.isAdmin) return null;
 
   const formAction = async (formData: FormData) => {
-    const result = await createPost({}, formData);
+    let result: { ok?: boolean; error?: string };
+    try {
+      result = await createPost({}, formData);
+    } catch {
+      result = { error: 'No pude publicar ahora. Revisa tu conexión e inténtalo de nuevo.' };
+    }
     if (!result.ok) {
       setError(result.error ?? 'No pude publicar ahora.');
       return;
@@ -83,16 +88,27 @@ export function PostComposer({
     setTagDraft('');
   };
 
+  // Direto ao Blob, como os anexos: não passa pelo limite de corpo das actions.
   const onPickFile = async (file: File) => {
-    setUploading(true);
     setError(null);
-    const body = new FormData();
-    body.append('file', file);
-    const result = await uploadAvatar(body);
-    if (result.error) setError(result.error);
-    else setImage(result.url ?? null);
-    setUploading(false);
-    if (fileRef.current) fileRef.current.value = '';
+    if (file.size > 40 * 1024 * 1024) {
+      setError('Imagen mayor a 40 MB.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const blob = await upload(`posts/${file.name.replace(/[^\w.-]+/g, '_')}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        contentType: file.type || undefined,
+      });
+      setImage(blob.url);
+    } catch (e) {
+      setError(e instanceof Error ? `No pude subir la imagen: ${e.message}` : 'No pude subir la imagen.');
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
   };
 
   const avatar = (

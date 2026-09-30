@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  // Uploads por Server Action (avatar, prova de missão, criativos) passam de
+  // 1 MB com facilidade; sem isto a chamada falha e a tela fica "carregando".
+  experimental: {
+    serverActions: { bodySizeLimit: '8mb' },
+  },
 };
 
 export default nextConfig;

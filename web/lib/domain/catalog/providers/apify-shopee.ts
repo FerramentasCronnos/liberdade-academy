@@ -73,7 +73,7 @@ export const apifyShopeeProvider: CatalogProvider = {
       searchTerms: terms,
       region: 'BR',
       maxItems: limit,
-      sort: 'sales',
+      sort: 'relevance',
       includeEnrichment: false,
     };
 

@@ -8,6 +8,8 @@ import { createPost } from '@/app/(app)/comunidade/actions';
 import { upload } from '@vercel/blob/client';
 import { avatarColor, initials, normalizeTag, SUGGESTED_TAGS, type Space } from '@/lib/community';
 import { Avatar } from './avatar';
+import { PostCard } from './post-card';
+import type { CommunityPost } from '@/lib/community';
 import { IconImage, IconX } from './icons';
 
 function Submit({ disabled, label }: { disabled: boolean; label: string }) {
@@ -54,6 +56,8 @@ export function PostComposer({
   const [tags, setTags] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState('');
   const [notify, setNotify] = useState(true);
+  const [preview, setPreview] = useState<{ title: string; content: string; link: string; pinned: boolean } | null>(null);
+  const [publishing, setPublishing] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +67,35 @@ export function PostComposer({
 
   if (space?.kind === 'announcements' && !user.isAdmin) return null;
 
+  // Anúncio: antes de publicar, mostra como vai ficar e o que vai acontecer.
+  const openPreview = () => {
+    const form = formRef.current;
+    if (!form) return;
+    const fd = new FormData(form);
+    const title = String(fd.get('title') || '').trim();
+    const content = String(fd.get('content') || '').trim();
+    const link = String(fd.get('link') || '').trim();
+    if (title.length < 3) {
+      setError('El anuncio necesita un título.');
+      return;
+    }
+    if (content.length < 3 && !image) {
+      setError('Escribe el contenido del anuncio.');
+      return;
+    }
+    if (link && !/^https?:\/\/\S+$/i.test(link)) {
+      setError('El enlace debe empezar con http:// o https://.');
+      return;
+    }
+    setError(null);
+    setPreview({ title, content, link, pinned: fd.get('pinned') === 'on' });
+  };
+
+  const publishFromPreview = () => {
+    setPublishing(true);
+    formRef.current?.requestSubmit();
+  };
+
   const formAction = async (formData: FormData) => {
     let result: { ok?: boolean; error?: string };
     try {
@@ -70,10 +103,13 @@ export function PostComposer({
     } catch {
       result = { error: 'No pude publicar ahora. Revisa tu conexión e inténtalo de nuevo.' };
     }
+    setPublishing(false);
     if (!result.ok) {
+      setPreview(null);
       setError(result.error ?? 'No pude publicar ahora.');
       return;
     }
+    setPreview(null);
     setError(null);
     formRef.current?.reset();
     setImage(null);
@@ -249,11 +285,77 @@ export function PostComposer({
           {uploading ? 'Subiendo…' : isAnnouncement ? 'Portada' : 'Foto'}
         </button>
         <div className="ml-auto">
-          <Submit disabled={uploading} label={isIntro ? 'Presentarme' : isAnnouncement ? (notify ? 'Publicar y avisar' : 'Publicar sin avisar') : 'Publicar'} />
+          {isAnnouncement ? (
+            <button
+              type="button"
+              onClick={openPreview}
+              disabled={uploading}
+              className="rounded-xl bg-[var(--text)] px-5 py-2.5 text-[13.5px] font-semibold text-[var(--bg-elevated)] transition hover:opacity-90 disabled:opacity-60"
+            >
+              Vista previa
+            </button>
+          ) : (
+            <Submit disabled={uploading} label={isIntro ? 'Presentarme' : 'Publicar'} />
+          )}
         </div>
       </div>
 
       {error && <p role="alert" className="mt-2 text-[12.5px] font-medium text-red-600 dark:text-red-400">{error}</p>}
+
+      {preview && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6">
+          <div role="dialog" aria-modal="true" className="flex max-h-[94dvh] w-full max-w-[720px] flex-col overflow-hidden rounded-t-[26px] bg-[var(--bg)] shadow-[var(--shadow-lift)] sm:rounded-[26px]">
+            <header className="flex items-center gap-3 border-b border-[var(--border)] bg-[var(--bg-elevated)] px-6 py-4">
+              <div className="flex-1">
+                <h2 className="font-display text-[20px] font-semibold text-[var(--text)]">Así verán el anuncio</h2>
+                <p className="text-[12.5px] text-[var(--text-muted)]">Revisa todo antes de publicar.</p>
+              </div>
+              <button type="button" onClick={() => setPreview(null)} aria-label="Cerrar" className="grid h-8 w-8 place-items-center rounded-full text-[var(--text-faint)] hover:bg-[var(--bg-sunken)]">
+                <IconX className="h-4 w-4" />
+              </button>
+            </header>
+
+            <div className="overflow-y-auto p-5">
+              <PostCard
+                preview
+                post={{
+                  id: 'preview',
+                  author: { id: 'me', name: user.name, avatar: user.avatar, level: 1, isAdmin: true },
+                  title: preview.title,
+                  content: preview.content,
+                  image: image ?? undefined,
+                  pinned: preview.pinned,
+                  likes: 0,
+                  comments: 0,
+                  isLiked: false,
+                  createdAt: new Date().toISOString(),
+                  category: 'dica',
+                  tags,
+                  attachments: [],
+                  link: preview.link || undefined,
+                  space: { slug: 'anuncios', name: 'Anuncios', emoji: '📣', kind: 'announcements' },
+                } satisfies CommunityPost}
+              />
+
+              <ul className="mt-4 grid gap-2 rounded-2xl bg-[var(--bg-elevated)] p-4 text-[13.5px] text-[var(--text)] shadow-[var(--shadow-soft)] sm:grid-cols-2">
+                <li>🖼️ Portada: <strong>{image ? 'sí' : 'sin portada'}</strong></li>
+                <li>🔗 Enlace: <strong className="break-all">{preview.link || 'ninguno'}</strong></li>
+                <li>📌 Fijado arriba: <strong>{preview.pinned ? 'sí' : 'no'}</strong></li>
+                <li>✉️ Correo a los miembros: <strong>{notify ? 'sí, a todos' : 'no'}</strong></li>
+              </ul>
+            </div>
+
+            <footer className="flex flex-wrap items-center gap-3 border-t border-[var(--border)] bg-[var(--bg-elevated)] px-6 py-4">
+              <button type="button" onClick={() => setPreview(null)} disabled={publishing} className="rounded-xl bg-[var(--bg-sunken)] px-4 py-2.5 text-[13.5px] font-semibold text-[var(--text)] transition hover:opacity-90 disabled:opacity-60">
+                ← Volver a editar
+              </button>
+              <button type="button" onClick={publishFromPreview} disabled={publishing} className="ml-auto rounded-xl bg-[var(--brand)] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60">
+                {publishing ? 'Publicando…' : notify ? 'Publicar y avisar' : 'Publicar sin avisar'}
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

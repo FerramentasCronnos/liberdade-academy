@@ -94,6 +94,7 @@ export function PostCard({
   viewerIsAdmin = false,
   detail = false,
   backTo = '/comunidade',
+  preview = false,
 }: {
   post: CommunityPost;
   viewerId?: string;
@@ -101,6 +102,8 @@ export function PostCard({
   /** Na página do post: texto inteiro, sem "ver más". */
   detail?: boolean;
   backTo?: string;
+  /** Prévia no compositor: sem menu nem ações. */
+  preview?: boolean;
 }) {
   const [, startTransition] = useTransition();
   const [state, addOptimistic] = useOptimistic(
@@ -124,8 +127,9 @@ export function PostCard({
   return (
     <article className="overflow-hidden rounded-[22px] bg-[var(--bg-elevated)] shadow-[var(--shadow-soft)]">
       {isAnnouncement && post.image && (
-        <Link href={detail ? post.image : href} target={detail ? '_blank' : undefined} className="block bg-[var(--bg-sunken)]">
-          <img src={post.image} alt="" loading="lazy" className="max-h-[360px] w-full object-cover" />
+        // capa inteira, na proporção original: um post quadrado não pode sair cortado
+        <Link href={preview ? '#' : detail ? post.image : href} target={detail && !preview ? '_blank' : undefined} className="block bg-[var(--bg-sunken)]">
+          <img src={post.image} alt="" loading="lazy" className="block h-auto w-full" />
         </Link>
       )}
       <div className="p-6">
@@ -145,7 +149,7 @@ export function PostCard({
             </span>
           )}
         </div>
-        <Menu post={post} canDelete={canDelete} canPin={viewerIsAdmin} backTo={backTo} />
+        {!preview && <Menu post={post} canDelete={canDelete} canPin={viewerIsAdmin} backTo={backTo} />}
       </header>
 
       <div className={`flex items-center gap-3 ${title || post.pinned ? 'mt-4' : ''}`}>
@@ -217,7 +221,8 @@ export function PostCard({
       <footer className="mt-5 flex items-center gap-1 border-t border-[var(--border)] pt-3">
         <button
           type="button"
-          onClick={onLike}
+          onClick={preview ? undefined : onLike}
+          disabled={preview}
           aria-pressed={state.liked}
           className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition ${
             state.liked ? 'text-red-500' : 'text-[var(--text-muted)] hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]'

@@ -87,7 +87,7 @@ export function announcementEmail(input: { title: string; excerpt: string; postI
   const body = `
     <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#6d5ce7;">📣 Nuevo anuncio</p>
     <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#17143a;line-height:1.25;">${escape(input.title)}</h1>
-    ${input.image ? `<img src="${escape(input.image)}" alt="" style="display:block;width:100%;max-height:280px;object-fit:cover;border-radius:14px;margin:0 0 16px;">` : ''}
+    ${input.image ? `<img src="${escape(input.image)}" alt="" style="display:block;width:100%;height:auto;border-radius:14px;margin:0 0 16px;">` : ''}
     <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#4a4668;white-space:pre-line;">${escape(input.excerpt)}</p>
     <a href="${url}" style="display:inline-block;background:#6d5ce7;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver el anuncio completo</a>
     ${input.link ? `<p style="margin:16px 0 0;font-size:13.5px;color:#8b87a6;">Enlace del anuncio: <a href="${escape(input.link)}" style="color:#6d5ce7;">${escape(input.link)}</a></p>` : ''}`;

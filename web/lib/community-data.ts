@@ -86,12 +86,13 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
     likes: post.likes.length,
     comments: post._count.comments,
     isLiked: post.likes.some((like) => like.userId === viewerId),
-    createdAt: post.createdAt.toISOString(),
+    createdAt: (post.scheduledAt ?? post.createdAt).toISOString(),
     category: post.category,
     tags: post.tags,
     attachments: post.attachments,
     resolvedAt: post.resolvedAt?.toISOString(),
     link: post.link ?? undefined,
+    scheduledAt: post.scheduledAt && post.scheduledAt > new Date() ? post.scheduledAt.toISOString() : undefined,
     space: post.space
       ? { slug: post.space.slug, name: post.space.name, emoji: post.space.emoji, kind: post.space.kind }
       : undefined,
@@ -99,11 +100,15 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
 }
 
 /** Feed geral (todos os espaços) ou de um espaço. Fixados vêm primeiro. */
-export async function listFeed(viewerId: string, spaceSlug?: string, tag?: string) {
+/** Publicado, ou agendado e já vencido. */
+const published = { OR: [{ scheduledAt: null }, { scheduledAt: { lte: new Date() } }] };
+
+export async function listFeed(viewerId: string, spaceSlug?: string, tag?: string, viewerIsAdmin = false) {
   const posts = await prisma.post.findMany({
     where: {
       ...(spaceSlug ? { space: { slug: spaceSlug } } : {}),
       ...(tag ? { tags: { has: tag } } : {}),
+      ...(viewerIsAdmin ? {} : published),
     },
     orderBy: spaceSlug ? [{ pinned: 'desc' }, { createdAt: 'desc' }] : { createdAt: 'desc' },
     take: 60,
@@ -139,9 +144,10 @@ export async function listChat(viewerId: string, spaceSlug: string): Promise<Cha
   }));
 }
 
-export async function getPost(id: string, viewerId: string) {
+export async function getPost(id: string, viewerId: string, viewerIsAdmin = false) {
   const post = await prisma.post.findUnique({ where: { id }, include: postInclude });
   if (!post) return null;
+  if (!viewerIsAdmin && post.scheduledAt && post.scheduledAt > new Date()) return null;
 
   const comments = await prisma.comment.findMany({
     where: { postId: id },
@@ -183,6 +189,8 @@ export async function createSpacePost(input: {
   attachments?: string[];
   link?: string;
   pinned?: boolean;
+  scheduledAt?: Date;
+  notifyEmail?: boolean;
 }) {
   const [space, user] = await Promise.all([
     prisma.space.findUnique({ where: { slug: input.spaceSlug } }),
@@ -203,6 +211,8 @@ export async function createSpacePost(input: {
       attachments: input.attachments ?? [],
       link: input.link || null,
       pinned: Boolean(input.pinned) && user.isAdmin,
+      scheduledAt: input.scheduledAt ?? null,
+      notifyEmail: Boolean(input.notifyEmail),
       authorId: input.userId,
       spaceId: space.id,
     },
@@ -226,11 +236,11 @@ export async function createSpacePost(input: {
  * Usado pela ação de publicar e pela rota administrativa de reenvio.
  */
 export async function notifyAnnouncement(postId: string) {
-  const { announcementEmail, sendBatch } = await import('./email');
+  const { announcementEmail, sendBatch, isDeliverable } = await import('./email');
   const post = await prisma.post.findUnique({ where: { id: postId }, include: { space: true } });
   if (!post || post.space?.kind !== 'announcements') return { sent: 0, recipients: 0, error: 'No es un anuncio.' };
 
-  const recipients = await listNotifiableEmails();
+  const recipients = (await listNotifiableEmails()).filter(isDeliverable);
   const mail = announcementEmail({
     title: post.title || 'Nuevo anuncio',
     excerpt: post.content.slice(0, 400),
@@ -239,8 +249,33 @@ export async function notifyAnnouncement(postId: string) {
     link: post.link ?? undefined,
   });
   const result = await sendBatch(recipients, mail.subject, mail.html);
-  if (result.error) console.error(`[anuncios] e-mail ${result.sent}/${recipients.length}: ${result.error}`);
-  return { sent: result.sent, recipients: recipients.length, error: result.error };
+  if (result.failed.length) console.error(`[anuncios] falharam: ${result.failed.join(', ')} ${result.error ?? ''}`);
+  if (result.sent > 0) {
+    await prisma.post.update({ where: { id: post.id }, data: { notifiedAt: new Date() } });
+  }
+  return { sent: result.sent, recipients: recipients.length, failed: result.failed, error: result.error };
+}
+
+/**
+ * Anúncios agendados cuja hora chegou e ainda não avisaram por e-mail.
+ * Chamado pelo cron e, por garantia, ao abrir a comunidade.
+ */
+export async function publishDueAnnouncements() {
+  const due = await prisma.post.findMany({
+    where: { scheduledAt: { lte: new Date() }, notifyEmail: true, notifiedAt: null, space: { kind: 'announcements' } },
+    select: { id: true },
+    take: 10,
+  });
+  const results = [];
+  for (const { id } of due) {
+    // marca antes de enviar para duas chamadas simultâneas não duplicarem
+    const claimed = await prisma.post.updateMany({ where: { id, notifiedAt: null }, data: { notifiedAt: new Date() } });
+    if (!claimed.count) continue;
+    const r = await notifyAnnouncement(id);
+    if (r.sent === 0) await prisma.post.update({ where: { id }, data: { notifiedAt: null } });
+    results.push({ id, ...r });
+  }
+  return results;
 }
 
 /** Quem recebe avisos por e-mail: contas reais e ativas. */

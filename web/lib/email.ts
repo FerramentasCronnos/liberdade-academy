@@ -14,26 +14,54 @@ interface SendResult {
   error?: string;
 }
 
-/** Mesmo e-mail para muitas pessoas: a Resend aceita lotes de até 100. */
-export async function sendBatch(recipients: string[], subject: string, html: string): Promise<{ sent: number; error?: string }> {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { sent: 0, error: 'RESEND_API_KEY não configurada' };
+/** Endereço plausível e fora dos domínios de teste que a Resend recusa. */
+export function isDeliverable(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email) && !/@(example\.(com|org|net)|test\.com|localhost)$/i.test(email);
+}
 
+/**
+ * Mesmo e-mail para muitas pessoas. Tenta em lotes de 100; se a Resend
+ * recusar um lote (um único endereço ruim derruba o lote inteiro), reenvia
+ * um a um para não perder os demais.
+ */
+export async function sendBatch(
+  recipients: string[],
+  subject: string,
+  html: string,
+): Promise<{ sent: number; failed: string[]; error?: string }> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { sent: 0, failed: recipients, error: 'RESEND_API_KEY não configurada' };
+
+  const list = recipients.filter(isDeliverable);
+  const failed: string[] = recipients.filter((r) => !isDeliverable(r));
   let sent = 0;
-  for (let i = 0; i < recipients.length; i += 100) {
-    const chunk = recipients.slice(i, i + 100);
+  let lastError: string | undefined;
+
+  for (let i = 0; i < list.length; i += 100) {
+    const chunk = list.slice(i, i + 100);
     const response = await fetch('https://api.resend.com/emails/batch', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(chunk.map((to) => ({ from: FROM, to: [to], subject, html }))),
     });
-    if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { message?: string };
-      return { sent, error: data.message || `HTTP ${response.status}` };
+    if (response.ok) {
+      sent += chunk.length;
+      continue;
     }
-    sent += chunk.length;
+
+    // lote recusado: um a um, respeitando o limite de 2 envios por segundo
+    for (const to of chunk) {
+      const one = await send(to, subject, html);
+      if (one.ok) sent += 1;
+      else {
+        failed.push(to);
+        lastError = one.error;
+      }
+      await new Promise((r) => setTimeout(r, 550));
+    }
   }
-  return { sent };
+
+  return { sent, failed, error: sent === 0 && list.length > 0 ? lastError : undefined };
 }
 
 async function send(to: string, subject: string, html: string): Promise<SendResult> {

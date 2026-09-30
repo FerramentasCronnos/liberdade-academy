@@ -39,6 +39,8 @@ export interface CommunityPost {
   resolvedAt?: string;
   /** Anúncios: botão de ação. */
   link?: string;
+  /** Anúncio agendado ainda não publicado (só admin vê). */
+  scheduledAt?: string;
   space?: { slug: string; name: string; emoji: string; kind: string };
 }
 

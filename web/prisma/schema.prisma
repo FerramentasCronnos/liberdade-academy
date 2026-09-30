@@ -317,6 +317,12 @@ model Post {
   resolvedAt DateTime?
   /// Anúncios: botão de ação opcional.
   link      String?
+  /// Anúncios agendados: só aparecem (e avisam) a partir desta hora.
+  scheduledAt DateTime?
+  /// Enviar e-mail aos membros ao publicar.
+  notifyEmail Boolean   @default(false)
+  /// Quando o e-mail foi enviado (evita reenvio pelo cron).
+  notifiedAt  DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   authorId  String
@@ -327,6 +333,7 @@ model Post {
   comments  Comment[]
 
   @@index([spaceId, pinned, createdAt])
+  @@index([scheduledAt, notifiedAt])
 }
 
 /// Espaço da comunidade (como no Circle): cada um tem seu feed.

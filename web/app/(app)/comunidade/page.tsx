@@ -16,7 +16,7 @@ export default async function CommunityHome({ searchParams }: { searchParams: Pr
   const { tag } = await searchParams;
   const [spaces, posts, me] = await Promise.all([
     listSpaces(),
-    listFeed(user.id, undefined, tag || undefined),
+    listFeed(user.id, undefined, tag || undefined, user.isAdmin),
     prisma.user.findUnique({ where: { id: user.id }, select: { introducedAt: true } }),
   ]);
 

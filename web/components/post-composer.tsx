@@ -57,6 +57,11 @@ export function PostComposer({
   const [tagDraft, setTagDraft] = useState('');
   const [notify, setNotify] = useState(true);
   const [preview, setPreview] = useState<{ title: string; content: string; link: string; pinned: boolean } | null>(null);
+  const [scheduleLocal, setScheduleLocal] = useState('');
+  const scheduledIso = scheduleLocal ? new Date(scheduleLocal).toISOString() : '';
+  const scheduleLabel = scheduleLocal
+    ? new Date(scheduleLocal).toLocaleString('es-419', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
   const [publishing, setPublishing] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -87,6 +92,10 @@ export function PostComposer({
       setError('El enlace debe empezar con http:// o https://.');
       return;
     }
+    if (scheduleLocal && new Date(scheduleLocal).getTime() < Date.now()) {
+      setError('La fecha de programación ya pasó.');
+      return;
+    }
     setError(null);
     setPreview({ title, content, link, pinned: fd.get('pinned') === 'on' });
   };
@@ -115,6 +124,7 @@ export function PostComposer({
     setImage(null);
     setTags([]);
     setTagDraft('');
+    setScheduleLocal('');
     setOpen(forceOpen);
   };
 
@@ -181,6 +191,7 @@ export function PostComposer({
       <input type="hidden" name="space" value={slug} />
       <input type="hidden" name="image" value={image ?? ''} />
       <input type="hidden" name="tags" value={tags.join(',')} />
+      <input type="hidden" name="scheduledAt" value={scheduledIso} />
 
       <div className="flex items-center gap-3">
         {avatar}
@@ -246,6 +257,21 @@ export function PostComposer({
           <label className="inline-flex items-center gap-2 text-[13px] font-medium text-[var(--text)]">
             <input type="checkbox" name="notify" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="h-4 w-4 accent-[var(--brand)]" />
             Avisar a todos los miembros por correo
+          </label>
+          <label className="flex flex-wrap items-center gap-2 text-[13px] font-medium text-[var(--text)]">
+            🗓️ Programar para
+            <input
+              type="datetime-local"
+              value={scheduleLocal}
+              min={new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)}
+              onChange={(e) => setScheduleLocal(e.target.value)}
+              className="rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5 text-[13px] text-[var(--text)] outline-none focus:border-[var(--brand)]"
+            />
+            {scheduleLocal ? (
+              <button type="button" onClick={() => setScheduleLocal('')} className="text-[12px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]">Quitar</button>
+            ) : (
+              <span className="text-[12px] font-normal text-[var(--text-muted)]">vacío = publicar ahora</span>
+            )}
           </label>
           <p className="text-[12px] text-[var(--text-muted)]">
             {notify
@@ -342,6 +368,7 @@ export function PostComposer({
                 <li>🔗 Enlace: <strong className="break-all">{preview.link || 'ninguno'}</strong></li>
                 <li>📌 Fijado arriba: <strong>{preview.pinned ? 'sí' : 'no'}</strong></li>
                 <li>✉️ Correo a los miembros: <strong>{notify ? 'sí, a todos' : 'no'}</strong></li>
+                <li className="sm:col-span-2">🗓️ Publicación: <strong>{scheduleLocal ? `programada para ${scheduleLabel} (tu hora local)` : 'ahora mismo'}</strong></li>
               </ul>
             </div>
 
@@ -350,7 +377,7 @@ export function PostComposer({
                 ← Volver a editar
               </button>
               <button type="button" onClick={publishFromPreview} disabled={publishing} className="ml-auto rounded-xl bg-[var(--brand)] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-60">
-                {publishing ? 'Publicando…' : notify ? 'Publicar y avisar' : 'Publicar sin avisar'}
+                {publishing ? 'Publicando…' : scheduleLocal ? 'Programar' : notify ? 'Publicar y avisar' : 'Publicar sin avisar'}
               </button>
             </footer>
           </div>

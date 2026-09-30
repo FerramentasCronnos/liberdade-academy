@@ -58,6 +58,10 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
   const link = /^https?:\/\/\S+$/i.test(rawLink) ? rawLink.slice(0, 500) : '';
   const pinned = formData.get('pinned') === 'on';
   const notify = formData.get('notify') === 'on';
+  const scheduledRaw = String(formData.get('scheduledAt') || '');
+  const scheduledAt = scheduledRaw ? new Date(scheduledRaw) : undefined;
+  if (scheduledAt && Number.isNaN(scheduledAt.getTime())) return { error: 'Fecha de programación inválida.' };
+  if (scheduledAt && scheduledAt.getTime() < Date.now() - 60_000) return { error: 'La fecha de programación ya pasó.' };
 
   if (rawLink && !link) return { error: 'El enlace debe empezar con http:// o https://.' };
   if (spaceSlug === 'anuncios' && title.length < 3) return { error: 'El anuncio necesita un título.' };
@@ -66,18 +70,19 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
 
   let created: Awaited<ReturnType<typeof createSpacePost>>;
   try {
-    created = await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined, tags, attachments, link, pinned });
+    created = await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined, tags, attachments, link, pinned, scheduledAt, notifyEmail: notify });
   } catch (e) {
     return { error: message(e, 'No pude publicar ahora.') };
   }
 
   // anúncio novo com aviso marcado: e-mail para todos antes de responder.
   // É um lote só (até 100 por chamada), então não vale esconder a falha.
-  if (created.spaceKind === 'announcements' && notify) {
+  // agendado: o cron (ou a próxima visita) avisa na hora marcada
+  if (created.spaceKind === 'announcements' && notify && !scheduledAt) {
     const result = await notifyAnnouncement(created.post.id);
     revalidatePath('/comunidade', 'layout');
     if (result.error) {
-      return { error: `Anuncio publicado, pero el correo falló (${result.error}). Puedes reenviarlo desde el menú del anuncio.` };
+      return { error: `Anuncio publicado, pero el correo falló (${result.error}).` };
     }
   }
 

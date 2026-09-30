@@ -134,7 +134,14 @@ export function PostCard({
       )}
       <div className="p-6">
       {isAnnouncement && (
-        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">📣 Anuncio</p>
+        <p className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
+          📣 Anuncio
+          {post.scheduledAt && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] normal-case tracking-normal text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
+              Programado · {new Date(post.scheduledAt).toLocaleString('es-419', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · solo lo ves tú
+            </span>
+          )}
+        </p>
       )}
       <header className="flex items-start gap-3">
         <div className="min-w-0 flex-1">

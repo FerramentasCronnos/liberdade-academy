@@ -32,7 +32,7 @@ export default async function SpacePage({ params, searchParams }: { params: Para
     return <ChatSpace space={space} messages={messages} members={members} viewerId={user.id} viewerIsAdmin={user.isAdmin} />;
   }
 
-  const posts = await listFeed(user.id, slug, tag || undefined);
+  const posts = await listFeed(user.id, slug, tag || undefined, user.isAdmin);
   const backTo = `/comunidade/e/${slug}`;
   const pill = space.kind === 'intro' ? 'Nuevos miembros' : space.kind === 'announcements' ? 'Del equipo' : undefined;
   const canPost = space.kind !== 'announcements' || user.isAdmin;

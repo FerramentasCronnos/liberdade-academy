@@ -21,7 +21,7 @@ export default async function PostPage({ params }: { params: Params }) {
   if (!user) redirect('/login');
 
   const { id } = await params;
-  const data = await getPost(id, user.id);
+  const data = await getPost(id, user.id, user.isAdmin);
   if (!data) notFound();
 
   const { post, comments } = data;

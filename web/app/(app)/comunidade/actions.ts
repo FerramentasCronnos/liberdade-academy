@@ -59,6 +59,7 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
   const rawLink = String(formData.get('link') || '').trim();
   const link = /^https?:\/\/\S+$/i.test(rawLink) ? rawLink.slice(0, 500) : '';
   const pinned = formData.get('pinned') === 'on';
+  const notify = formData.get('notify') === 'on';
 
   if (rawLink && !link) return { error: 'El enlace debe empezar con http:// o https://.' };
   if (spaceSlug === 'anuncios' && title.length < 3) return { error: 'El anuncio necesita un título.' };
@@ -72,8 +73,8 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
     return { error: message(e, 'No pude publicar ahora.') };
   }
 
-  // anúncio novo: avisa todo mundo por e-mail, depois de responder à tela
-  if (created.spaceKind === 'announcements') {
+  // anúncio novo com aviso marcado: e-mail para todos, depois de responder à tela
+  if (created.spaceKind === 'announcements' && notify) {
     const { post } = created;
     after(async () => {
       const recipients = await listNotifiableEmails();

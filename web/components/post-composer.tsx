@@ -53,6 +53,7 @@ export function PostComposer({
   const [error, setError] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState('');
+  const [notify, setNotify] = useState(true);
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -206,8 +207,15 @@ export function PostComposer({
             <input type="checkbox" name="pinned" className="h-4 w-4 accent-[var(--brand)]" />
             Fijar arriba del espacio
           </label>
+          <label className="inline-flex items-center gap-2 text-[13px] font-medium text-[var(--text)]">
+            <input type="checkbox" name="notify" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="h-4 w-4 accent-[var(--brand)]" />
+            Avisar a todos los miembros por correo
+          </label>
           <p className="text-[12px] text-[var(--text-muted)]">
-            📣 Al publicar, todos los miembros reciben un correo con este anuncio. Los anuncios no tienen comentarios, solo reacciones.
+            {notify
+              ? '📣 Al publicar, cada miembro recibe un correo con el título, la portada y el enlace al anuncio.'
+              : 'Solo se publica en el espacio. Nadie recibe correo.'}{' '}
+            Los anuncios no tienen comentarios, solo reacciones.
           </p>
         </div>
       )}
@@ -241,7 +249,7 @@ export function PostComposer({
           {uploading ? 'Subiendo…' : isAnnouncement ? 'Portada' : 'Foto'}
         </button>
         <div className="ml-auto">
-          <Submit disabled={uploading} label={isIntro ? 'Presentarme' : isAnnouncement ? 'Publicar y avisar' : 'Publicar'} />
+          <Submit disabled={uploading} label={isIntro ? 'Presentarme' : isAnnouncement ? (notify ? 'Publicar y avisar' : 'Publicar sin avisar') : 'Publicar'} />
         </div>
       </div>
 

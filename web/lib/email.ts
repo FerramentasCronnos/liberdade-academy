@@ -5,7 +5,7 @@
  * uma dependência. A chave vem de RESEND_API_KEY; sem ela, o envio é pulado
  * e devolve erro em vez de derrubar o fluxo que chamou.
  */
-const APP_URL = process.env.APP_URL || 'https://liberdade-academy.vercel.app';
+const APP_URL = process.env.APP_URL || 'https://catalogo.s4accelerator.com';
 const FROM = process.env.EMAIL_FROM || 'Liberdade Academy <onboarding@resend.dev>';
 
 interface SendResult {

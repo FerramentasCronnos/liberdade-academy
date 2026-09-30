@@ -235,12 +235,13 @@ export async function createSpacePost(input: {
  * Dispara o e-mail de um anúncio já publicado para todos os membros.
  * Usado pela ação de publicar e pela rota administrativa de reenvio.
  */
-export async function notifyAnnouncement(postId: string) {
+export async function notifyAnnouncement(postId: string, only?: string[]) {
   const { announcementEmail, sendBatch, isDeliverable } = await import('./email');
   const post = await prisma.post.findUnique({ where: { id: postId }, include: { space: true } });
-  if (!post || post.space?.kind !== 'announcements') return { sent: 0, recipients: 0, error: 'No es un anuncio.' };
+  if (!post || post.space?.kind !== 'announcements') return { sent: 0, recipients: 0, failed: [] as string[], error: 'No es un anuncio.' };
 
-  const recipients = (await listNotifiableEmails()).filter(isDeliverable);
+  // `only`: reenvio para endereços específicos, sem repetir para todo mundo
+  const recipients = (only?.length ? only : await listNotifiableEmails()).filter(isDeliverable);
   const mail = announcementEmail({
     title: post.title || 'Nuevo anuncio',
     excerpt: post.content.slice(0, 400),
@@ -250,7 +251,7 @@ export async function notifyAnnouncement(postId: string) {
   });
   const result = await sendBatch(recipients, mail.subject, mail.html);
   if (result.failed.length) console.error(`[anuncios] falharam: ${result.failed.join(', ')} ${result.error ?? ''}`);
-  if (result.sent > 0) {
+  if (result.sent > 0 && !only?.length) {
     await prisma.post.update({ where: { id: post.id }, data: { notifiedAt: new Date() } });
   }
   return { sent: result.sent, recipients: recipients.length, failed: result.failed, error: result.error };

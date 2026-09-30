@@ -4,6 +4,7 @@ import { notifyAnnouncement } from '@/lib/community-data';
 
 /**
  * Reenvia o e-mail de um anúncio. `?postId=` ou `?latest=1` (o mais recente).
+ * `?to=a@x.com,b@y.com` limita a esses endereços (não marca como enviado).
  * Protegido pelo CRON_SECRET, como as demais rotas administrativas.
  */
 export async function POST(request: Request) {
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
   }
   if (!postId) return NextResponse.json({ message: 'Informe postId ou latest=1.' }, { status: 400 });
 
-  const result = await notifyAnnouncement(postId);
+  const only = (params.get('to') || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+  const result = await notifyAnnouncement(postId, only);
   return NextResponse.json({ postId, ...result }, { status: result.error ? 502 : 200 });
 }

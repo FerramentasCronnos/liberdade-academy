@@ -7,6 +7,35 @@
  */
 const APP_URL = process.env.APP_URL || 'https://catalogo.s4accelerator.com';
 const FROM = process.env.EMAIL_FROM || 'Liberdade Academy <onboarding@resend.dev>';
+/** Caixa que recebe respostas e pedidos de descadastro: conta para a reputação. */
+const REPLY_TO = process.env.EMAIL_REPLY_TO || 'ferramentas@brainexperts.com.br';
+
+/** Versão em texto do HTML: filtros de spam desconfiam de e-mail só com HTML. */
+function toText(html: string) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h1|h2|h3|tr|li)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function envelope(to: string, subject: string, html: string) {
+  return {
+    from: FROM,
+    to: [to],
+    reply_to: REPLY_TO,
+    subject,
+    html,
+    text: toText(html),
+    headers: {
+      'List-Unsubscribe': `<mailto:${REPLY_TO}?subject=baja>`,
+    },
+  };
+}
 
 interface SendResult {
   ok: boolean;
@@ -42,7 +71,7 @@ export async function sendBatch(
     const response = await fetch('https://api.resend.com/emails/batch', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(chunk.map((to) => ({ from: FROM, to: [to], subject, html }))),
+      body: JSON.stringify(chunk.map((to) => envelope(to, subject, html))),
     });
     if (response.ok) {
       sent += chunk.length;
@@ -71,7 +100,7 @@ async function send(to: string, subject: string, html: string): Promise<SendResu
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: FROM, to: [to], subject, html }),
+    body: JSON.stringify(envelope(to, subject, html)),
   });
 
   const data = (await response.json().catch(() => ({}))) as { id?: string; message?: string };
@@ -101,8 +130,10 @@ function layout(body: string) {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:22px;padding:40px 36px;font-family:Helvetica,Arial,sans-serif;color:#2b2846;">
         <tr><td>${brand()}${body}</td></tr>
       </table>
-      <p style="max-width:560px;margin:20px auto 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#8b87a6;text-align:center;line-height:1.5;">
-        Recibiste este correo porque adquiriste acceso a Liberdade Academy.<br>Si no fuiste tú, puedes ignorarlo.
+      <p style="max-width:560px;margin:20px auto 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#8b87a6;text-align:center;line-height:1.6;">
+        Recibiste este correo porque eres miembro de Liberdade Academy, la plataforma de Máquina de Ventas Automáticas.<br>
+        Para dejar de recibir avisos, responde a este correo con la palabra <strong>baja</strong>.<br>
+        Liberdade Academy · Brain Experts · ${escape(APP_URL.replace(/^https?:\/\//, ''))}
       </p>
     </td></tr>
   </table>
@@ -119,7 +150,7 @@ export function announcementEmail(input: { title: string; excerpt: string; postI
     <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#4a4668;white-space:pre-line;">${escape(input.excerpt)}</p>
     <a href="${url}" style="display:inline-block;background:#6d5ce7;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver el anuncio completo</a>
     ${input.link ? `<p style="margin:16px 0 0;font-size:13.5px;color:#8b87a6;">Enlace del anuncio: <a href="${escape(input.link)}" style="color:#6d5ce7;">${escape(input.link)}</a></p>` : ''}`;
-  return { subject: `📣 ${input.title}`, html: layout(body) };
+  return { subject: `Nuevo anuncio: ${input.title}`, html: layout(body) };
 }
 
 /** Boas-vindas com as credenciais. Em espanhol, como a plataforma. */

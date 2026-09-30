@@ -69,6 +69,8 @@ export interface SyncRegionResult {
   region: Region;
   fetched: number;
   saved: number;
+  /** Quantos dos salvos ainda não existiam no catálogo. */
+  created: number;
   skipped: number;
   error?: string;
 }
@@ -77,6 +79,7 @@ export interface SyncResult {
   provider: string;
   results: SyncRegionResult[];
   synced: number;
+  created: number;
   message: string;
 }
 
@@ -96,6 +99,7 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
       provider: provider.name,
       results: [],
       synced: 0,
+      created: 0,
       message: `CATALOG_PROVIDER=seed — catálogo servido do Postgres (${total} produtos). Configure um provider para buscar dados reais do TikTok Shop.`,
     };
   }
@@ -129,26 +133,25 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
         .filter((item): item is NonNullable<typeof item> => item !== null);
 
       let saved = 0;
+      let created = 0;
       for (const product of normalized) {
         const { externalId, ...data } = product;
+        const where = { provider_region_externalId: { provider: provider.name, region, externalId } };
+        const exists = await prisma.product.findUnique({ where, select: { id: true } });
         await prisma.product.upsert({
-          where: {
-            provider_region_externalId: {
-              provider: provider.name,
-              region,
-              externalId,
-            },
-          },
+          where,
           update: { ...data, externalId, active: true, syncedAt: new Date() },
           create: { ...data, externalId, syncedAt: new Date() },
         });
         saved += 1;
+        if (!exists) created += 1;
       }
 
       results.push({
         region,
         fetched: raw.length,
         saved,
+        created,
         skipped: raw.length - normalized.length,
       });
     } catch (error) {
@@ -156,6 +159,7 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
         region,
         fetched: 0,
         saved: 0,
+        created: 0,
         skipped: 0,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -163,14 +167,16 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
   }
 
   const synced = results.reduce((total, result) => total + result.saved, 0);
+  const created = results.reduce((total, result) => total + result.created, 0);
   const failed = results.filter((result) => result.error);
 
   return {
     provider: provider.name,
     results,
     synced,
+    created,
     message: failed.length
-      ? `${synced} produtos sincronizados. Falhou em: ${failed.map((f) => f.region).join(', ')}.`
-      : `${synced} produtos sincronizados de ${provider.name}.`,
+      ? `${synced} produtos sincronizados (${created} novos). Falhou em: ${failed.map((f) => f.region).join(', ')}.`
+      : `${synced} produtos sincronizados de ${provider.name} (${created} novos).`,
   };
 }

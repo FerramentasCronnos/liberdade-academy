@@ -121,10 +121,29 @@ function brand() {
     </div>`;
 }
 
-function layout(body: string) {
+/** Texto que o Gmail mostra ao lado do assunto. Oculto no corpo. */
+function preheaderBlock(text: string) {
+  const padded = escape(text.slice(0, 110)) + '&#847;&zwnj;&nbsp;'.repeat(40);
+  return `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;">${padded}</div>`;
+}
+
+/** Tira emojis e símbolos decorativos de um trecho para o preheader. */
+export function plainExcerpt(text: string, max = 110) {
+  const clean = text
+    .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '')
+    .replace(/[¡!]{2,}/g, '!')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 60))}…`;
+}
+
+function layout(body: string, preheader?: string) {
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Liberdade Academy</title></head>
 <body style="margin:0;padding:0;background:#f3f1fb;">
+  ${preheader ? preheaderBlock(preheader) : ''}
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f1fb;padding:32px 16px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:22px;padding:40px 36px;font-family:Helvetica,Arial,sans-serif;color:#2b2846;">
@@ -150,7 +169,9 @@ export function announcementEmail(input: { title: string; excerpt: string; postI
     <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#4a4668;white-space:pre-line;">${escape(input.excerpt)}</p>
     <a href="${url}" style="display:inline-block;background:#6d5ce7;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver el anuncio completo</a>
     ${input.link ? `<p style="margin:16px 0 0;font-size:13.5px;color:#8b87a6;">Enlace del anuncio: <a href="${escape(input.link)}" style="color:#6d5ce7;">${escape(input.link)}</a></p>` : ''}`;
-  return { subject: `Nuevo anuncio: ${input.title}`, html: layout(body) };
+  // preheader: o começo do conteúdo, sem emojis, sem repetir o título
+  const preheader = plainExcerpt(input.excerpt) || 'Hay un anuncio nuevo en la plataforma.';
+  return { subject: `Nuevo anuncio: ${plainExcerpt(input.title, 80)}`, html: layout(body, preheader) };
 }
 
 /** Boas-vindas com as credenciais. Em espanhol, como a plataforma. */
@@ -179,5 +200,9 @@ export function sendAccessEmail(input: { name: string; email: string; password: 
       Si el botón no funciona, copia este enlace: <a href="${loginUrl}" style="color:#6d5ce7;">${loginUrl}</a>
     </p>`;
 
-  return send(input.email, 'Tu acceso a Liberdade Academy está listo', layout(body));
+  return send(
+    input.email,
+    'Tu acceso a Liberdade Academy está listo',
+    layout(body, 'Tus datos de acceso están adentro. Entra y empieza por el catálogo de productos virales.'),
+  );
 }

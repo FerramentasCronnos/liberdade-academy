@@ -262,15 +262,21 @@ export async function notifyAnnouncement(postId: string, only?: string[]) {
  * Chamado pelo cron e, por garantia, ao abrir a comunidade.
  */
 export async function publishDueAnnouncements() {
+  const now = new Date();
   const due = await prisma.post.findMany({
-    where: { scheduledAt: { lte: new Date() }, notifyEmail: true, notifiedAt: null, space: { kind: 'announcements' } },
+    where: {
+      OR: [{ scheduledAt: { lte: now } }, { notifyAt: { lte: now } }],
+      notifyEmail: true,
+      notifiedAt: null,
+      space: { kind: 'announcements' },
+    },
     select: { id: true },
     take: 10,
   });
   const results = [];
   for (const { id } of due) {
     // marca antes de enviar para duas chamadas simultâneas não duplicarem
-    const claimed = await prisma.post.updateMany({ where: { id, notifiedAt: null }, data: { notifiedAt: new Date() } });
+    const claimed = await prisma.post.updateMany({ where: { id, notifiedAt: null }, data: { notifiedAt: new Date(), notifyAt: null } });
     if (!claimed.count) continue;
     const r = await notifyAnnouncement(id);
     if (r.sent === 0) await prisma.post.update({ where: { id }, data: { notifiedAt: null } });

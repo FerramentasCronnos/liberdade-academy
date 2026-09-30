@@ -91,6 +91,7 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
     tags: post.tags,
     attachments: post.attachments,
     resolvedAt: post.resolvedAt?.toISOString(),
+    link: post.link ?? undefined,
     space: post.space
       ? { slug: post.space.slug, name: post.space.name, emoji: post.space.emoji, kind: post.space.kind }
       : undefined,
@@ -180,6 +181,8 @@ export async function createSpacePost(input: {
   image?: string;
   tags?: string[];
   attachments?: string[];
+  link?: string;
+  pinned?: boolean;
 }) {
   const [space, user] = await Promise.all([
     prisma.space.findUnique({ where: { slug: input.spaceSlug } }),
@@ -198,6 +201,8 @@ export async function createSpacePost(input: {
       image: input.image,
       tags: input.tags ?? [],
       attachments: input.attachments ?? [],
+      link: input.link || null,
+      pinned: Boolean(input.pinned) && user.isAdmin,
       authorId: input.userId,
       spaceId: space.id,
     },
@@ -213,7 +218,18 @@ export async function createSpacePost(input: {
   });
 
   await tryCompleteAutoMission(input.userId, AUTO_MISSIONS.postCommunity);
-  return post;
+  return { post, spaceKind: space.kind };
+}
+
+/** Quem recebe avisos por e-mail: contas reais e ativas. */
+export async function listNotifiableEmails() {
+  const users = await prisma.user.findMany({
+    where: {
+      NOT: [{ email: { endsWith: '@demo.liberdade.academy' } }, { planSource: 'kiwify_refunded' }],
+    },
+    select: { email: true },
+  });
+  return users.map((u) => u.email);
 }
 
 /** Finaliza ou reabre a atención de uma mensagem do chat. Equipe ou autor. */
@@ -262,6 +278,7 @@ export async function addComment(input: {
     },
   });
   if (!post) throw new CommunityError('Publicación no encontrada.');
+  if (post.space?.kind === 'announcements') throw new CommunityError('Los anuncios no reciben comentarios.');
 
   // Chat de suporte: a equipe abre a thread; o autor responde dentro dela;
   // ninguém escreve numa atención finalizada.

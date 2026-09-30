@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { redirect } from 'next/navigation';
 import { togglePostLike } from '@/lib/mutations';
 import {
@@ -8,6 +9,7 @@ import {
   createSpacePost,
   createTicket,
   deletePost,
+  listNotifiableEmails,
   replyTicket,
   setPinned,
   setResolved,
@@ -16,6 +18,7 @@ import {
 } from '@/lib/community-data';
 import { normalizeTag, SPACE_CATEGORY, TICKET_CATEGORIES } from '@/lib/community';
 import { getUserId, isAdmin } from '@/lib/session';
+import { announcementEmail, sendBatch } from '@/lib/email';
 
 export type ComposerState = { error?: string; ok?: boolean };
 export type FormState = { error?: string; ok?: boolean };
@@ -53,14 +56,37 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
   const category = String(formData.get('category') || SPACE_CATEGORY[spaceSlug] || 'dica');
   const tags = parseTags(String(formData.get('tags') || ''));
   const attachments = parseAttachments(String(formData.get('attachments') || ''));
+  const rawLink = String(formData.get('link') || '').trim();
+  const link = /^https?:\/\/\S+$/i.test(rawLink) ? rawLink.slice(0, 500) : '';
+  const pinned = formData.get('pinned') === 'on';
 
+  if (rawLink && !link) return { error: 'El enlace debe empezar con http:// o https://.' };
+  if (spaceSlug === 'anuncios' && title.length < 3) return { error: 'El anuncio necesita un título.' };
   if (content.length < (image || attachments.length ? 0 : 3)) return { error: 'Escribe un poco más.' };
   if (content.length > 4000) return { error: 'Texto demasiado largo (máx. 4000).' };
 
+  let created: Awaited<ReturnType<typeof createSpacePost>>;
   try {
-    await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined, tags, attachments });
+    created = await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined, tags, attachments, link, pinned });
   } catch (e) {
     return { error: message(e, 'No pude publicar ahora.') };
+  }
+
+  // anúncio novo: avisa todo mundo por e-mail, depois de responder à tela
+  if (created.spaceKind === 'announcements') {
+    const { post } = created;
+    after(async () => {
+      const recipients = await listNotifiableEmails();
+      const mail = announcementEmail({
+        title: post.title || 'Nuevo anuncio',
+        excerpt: post.content.slice(0, 400),
+        postId: post.id,
+        image: post.image ?? undefined,
+        link: post.link ?? undefined,
+      });
+      const result = await sendBatch(recipients, mail.subject, mail.html);
+      if (result.error) console.error(`[anuncios] e-mail para ${result.sent}/${recipients.length}: ${result.error}`);
+    });
   }
 
   revalidatePath('/comunidade', 'layout');

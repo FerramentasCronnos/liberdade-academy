@@ -58,6 +58,7 @@ export function PostComposer({
 
   const current = spaces.find((s) => s.slug === slug);
   const isIntro = current?.kind === 'intro';
+  const isAnnouncement = current?.kind === 'announcements';
 
   if (space?.kind === 'announcements' && !user.isAdmin) return null;
 
@@ -156,7 +157,7 @@ export function PostComposer({
         name="title"
         maxLength={120}
         autoFocus
-        placeholder={isIntro ? 'Un título para tu presentación (opcional)' : 'Título'}
+        placeholder={isIntro ? 'Un título para tu presentación (opcional)' : isAnnouncement ? 'Título del anuncio' : 'Título'}
         className={`${input} mt-4 font-display text-[22px] font-semibold text-[var(--text)] placeholder:font-sans placeholder:text-[17px] placeholder:font-normal`}
       />
       <textarea
@@ -176,6 +177,24 @@ export function PostComposer({
         </div>
       )}
       <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onPickFile(f); }} />
+
+      {isAnnouncement && (
+        <div className="mt-3 flex flex-col gap-2 rounded-2xl bg-[var(--bg-sunken)] p-3">
+          <input
+            name="link"
+            type="url"
+            placeholder="Enlace (opcional): https://…"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-[13.5px] text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--brand)]"
+          />
+          <label className="inline-flex items-center gap-2 text-[13px] font-medium text-[var(--text)]">
+            <input type="checkbox" name="pinned" className="h-4 w-4 accent-[var(--brand)]" />
+            Fijar arriba del espacio
+          </label>
+          <p className="text-[12px] text-[var(--text-muted)]">
+            📣 Al publicar, todos los miembros reciben un correo con este anuncio. Los anuncios no tienen comentarios, solo reacciones.
+          </p>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-[var(--border)] pt-3">
         {tags.map((t) => (
@@ -203,10 +222,10 @@ export function PostComposer({
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">
         <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-sunken)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-muted)] transition hover:text-[var(--brand)] disabled:opacity-60">
           <IconImage className="h-4 w-4" />
-          {uploading ? 'Subiendo…' : 'Foto'}
+          {uploading ? 'Subiendo…' : isAnnouncement ? 'Portada' : 'Foto'}
         </button>
         <div className="ml-auto">
-          <Submit disabled={uploading} label={isIntro ? 'Presentarme' : 'Publicar'} />
+          <Submit disabled={uploading} label={isIntro ? 'Presentarme' : isAnnouncement ? 'Publicar y avisar' : 'Publicar'} />
         </div>
       </div>
 

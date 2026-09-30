@@ -37,7 +37,7 @@ export default async function PostPage({ params }: { params: Params }) {
           Volver
         </Link>
         <PostCard post={post} viewerId={user.id} viewerIsAdmin={user.isAdmin} detail backTo={back} />
-        <Comments postId={post.id} comments={comments} />
+        {post.space?.kind !== 'announcements' && <Comments postId={post.id} comments={comments} />}
       </div>
     </>
   );

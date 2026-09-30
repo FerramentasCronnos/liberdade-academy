@@ -109,6 +109,7 @@ export function PostCard({
   );
 
   const href = `/comunidade/post/${post.id}`;
+  const isAnnouncement = post.space?.kind === 'announcements';
   const canDelete = viewerIsAdmin || viewerId === post.author.id;
   const long = !detail && post.content.length > 520;
   const text = long ? `${post.content.slice(0, 520).trimEnd()}…` : post.content;
@@ -121,7 +122,16 @@ export function PostCard({
     });
 
   return (
-    <article className="rounded-[22px] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-soft)]">
+    <article className="overflow-hidden rounded-[22px] bg-[var(--bg-elevated)] shadow-[var(--shadow-soft)]">
+      {isAnnouncement && post.image && (
+        <Link href={detail ? post.image : href} target={detail ? '_blank' : undefined} className="block bg-[var(--bg-sunken)]">
+          <img src={post.image} alt="" loading="lazy" className="max-h-[360px] w-full object-cover" />
+        </Link>
+      )}
+      <div className="p-6">
+      {isAnnouncement && (
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">📣 Anuncio</p>
+      )}
       <header className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           {title && (
@@ -171,10 +181,21 @@ export function PostCard({
         </p>
       )}
 
-      {post.image && (
+      {post.image && !isAnnouncement && (
         <div className="mt-4 overflow-hidden rounded-2xl bg-[var(--bg-sunken)]">
           <img src={post.image} alt="" loading="lazy" className="max-h-[520px] w-full object-cover" />
         </div>
+      )}
+
+      {post.link && (
+        <a
+          href={post.link}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-2.5 text-[13.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
+        >
+          Abrir enlace ↗
+        </a>
       )}
 
       <AttachmentList urls={post.attachments} />
@@ -205,14 +226,17 @@ export function PostCard({
           <IconHeart className="h-[17px] w-[17px]" fill={state.liked ? 'currentColor' : 'none'} />
           {state.likes}
         </button>
-        <Link
-          href={detail ? '#comentarios' : href}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-[var(--text-muted)] transition hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]"
-        >
-          <IconMessage className="h-[17px] w-[17px]" />
-          {post.comments} {post.comments === 1 ? 'comentario' : 'comentarios'}
-        </Link>
+        {!isAnnouncement && (
+          <Link
+            href={detail ? '#comentarios' : href}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-[var(--text-muted)] transition hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]"
+          >
+            <IconMessage className="h-[17px] w-[17px]" />
+            {post.comments} {post.comments === 1 ? 'comentario' : 'comentarios'}
+          </Link>
+        )}
       </footer>
+      </div>
     </article>
   );
 }

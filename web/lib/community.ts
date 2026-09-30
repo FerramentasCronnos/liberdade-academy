@@ -37,6 +37,8 @@ export interface CommunityPost {
   attachments: string[];
   /** Chat de suporte: atendimento finalizado. */
   resolvedAt?: string;
+  /** Anúncios: botão de ação. */
+  link?: string;
   space?: { slug: string; name: string; emoji: string; kind: string };
 }
 

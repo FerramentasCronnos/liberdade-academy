@@ -14,6 +14,28 @@ interface SendResult {
   error?: string;
 }
 
+/** Mesmo e-mail para muitas pessoas: a Resend aceita lotes de até 100. */
+export async function sendBatch(recipients: string[], subject: string, html: string): Promise<{ sent: number; error?: string }> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { sent: 0, error: 'RESEND_API_KEY não configurada' };
+
+  let sent = 0;
+  for (let i = 0; i < recipients.length; i += 100) {
+    const chunk = recipients.slice(i, i + 100);
+    const response = await fetch('https://api.resend.com/emails/batch', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(chunk.map((to) => ({ from: FROM, to: [to], subject, html }))),
+    });
+    if (!response.ok) {
+      const data = (await response.json().catch(() => ({}))) as { message?: string };
+      return { sent, error: data.message || `HTTP ${response.status}` };
+    }
+    sent += chunk.length;
+  }
+  return { sent };
+}
+
 async function send(to: string, subject: string, html: string): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { ok: false, error: 'RESEND_API_KEY não configurada' };
@@ -57,6 +79,19 @@ function layout(body: string) {
     </td></tr>
   </table>
 </body></html>`;
+}
+
+/** Aviso de anúncio novo, para todos os membros. */
+export function announcementEmail(input: { title: string; excerpt: string; postId: string; image?: string; link?: string }) {
+  const url = `${APP_URL}/comunidade/post/${input.postId}`;
+  const body = `
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#6d5ce7;">📣 Nuevo anuncio</p>
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#17143a;line-height:1.25;">${escape(input.title)}</h1>
+    ${input.image ? `<img src="${escape(input.image)}" alt="" style="display:block;width:100%;max-height:280px;object-fit:cover;border-radius:14px;margin:0 0 16px;">` : ''}
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#4a4668;white-space:pre-line;">${escape(input.excerpt)}</p>
+    <a href="${url}" style="display:inline-block;background:#6d5ce7;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver el anuncio completo</a>
+    ${input.link ? `<p style="margin:16px 0 0;font-size:13.5px;color:#8b87a6;">Enlace del anuncio: <a href="${escape(input.link)}" style="color:#6d5ce7;">${escape(input.link)}</a></p>` : ''}`;
+  return { subject: `📣 ${input.title}`, html: layout(body) };
 }
 
 /** Boas-vindas com as credenciais. Em espanhol, como a plataforma. */

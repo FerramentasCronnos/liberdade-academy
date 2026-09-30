@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { after } from 'next/server';
 import { redirect } from 'next/navigation';
 import { togglePostLike } from '@/lib/mutations';
 import {
@@ -9,7 +8,7 @@ import {
   createSpacePost,
   createTicket,
   deletePost,
-  listNotifiableEmails,
+  notifyAnnouncement,
   replyTicket,
   setPinned,
   setResolved,
@@ -18,7 +17,6 @@ import {
 } from '@/lib/community-data';
 import { normalizeTag, SPACE_CATEGORY, TICKET_CATEGORIES } from '@/lib/community';
 import { getUserId, isAdmin } from '@/lib/session';
-import { announcementEmail, sendBatch } from '@/lib/email';
 
 export type ComposerState = { error?: string; ok?: boolean };
 export type FormState = { error?: string; ok?: boolean };
@@ -73,21 +71,14 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
     return { error: message(e, 'No pude publicar ahora.') };
   }
 
-  // anúncio novo com aviso marcado: e-mail para todos, depois de responder à tela
+  // anúncio novo com aviso marcado: e-mail para todos antes de responder.
+  // É um lote só (até 100 por chamada), então não vale esconder a falha.
   if (created.spaceKind === 'announcements' && notify) {
-    const { post } = created;
-    after(async () => {
-      const recipients = await listNotifiableEmails();
-      const mail = announcementEmail({
-        title: post.title || 'Nuevo anuncio',
-        excerpt: post.content.slice(0, 400),
-        postId: post.id,
-        image: post.image ?? undefined,
-        link: post.link ?? undefined,
-      });
-      const result = await sendBatch(recipients, mail.subject, mail.html);
-      if (result.error) console.error(`[anuncios] e-mail para ${result.sent}/${recipients.length}: ${result.error}`);
-    });
+    const result = await notifyAnnouncement(created.post.id);
+    revalidatePath('/comunidade', 'layout');
+    if (result.error) {
+      return { error: `Anuncio publicado, pero el correo falló (${result.error}). Puedes reenviarlo desde el menú del anuncio.` };
+    }
   }
 
   revalidatePath('/comunidade', 'layout');

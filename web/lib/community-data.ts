@@ -221,6 +221,28 @@ export async function createSpacePost(input: {
   return { post, spaceKind: space.kind };
 }
 
+/**
+ * Dispara o e-mail de um anúncio já publicado para todos os membros.
+ * Usado pela ação de publicar e pela rota administrativa de reenvio.
+ */
+export async function notifyAnnouncement(postId: string) {
+  const { announcementEmail, sendBatch } = await import('./email');
+  const post = await prisma.post.findUnique({ where: { id: postId }, include: { space: true } });
+  if (!post || post.space?.kind !== 'announcements') return { sent: 0, recipients: 0, error: 'No es un anuncio.' };
+
+  const recipients = await listNotifiableEmails();
+  const mail = announcementEmail({
+    title: post.title || 'Nuevo anuncio',
+    excerpt: post.content.slice(0, 400),
+    postId: post.id,
+    image: post.image ?? undefined,
+    link: post.link ?? undefined,
+  });
+  const result = await sendBatch(recipients, mail.subject, mail.html);
+  if (result.error) console.error(`[anuncios] e-mail ${result.sent}/${recipients.length}: ${result.error}`);
+  return { sent: result.sent, recipients: recipients.length, error: result.error };
+}
+
 /** Quem recebe avisos por e-mail: contas reais e ativas. */
 export async function listNotifiableEmails() {
   const users = await prisma.user.findMany({

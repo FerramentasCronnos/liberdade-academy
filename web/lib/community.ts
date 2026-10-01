@@ -11,6 +11,7 @@ export interface Space {
   kind: SpaceKind | string;
   order: number;
   postCount: number;
+  coverImage?: string;
 }
 
 export interface PostAuthor {

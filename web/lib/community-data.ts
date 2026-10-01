@@ -46,6 +46,7 @@ function serializeSpace(row: SpaceRow & { _count: { posts: number } }): Space {
     kind: row.kind,
     order: row.order,
     postCount: row._count.posts,
+    coverImage: row.coverImage ?? undefined,
   };
 }
 

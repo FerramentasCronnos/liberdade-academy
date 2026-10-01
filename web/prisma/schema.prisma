@@ -351,6 +351,8 @@ model Space {
   emoji       String
   kind        String   @default("posts")
   order       Int      @default(0)
+  /// Arte da capa (Blob). Sem ela, a capa é o fundo colorido com a frase.
+  coverImage  String?
   createdAt   DateTime @default(now())
   posts       Post[]
 }

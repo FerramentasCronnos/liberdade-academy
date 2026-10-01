@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { ThemeToggle } from '@/components/theme-toggle';
 import { spaceColor, type Space } from '@/lib/community';
 
@@ -20,6 +21,12 @@ export function SpaceHero({
 
   return (
     <section className="overflow-hidden rounded-[22px] bg-[var(--bg-elevated)] shadow-[var(--shadow-soft)]">
+      {space.coverImage ? (
+        // arte real: 3:1, sem texto por cima para não brigar com o que já vem na imagem
+        <div className="aspect-[3/1] w-full bg-[var(--bg-sunken)]">
+          <img src={space.coverImage} alt="" className="h-full w-full object-cover" />
+        </div>
+      ) : (
       <div className="relative overflow-hidden px-7 py-9 sm:px-10 sm:py-12" style={{ background: color.cover, color: color.ink }}>
         {/* formas decorativas */}
         <div className="pointer-events-none absolute -right-10 -bottom-24 h-[260px] w-[260px] rounded-full bg-white/35" aria-hidden />
@@ -35,6 +42,7 @@ export function SpaceHero({
           {space.description}
         </h1>
       </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3 px-5 py-4 sm:px-6">
         <p className="flex min-w-0 flex-1 items-center gap-2.5 font-display text-[22px] font-semibold text-[var(--text)]">

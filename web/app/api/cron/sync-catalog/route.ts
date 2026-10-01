@@ -35,11 +35,14 @@ export async function GET(request: Request) {
 
   try {
     if ([...params.keys()].length === 0) {
-      // cron: TikTok (região configurada), Amazon (US) e Shopee (BR)
+      // cron: TikTok todo dia; Amazon (US) e Shopee (BR) só às segundas,
+      // porque cada execução traz ~100 produtos e custa na Apify
+      const monday = new Date().getUTCDay() === 1;
+      const skipped = { skipped: 'solo los lunes' };
       const all = await Promise.all([
         syncCatalog({}),
-        syncCatalog({ marketplace: 'amazon', regions: ['US'] }).catch((e: Error) => ({ error: e.message })),
-        syncCatalog({ marketplace: 'shopee', regions: ['BR'] }).catch((e: Error) => ({ error: e.message })),
+        monday ? syncCatalog({ marketplace: 'amazon', regions: ['US'] }).catch((e: Error) => ({ error: e.message })) : skipped,
+        monday ? syncCatalog({ marketplace: 'shopee', regions: ['BR'] }).catch((e: Error) => ({ error: e.message })) : skipped,
       ]);
       return NextResponse.json({ tiktok_shop: all[0], amazon: all[1], shopee: all[2] });
     }

@@ -21,7 +21,7 @@ export async function listProducts(params: {
   limit?: number;
 }) {
   // três lojas no mesmo catálogo: 200 cortava o TikTok inteiro depois de Amazon e Shopee
-  const take = Math.min(Math.max(1, params.limit ?? 900), 1500);
+  const take = Math.min(Math.max(1, params.limit ?? 2000), 3000);
 
   const products = await prisma.product.findMany({
     where: {

@@ -22,9 +22,10 @@ export function SpaceHero({
   return (
     <section className="overflow-hidden rounded-[22px] bg-[var(--bg-elevated)] shadow-[var(--shadow-soft)]">
       {space.coverImage ? (
-        // arte real: 3:1, sem texto por cima para não brigar com o que já vem na imagem
-        <div className="aspect-[3/1] w-full bg-[var(--bg-sunken)]">
-          <img src={space.coverImage} alt="" className="h-full w-full object-cover" />
+        // arte real, na proporção em que foi desenhada (2200×715), sem corte e
+        // sem texto por cima para não brigar com o que já vem na imagem
+        <div className="aspect-[2200/715] w-full bg-[var(--bg-sunken)]">
+          <img src={space.coverImage} alt={space.name} className="h-full w-full object-cover" />
         </div>
       ) : (
       <div className="relative overflow-hidden px-7 py-9 sm:px-10 sm:py-12" style={{ background: color.cover, color: color.ink }}>

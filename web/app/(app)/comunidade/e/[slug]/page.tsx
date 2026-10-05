@@ -69,7 +69,7 @@ export default async function SpacePage({ params, searchParams }: { params: Para
           {posts.length === 0 && (
             <div className="rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-16 text-center">
               <p className="font-display text-lg font-semibold text-[var(--text)]">
-                {space.kind === 'intro' ? 'Nadie se presentó todavía' : 'Este espacio está vacío'}
+                {space.kind === 'intro' ? 'Nadie hizo networking todavía' : 'Este espacio está vacío'}
               </p>
               <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">
                 {space.kind === 'intro' ? 'Rompe el hielo: cuéntanos quién eres.' : 'Sé la primera en publicar aquí.'}

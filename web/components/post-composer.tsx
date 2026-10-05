@@ -56,8 +56,10 @@ export function PostComposer({
   const [tags, setTags] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState('');
   const [notify, setNotify] = useState(true);
-  const [preview, setPreview] = useState<{ title: string; content: string; link: string; pinned: boolean } | null>(null);
+  const [preview, setPreview] = useState<{ title: string; content: string; link: string; pinned: boolean; at: string } | null>(null);
   const [scheduleLocal, setScheduleLocal] = useState('');
+  // calculado uma vez: o render precisa ser puro
+  const [minLocal] = useState(() => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16));
   const scheduledIso = scheduleLocal ? new Date(scheduleLocal).toISOString() : '';
   const scheduleLabel = scheduleLocal
     ? new Date(scheduleLocal).toLocaleString('es-419', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -97,7 +99,7 @@ export function PostComposer({
       return;
     }
     setError(null);
-    setPreview({ title, content, link, pinned: fd.get('pinned') === 'on' });
+    setPreview({ title, content, link, pinned: fd.get('pinned') === 'on', at: new Date().toISOString() });
   };
 
   const publishFromPreview = () => {
@@ -172,7 +174,7 @@ export function PostComposer({
       >
         {avatar}
         <span className="flex-1 text-[15px] text-[var(--text-faint)]">
-          {isIntro ? 'Preséntate a la comunidad…' : 'Escribe una publicación…'}
+          {isIntro ? 'Preséntate y conecta con la comunidad…' : 'Escribe una publicación…'}
         </span>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-sunken)] text-[20px] leading-none text-[var(--text-muted)]" aria-hidden>+</span>
       </button>
@@ -263,7 +265,7 @@ export function PostComposer({
             <input
               type="datetime-local"
               value={scheduleLocal}
-              min={new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)}
+              min={minLocal}
               onChange={(e) => setScheduleLocal(e.target.value)}
               className="rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5 text-[13px] text-[var(--text)] outline-none focus:border-[var(--brand)]"
             />
@@ -354,12 +356,12 @@ export function PostComposer({
                   likes: 0,
                   comments: 0,
                   isLiked: false,
-                  createdAt: new Date().toISOString(),
+                  createdAt: preview.at,
                   category: 'dica',
                   tags,
                   attachments: [],
                   link: preview.link || undefined,
-                  space: { slug: 'anuncios', name: 'Anuncios', emoji: '📣', kind: 'announcements' },
+                  space: { slug: 'anuncios', name: current?.name ?? 'Novedades', emoji: '📣', kind: 'announcements' },
                 } satisfies CommunityPost}
               />
 

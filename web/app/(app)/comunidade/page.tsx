@@ -31,17 +31,14 @@ export default async function CommunityHome({ searchParams }: { searchParams: Pr
       </header>
 
       {!me?.introducedAt && (
+        // convite para o espaço de Networking, com a arte do próprio espaço
         <Link
           href="/comunidade/e/presentaciones"
-          className="mb-4 flex items-center gap-4 rounded-[22px] p-5 shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
-          style={{ background: 'linear-gradient(135deg,#c9e9d6 0%,#a9dcc0 100%)', color: '#1f3d2e' }}
+          aria-label="Networking: preséntate y conecta con la comunidad"
+          className="mb-4 block overflow-hidden rounded-[22px] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
         >
-          <span className="text-3xl" aria-hidden>👋</span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-[18px] font-semibold">Estás en el lugar correcto. Preséntate.</span>
-            <span className="block text-[13.5px] opacity-80">Una línea alcanza: qué haces y qué te trajo aquí.</span>
-          </span>
-          <span className="shrink-0 rounded-full bg-white/60 px-3.5 py-1.5 text-[12.5px] font-semibold">Ir →</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/spaces/presentaciones.jpg" alt="Hace networking. El ambiente cambia el juego." className="block aspect-[2200/715] w-full object-cover" />
         </Link>
       )}
 

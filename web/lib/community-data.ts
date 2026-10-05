@@ -36,18 +36,39 @@ export async function getSpace(slug: string) {
   return row ? serializeSpace(row) : null;
 }
 
+/**
+ * Identidade visual dos espaços: nome, emoji e arte da capa.
+ *
+ * Fica no código (e as artes em /public/spaces) porque é marca, não dado:
+ * muda junto com o deploy e pode ser revisado em preview sem tocar o banco.
+ * Uma capa enviada pela rota administrativa (coverImage) tem prioridade.
+ */
+const SPACE_BRANDING: Record<string, { name?: string; emoji?: string; cover?: string }> = {
+  presentaciones: { name: 'Networking', emoji: '🤝', cover: '/spaces/presentaciones.jpg' },
+  anuncios: { name: 'Novedades', cover: '/spaces/anuncios.jpg' },
+  trafico: { cover: '/spaces/trafico.jpg' },
+  resultados: { cover: '/spaces/resultados.jpg' },
+};
+
 function serializeSpace(row: SpaceRow & { _count: { posts: number } }): Space {
+  const brand = SPACE_BRANDING[row.slug] ?? {};
   return {
     id: row.id,
     slug: row.slug,
-    name: row.name,
+    name: brand.name ?? row.name,
     description: row.description,
-    emoji: row.emoji,
+    emoji: brand.emoji ?? row.emoji,
     kind: row.kind,
     order: row.order,
     postCount: row._count.posts,
-    coverImage: row.coverImage ?? undefined,
+    coverImage: row.coverImage ?? brand.cover,
   };
+}
+
+/** Nome de exibição de um espaço a partir da linha do banco (posts, avisos). */
+function spaceLabel(space: SpaceRow) {
+  const brand = SPACE_BRANDING[space.slug] ?? {};
+  return { name: brand.name ?? space.name, emoji: brand.emoji ?? space.emoji };
 }
 
 /* ------------------------------------------------------------------- posts */
@@ -95,7 +116,7 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
     link: post.link ?? undefined,
     scheduledAt: post.scheduledAt && post.scheduledAt > new Date() ? post.scheduledAt.toISOString() : undefined,
     space: post.space
-      ? { slug: post.space.slug, name: post.space.name, emoji: post.space.emoji, kind: post.space.kind }
+      ? { slug: post.space.slug, ...spaceLabel(post.space), kind: post.space.kind }
       : undefined,
   };
 }

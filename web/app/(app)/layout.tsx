@@ -1,5 +1,7 @@
 import { Sidebar } from '@/components/sidebar';
 import { MobileNav } from '@/components/mobile-nav';
+import { AssistantWidget } from '@/components/assistant-widget';
+import { whatsappLink } from '@/lib/assistant';
 import { redirect } from 'next/navigation';
 import { getCurrentUser, getUserId } from '@/lib/session';
 
@@ -15,6 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Sidebar user={user} />
       <div className="min-w-0 flex-1 pb-20 lg:pb-0">{children}</div>
       <MobileNav />
+      <AssistantWidget whatsappFallback={whatsappLink('general')} />
     </div>
   );
 }

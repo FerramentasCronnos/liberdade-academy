@@ -3,6 +3,8 @@ import { PageHeader } from '@/components/page-header';
 import { Tabs } from '@/components/tabs';
 import { MembersPanel, type Member } from '@/components/admin/members-panel';
 import { RewardsPanel } from '@/components/admin/rewards-panel';
+import { KnowledgePanel } from '@/components/admin/knowledge-panel';
+import { listDocuments } from '@/lib/knowledge';
 import { prisma } from '@/lib/db';
 import { listRewards } from '@/lib/queries';
 import { getUserId, isAdmin } from '@/lib/session';
@@ -15,7 +17,7 @@ export default async function AdminPage() {
   // sem isto, bastaria digitar /admin na barra de endereço
   if (!(await isAdmin(userId))) redirect('/catalogo');
 
-  const [users, rewards] = await Promise.all([
+  const [users, rewards, docs] = await Promise.all([
     prisma.user.findMany({
       orderBy: [{ isAdmin: 'desc' }, { createdAt: 'asc' }],
       select: {
@@ -28,6 +30,7 @@ export default async function AdminPage() {
       },
     }),
     listRewards(userId),
+    listDocuments(),
   ]);
 
   const members: Member[] = users.map((u) => ({
@@ -56,6 +59,12 @@ export default async function AdminPage() {
               label: 'Recompensas',
               count: rewards.length,
               content: <RewardsPanel rewards={rewards} />,
+            },
+            {
+              id: 'knowledge',
+              label: 'IA de soporte',
+              count: docs.length,
+              content: <KnowledgePanel docs={docs} />,
             },
           ]}
         />

@@ -178,6 +178,23 @@ export function Sidebar({ user }: { user: SessionUser | null }) {
           ))}
         </nav>
 
+        <nav className="mt-4 border-t border-white/12 pt-4">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('la:open-assistant'))}
+            title={collapsed ? 'Chat de soporte' : undefined}
+            className={`flex w-full items-center gap-3 rounded-2xl py-3 text-[14px] font-medium text-[var(--sidebar-muted)] transition hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)] ${collapsed ? 'justify-center px-0' : 'px-4'}`}
+          >
+            <IconMessage className="h-[19px] w-[19px] shrink-0" />
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate text-left">Chat de soporte</span>
+                <span className="rounded-full bg-white/12 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">IA</span>
+              </>
+            )}
+          </button>
+        </nav>
+
         {user?.isAdmin && (
           <nav className="mt-4 border-t border-white/12 pt-4">
             <NavLink

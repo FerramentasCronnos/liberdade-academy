@@ -53,6 +53,7 @@ model User {
   pointsEntries        PointsEntry[]
   tickets              Ticket[]
   ticketMessages       TicketMessage[]
+  supportChats         SupportChat[]
   /// Quando se apresentou no espaço de presentaciones.
   introducedAt         DateTime?
   affiliateAccounts    AffiliateAccount[]
@@ -449,4 +450,57 @@ model NotificationRead {
   notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, notificationId])
+}
+
+/// Documento da base de conhecimento de um assistente (aula, transcrição, FAQ).
+/// assistant: general | trafico
+model KnowledgeDoc {
+  id        String           @id @default(cuid())
+  assistant String
+  title     String
+  filename  String?
+  chars     Int              @default(0)
+  createdAt DateTime         @default(now())
+  chunks    KnowledgeChunk[]
+
+  @@index([assistant, createdAt])
+}
+
+/// Trecho pesquisável. A coluna tsvector (busca em espanhol) é criada na
+/// migração e usada por SQL direto; o Prisma só precisa do texto.
+model KnowledgeChunk {
+  id        String       @id @default(cuid())
+  docId     String
+  assistant String
+  position  Int
+  content   String
+  doc       KnowledgeDoc @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  @@index([assistant])
+}
+
+/// Conversa de um membro com um assistente de IA.
+model SupportChat {
+  id        String           @id @default(cuid())
+  userId    String
+  assistant String
+  escalated Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  SupportMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+/// role: user | assistant
+model SupportMessage {
+  id        String      @id @default(cuid())
+  chatId    String
+  role      String
+  content   String
+  createdAt DateTime    @default(now())
+  chat      SupportChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
 }

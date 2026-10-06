@@ -114,3 +114,38 @@ export async function setRewardImage(
   revalidatePath('/recompensas');
   return { ok: 'Foto actualizada.' };
 }
+
+/* ------------------------------------------------------- base de conocimiento */
+
+export async function uploadKnowledge(_prev: AdminState, formData: FormData): Promise<AdminState> {
+  if (!(await requireAdmin())) return { error: 'Acceso restringido.' };
+
+  const { isAssistant } = await import('@/lib/assistant');
+  const { addDocument, extractText } = await import('@/lib/knowledge');
+
+  const assistant = String(formData.get('assistant') || '');
+  if (!isAssistant(assistant)) return { error: 'Elige el asistente.' };
+
+  const file = formData.get('file');
+  if (!(file instanceof File) || file.size === 0) return { error: 'Elige un archivo (PDF, DOCX, TXT, MD, SRT o VTT).' };
+  if (file.size > 8 * 1024 * 1024) return { error: 'Archivo mayor a 8 MB. Divide la clase en partes.' };
+
+  const title = String(formData.get('title') || '').trim() || file.name.replace(/\.[^.]+$/, '');
+
+  try {
+    const text = await extractText(file);
+    const result = await addDocument({ assistant, title, filename: file.name, text });
+    revalidatePath('/admin');
+    return { ok: `"${title}" agregado al asistente (${result.chunks} fragmentos).` };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'No pude procesar el archivo.' };
+  }
+}
+
+export async function deleteKnowledge(formData: FormData) {
+  if (!(await requireAdmin())) return;
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+  await prisma.knowledgeDoc.delete({ where: { id } }).catch(() => undefined);
+  revalidatePath('/admin');
+}

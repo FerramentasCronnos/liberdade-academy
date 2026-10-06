@@ -499,6 +499,8 @@ model SupportMessage {
   chatId    String
   role      String
   content   String
+  /// Fotos ou prints enviados pelo membro (URLs no Blob).
+  attachments String[]  @default([])
   createdAt DateTime    @default(now())
   chat      SupportChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
 

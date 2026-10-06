@@ -1,7 +1,10 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useRef, useState } from 'react';
-import { IconMessage, IconX } from './icons';
+import { upload } from '@vercel/blob/client';
+import { IconImage, IconMessage, IconX } from './icons';
 
 /**
  * Widget de suporte com IA, no canto inferior direito de todas as telas.
@@ -12,14 +15,15 @@ import { IconMessage, IconX } from './icons';
  */
 type AssistantId = 'general' | 'trafico';
 
-const ASSISTANTS: Array<{ id: AssistantId; name: string; emoji: string; tagline: string }> = [
-  { id: 'general', name: 'Soporte general', emoji: '🛟', tagline: 'Plataforma, acceso, herramientas y cómo empezar.' },
-  { id: 'trafico', name: 'Tráfico', emoji: '🚀', tagline: 'Meta Ads, Google Ads, TikTok y contenido que vende.' },
+const ASSISTANTS: Array<{ id: AssistantId; name: string; agent: string; emoji: string; tagline: string }> = [
+  { id: 'general', name: 'Soporte general', agent: 'Sofía', emoji: '🛟', tagline: 'Plataforma, acceso, herramientas y cómo empezar.' },
+  { id: 'trafico', name: 'Tráfico', agent: 'Mateo', emoji: '🚀', tagline: 'Meta Ads, Google Ads, TikTok y contenido que vende.' },
 ];
 
 interface Msg {
   role: 'user' | 'assistant';
   content: string;
+  attachments?: string[];
   whatsapp?: string;
 }
 
@@ -31,8 +35,34 @@ export function AssistantWidget({ whatsappFallback }: { whatsappFallback: string
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // foto escolhida ou print colado: vai direto ao Blob, como os anexos de ticket
+  const attach = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setError('Solo imágenes (foto o captura de pantalla).');
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setError('Imagen mayor a 15 MB.');
+      return;
+    }
+    setUploading(true);
+    setError(null);
+    try {
+      const name = (file.name && file.name !== 'image.png' ? file.name : `captura-${Date.now()}.png`).replace(/[^\w.-]+/g, '_');
+      const blob = await upload(`support/${name}`, file, { access: 'public', handleUploadUrl: '/api/upload', contentType: file.type });
+      setPending((p) => [...p, blob.url].slice(0, 4));
+    } catch (e) {
+      setError(e instanceof Error ? `No pude subir la imagen: ${e.message}` : 'No pude subir la imagen.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -46,32 +76,44 @@ export function AssistantWidget({ whatsappFallback }: { whatsappFallback: string
 
   const current = ASSISTANTS.find((a) => a.id === assistant);
 
+  const [finished, setFinished] = useState(false);
+
   const reset = () => {
     setAssistant(null);
     setChatId(undefined);
     setMessages([]);
+    setPending([]);
     setError(null);
+  };
+
+  // encerra a conversa: volta ao início com um agradecimento curto
+  const finish = () => {
+    reset();
+    setFinished(true);
+    window.setTimeout(() => setFinished(false), 4000);
   };
 
   const choose = (id: AssistantId) => {
     const a = ASSISTANTS.find((x) => x.id === id)!;
     setAssistant(id);
-    setMessages([{ role: 'assistant', content: `¡Hola! Soy el asistente de ${a.name}. Cuéntame tu duda con detalle y te ayudo. Si no logro resolverla, te paso con el equipo.` }]);
+    setMessages([{ role: 'assistant', content: `¡Hola! Soy ${a.agent}, del equipo de ${a.name === 'Tráfico' ? 'tráfico' : 'soporte'} de MVA. Cuéntame tu duda con detalle y te ayudo. Si quieres, también puedes mandarme una captura de pantalla.` }]);
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const send = async () => {
     const text = draft.trim();
-    if (!text || !assistant || busy) return;
+    const attachments = pending;
+    if ((!text && !attachments.length) || !assistant || busy || uploading) return;
     setDraft('');
+    setPending([]);
     setError(null);
-    setMessages((m) => [...m, { role: 'user', content: text }]);
+    setMessages((m) => [...m, { role: 'user', content: text, attachments }]);
     setBusy(true);
     try {
       const res = await fetch('/api/assistant/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assistant, chatId, message: text }),
+        body: JSON.stringify({ assistant, chatId, message: text, attachments }),
       });
       const data = (await res.json()) as { chatId?: string; reply?: string; escalate?: boolean; whatsapp?: string; message?: string };
       if (!res.ok) throw new Error(data.message || 'Error');
@@ -104,12 +146,17 @@ export function AssistantWidget({ whatsappFallback }: { whatsappFallback: string
           <header className="flex items-center gap-3 border-b border-[var(--border)] px-4 py-3">
             {current ? (
               <>
-                <span className="text-[22px]" aria-hidden>{current.emoji}</span>
+                <button type="button" onClick={reset} aria-label="Volver a elegir el tema" title="Volver" className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]">
+                  <span className="text-[18px] leading-none" aria-hidden>←</span>
+                </button>
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--violet-soft)] text-[13px] font-bold text-[var(--brand)]" aria-hidden>{current.agent[0]}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[14px] font-semibold text-[var(--text)]">{current.name}</p>
-                  <p className="text-[11.5px] text-[var(--text-muted)]">Asistente con IA · responde al instante</p>
+                  <p className="text-[14px] font-semibold text-[var(--text)]">{current.agent} · {current.name}</p>
+                  <p className="flex items-center gap-1.5 text-[11.5px] text-[var(--text-muted)]"><span className="h-2 w-2 rounded-full bg-[var(--money)]" /> En línea ahora</p>
                 </div>
-                <button type="button" onClick={reset} className="text-[12px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]">Cambiar</button>
+                <button type="button" onClick={finish} className="rounded-full border border-[var(--border)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-muted)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]">
+                  Finalizar
+                </button>
               </>
             ) : (
               <div className="min-w-0 flex-1">
@@ -121,6 +168,11 @@ export function AssistantWidget({ whatsappFallback }: { whatsappFallback: string
 
           {!current ? (
             <div className="flex flex-1 flex-col gap-2 p-4">
+              {finished && (
+                <p className="rounded-xl bg-[var(--money-soft)] px-3 py-2 text-center text-[12.5px] font-semibold text-[var(--money)]">
+                  Conversación finalizada. ¡Gracias! Cuando quieras, aquí estamos.
+                </p>
+              )}
               {ASSISTANTS.map((a) => (
                 <button key={a.id} type="button" onClick={() => choose(a.id)} className="flex items-start gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-sunken)]/60 p-4 text-left transition hover:border-[var(--brand)] hover:bg-[var(--violet-soft)]/50">
                   <span className="text-[24px]" aria-hidden>{a.emoji}</span>
@@ -141,6 +193,11 @@ export function AssistantWidget({ whatsappFallback }: { whatsappFallback: string
                   {messages.map((m, i) => (
                     <li key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                       <div className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed ${m.role === 'user' ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-sunken)] text-[var(--text)]'}`}>
+                        {m.attachments?.map((u) => (
+                          <a key={u} href={u} target="_blank" rel="noreferrer" className="mb-1.5 block overflow-hidden rounded-xl">
+                            <img src={u} alt="Captura enviada" className="max-h-[180px] w-full object-cover" />
+                          </a>
+                        ))}
                         {m.content}
                         {m.whatsapp && (
                           <a href={m.whatsapp} target="_blank" rel="noreferrer" className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-2 text-[13px] font-semibold text-white">
@@ -161,19 +218,46 @@ export function AssistantWidget({ whatsappFallback }: { whatsappFallback: string
               </div>
               <form
                 onSubmit={(e) => { e.preventDefault(); void send(); }}
-                className="flex items-end gap-2 border-t border-[var(--border)] p-3"
+                className="border-t border-[var(--border)] p-3"
               >
+                {(pending.length > 0 || uploading) && (
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {pending.map((u) => (
+                      <span key={u} className="relative">
+                        <img src={u} alt="" className="h-14 w-14 rounded-xl object-cover" />
+                        <button type="button" onClick={() => setPending((p) => p.filter((x) => x !== u))} aria-label="Quitar imagen" className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/65 text-white">
+                          <IconX className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                    {uploading && <span className="grid h-14 w-14 place-items-center rounded-xl bg-[var(--bg-sunken)] text-[11px] text-[var(--text-faint)]">Subiendo…</span>}
+                  </div>
+                )}
+                <div className="flex items-end gap-2">
+                <input ref={fileRef} type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) void attach(f); e.target.value = ''; }} />
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || pending.length >= 4} aria-label="Adjuntar foto o captura" title="Adjuntar foto o captura (también puedes pegar un print)" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--bg-sunken)] text-[var(--text-muted)] transition hover:text-[var(--brand)] disabled:opacity-50">
+                  <IconImage className="h-[18px] w-[18px]" />
+                </button>
                 <textarea
                   ref={inputRef}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
+                  onPaste={(e) => {
+                    const item = Array.from(e.clipboardData.items).find((i) => i.type.startsWith('image/'));
+                    const file = item?.getAsFile();
+                    if (file) {
+                      e.preventDefault();
+                      void attach(file);
+                    }
+                  }}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(); } }}
                   rows={2}
                   maxLength={2000}
-                  placeholder="Escribe tu duda…"
+                  placeholder="Escribe tu duda o pega una captura…"
                   className="flex-1 resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-sunken)] px-3 py-2 text-[13.5px] text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--brand)]"
                 />
-                <button type="submit" disabled={busy || !draft.trim()} aria-label="Enviar" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--text)] text-[var(--bg-elevated)] disabled:opacity-50">↑</button>
+                <button type="submit" disabled={busy || uploading || (!draft.trim() && pending.length === 0)} aria-label="Enviar" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--text)] text-[var(--bg-elevated)] disabled:opacity-50">↑</button>
+                </div>
               </form>
             </>
           )}

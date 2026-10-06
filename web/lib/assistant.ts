@@ -10,20 +10,27 @@ import { prisma } from '@/lib/db';
  */
 export type AssistantId = 'general' | 'trafico';
 
-export const ASSISTANTS: Record<AssistantId, { name: string; emoji: string; tagline: string; persona: string }> = {
+/**
+ * Os assistentes se apresentam como pessoas da equipe de suporte (decisão
+ * de produto): nome próprio, sem mencionar IA. Quem não resolve, ao final,
+ * encaminha ao WhatsApp do time.
+ */
+export const ASSISTANTS: Record<AssistantId, { name: string; agent: string; emoji: string; tagline: string; persona: string }> = {
   general: {
     name: 'Soporte general',
+    agent: 'Sofía',
     emoji: '🛟',
     tagline: 'Plataforma, acceso, herramientas y cómo empezar.',
     persona:
-      'Eres el asistente de soporte general de Liberdade Academy, la plataforma del curso Máquina de Ventas Automáticas (MVA). Ayudas a los miembros con la plataforma (catálogo, enlaces, presell, comunidad, misiones), con el acceso y con los primeros pasos como afiliados de TikTok Shop, Amazon y Shopee.',
+      'Te llamas Sofía y eres parte del equipo de soporte de Liberdade Academy, la plataforma del curso Máquina de Ventas Automáticas (MVA). Atiendes a los miembros con la plataforma (catálogo, enlaces, presell, comunidad, misiones), con el acceso y con los primeros pasos como afiliados de TikTok Shop, Amazon y Shopee.',
   },
   trafico: {
     name: 'Tráfico',
+    agent: 'Mateo',
     emoji: '🚀',
     tagline: 'Meta Ads, Google Ads, TikTok y contenido que vende.',
     persona:
-      'Eres el asistente de tráfico de Liberdade Academy (curso MVA). Ayudas a los miembros con tráfico pago y orgánico: Meta Ads, Google Ads, TikTok, ganchos, creativos, presupuesto, métricas y optimización de campañas para vender como afiliados.',
+      'Te llamas Mateo y eres el especialista en tráfico del equipo de soporte de Liberdade Academy (curso MVA). Atiendes a los miembros en tráfico pago y orgánico: Meta Ads, Google Ads, TikTok, ganchos, creativos, presupuesto, métricas y optimización de campañas para vender como afiliados.',
   },
 };
 
@@ -80,9 +87,11 @@ export async function retrieve(assistant: AssistantId, question: string, limit =
 
 /* ------------------------------------------------------------- OpenRouter */
 
+type ContentPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } };
+
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | ContentPart[];
 }
 
 async function complete(messages: ChatMessage[]) {
@@ -118,14 +127,16 @@ function systemPrompt(assistant: AssistantId, hits: ChunkHit[], hasKnowledge: bo
   return `${a.persona}
 
 Reglas:
-- Responde siempre en español neutro, con tono cercano y directo, como un compañero experimentado. Frases cortas. Nada de relleno.
-- Basa tus respuestas en los FRAGMENTOS DE LAS CLASES de abajo. Puedes complementar con conocimiento general sólido del tema, dejando claro qué viene del curso.
-- Si la pregunta no está cubierta por las clases ni por conocimiento general confiable, o si requiere acción de una persona del equipo (acceso, pagos, reembolsos, errores de la plataforma, casos personales), dilo con honestidad en una frase y termina tu respuesta con el texto exacto ${ESCALATE_TAG} para que el miembro hable con el equipo humano.
+- Hablas como una persona del equipo que atiende por chat: cercana, directa, en español neutro. Frases cortas. Nada de relleno.
+- No digas que eres una inteligencia artificial, un asistente virtual ni un bot, y no hables de "mi base de datos" ni de "fragmentos". Si no tienes la información, di simplemente que no la tienes a mano.
+- Si el miembro manda una captura o foto, descríbela solo en lo necesario y responde a lo que muestra (errores, pantallas, métricas, anuncios).
+- Basa tus respuestas en los FRAGMENTOS DE LAS CLASES de abajo (material del curso). Puedes complementar con conocimiento general sólido del tema; cuando algo venga del curso, puedes decir "en el método MVA…".
+- Si la pregunta no está cubierta por las clases ni por conocimiento general confiable, o si requiere acción de otra persona del equipo (acceso, pagos, reembolsos, errores de la plataforma, casos personales), dilo con honestidad en una frase y termina tu respuesta con el texto exacto ${ESCALATE_TAG}: así el miembro puede seguir por WhatsApp con el equipo.
 - Nunca inventes datos del curso, precios, plazos ni procedimientos.
 - Si el miembro pide hablar con una persona, responde brevemente y termina con ${ESCALATE_TAG}.
 - Formato: texto plano. Usa guiones para pasos cuando ayude. Sin encabezados ni markdown pesado.
 - Sé breve: lo esencial en pocas líneas (máximo unas 180 palabras). Si hace falta más, ofrece ampliar.
-${hasKnowledge ? '' : '\nAviso: la base de conocimiento de este asistente todavía está vacía. Ayuda con lo que sepas con seguridad y, en dudas específicas del curso, deriva al equipo.'}
+${hasKnowledge ? '' : '\nAviso interno: todavía no hay material del curso cargado. Ayuda con lo que sepas con seguridad y, en dudas específicas del curso, deriva al equipo.'}
 
 FRAGMENTOS DE LAS CLASES:
 ${context}`;
@@ -138,9 +149,11 @@ export async function answer(input: {
   assistant: AssistantId;
   chatId?: string;
   message: string;
+  attachments?: string[];
 }) {
   const message = input.message.trim().slice(0, 2000);
-  if (!message) throw new Error('Escribe tu pregunta.');
+  const attachments = (input.attachments ?? []).slice(0, 4);
+  if (!message && !attachments.length) throw new Error('Escribe tu pregunta.');
 
   // conversa: reaproveita a aberta ou cria
   let chat = input.chatId
@@ -161,10 +174,24 @@ export async function answer(input: {
     prisma.knowledgeDoc.count({ where: { assistant: input.assistant } }),
   ]);
 
+  // só a mensagem atual leva a imagem em si; no histórico fica a marca
+  const current: ChatMessage = attachments.length
+    ? {
+        role: 'user',
+        content: [
+          { type: 'text', text: message || 'Te mando esta captura.' },
+          ...attachments.map((url): ContentPart => ({ type: 'image_url', image_url: { url } })),
+        ],
+      }
+    : { role: 'user', content: message };
+
   const messages: ChatMessage[] = [
     { role: 'system', content: systemPrompt(input.assistant, hits, docCount > 0) },
-    ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-    { role: 'user', content: message },
+    ...history.map((m) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.attachments.length ? `${m.content} [envió ${m.attachments.length === 1 ? 'una captura' : 'capturas'}]` : m.content,
+    })),
+    current,
   ];
 
   const raw = await complete(messages);
@@ -172,7 +199,7 @@ export async function answer(input: {
   const reply = raw.replace(ESCALATE_TAG, '').trim() || 'No encontré una respuesta clara para eso. Te paso con el equipo.';
 
   await prisma.$transaction([
-    prisma.supportMessage.create({ data: { chatId: chat.id, role: 'user', content: message } }),
+    prisma.supportMessage.create({ data: { chatId: chat.id, role: 'user', content: message, attachments } }),
     prisma.supportMessage.create({ data: { chatId: chat.id, role: 'assistant', content: reply } }),
     prisma.supportChat.update({ where: { id: chat.id }, data: { escalated: chat.escalated || escalate } }),
   ]);
@@ -181,7 +208,7 @@ export async function answer(input: {
     chatId: chat.id,
     reply,
     escalate,
-    whatsapp: escalate ? whatsappLink(input.assistant, message) : undefined,
+    whatsapp: escalate ? whatsappLink(input.assistant, message || 'Te mandé una captura en el chat.') : undefined,
     sources: hits.slice(0, 3).map((h) => h.title),
   };
 }

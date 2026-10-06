@@ -9,13 +9,17 @@ export async function POST(request: Request) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ message: 'Sesión expirada.' }, { status: 401 });
 
-  const body = (await request.json().catch(() => ({}))) as { assistant?: string; chatId?: string; message?: string };
+  const body = (await request.json().catch(() => ({}))) as { assistant?: string; chatId?: string; message?: string; attachments?: unknown };
+  // só imagens do nosso Blob
+  const attachments = (Array.isArray(body.attachments) ? body.attachments : [])
+    .filter((u): u is string => typeof u === 'string' && /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//.test(u))
+    .slice(0, 4);
   if (!body.assistant || !isAssistant(body.assistant)) {
     return NextResponse.json({ message: 'Elige un asistente.' }, { status: 400 });
   }
 
   try {
-    const result = await answer({ userId, assistant: body.assistant, chatId: body.chatId, message: body.message ?? '' });
+    const result = await answer({ userId, assistant: body.assistant, chatId: body.chatId, message: body.message ?? '', attachments });
     return NextResponse.json(result);
   } catch (error) {
     console.error('[assistant]', error);

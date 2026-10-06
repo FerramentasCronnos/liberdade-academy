@@ -47,17 +47,29 @@ interface ChunkHit {
   rank: number;
 }
 
-/** Trechos mais relevantes da base do assistente para a pergunta. */
+/**
+ * Trechos mais relevantes da base do assistente para a pergunta.
+ *
+ * Os termos entram com OU, não E: uma pergunta nunca repete todas as
+ * palavras da aula. O ranking (ts_rank_cd) favorece os trechos que casam
+ * mais termos. Stopwords somem no próprio dicionário espanhol.
+ */
 export async function retrieve(assistant: AssistantId, question: string, limit = 6): Promise<ChunkHit[]> {
-  const q = question.replace(/[^\p{L}\p{N}\s]/gu, ' ').trim().slice(0, 300);
-  if (!q) return [];
+  const terms = question
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 3)
+    .slice(0, 16);
+  if (!terms.length) return [];
+  const tsquery = terms.join(' | ');
   try {
     return await prisma.$queryRaw<ChunkHit[]>`
-      SELECT c."content", d."title", ts_rank(c."search", websearch_to_tsquery('spanish', ${q})) AS rank
+      SELECT c."content", d."title", ts_rank_cd(c."search", to_tsquery('spanish', ${tsquery})) AS rank
       FROM "KnowledgeChunk" c
       JOIN "KnowledgeDoc" d ON d."id" = c."docId"
       WHERE c."assistant" = ${assistant}
-        AND c."search" @@ websearch_to_tsquery('spanish', ${q})
+        AND c."search" @@ to_tsquery('spanish', ${tsquery})
       ORDER BY rank DESC
       LIMIT ${limit}
     `;
@@ -86,7 +98,7 @@ async function complete(messages: ChatMessage[]) {
       'HTTP-Referer': process.env.APP_URL || 'https://catalogo.s4accelerator.com',
       'X-Title': 'Liberdade Academy',
     },
-    body: JSON.stringify({ model, messages, max_tokens: 700, temperature: 0.3 }),
+    body: JSON.stringify({ model, messages, max_tokens: 1400, temperature: 0.3 }),
   });
 
   if (!response.ok) {
@@ -112,6 +124,7 @@ Reglas:
 - Nunca inventes datos del curso, precios, plazos ni procedimientos.
 - Si el miembro pide hablar con una persona, responde brevemente y termina con ${ESCALATE_TAG}.
 - Formato: texto plano. Usa guiones para pasos cuando ayude. Sin encabezados ni markdown pesado.
+- Sé breve: lo esencial en pocas líneas (máximo unas 180 palabras). Si hace falta más, ofrece ampliar.
 ${hasKnowledge ? '' : '\nAviso: la base de conocimiento de este asistente todavía está vacía. Ayuda con lo que sepas con seguridad y, en dudas específicas del curso, deriva al equipo.'}
 
 FRAGMENTOS DE LAS CLASES:

@@ -27,7 +27,7 @@ interface Msg {
   whatsapp?: string;
 }
 
-export function AssistantWidget({ whatsappFallback }: { whatsappFallback: string }) {
+export function AssistantWidget() {
   const [open, setOpen] = useState(false);
   const [assistant, setAssistant] = useState<AssistantId | null>(null);
   const [chatId, setChatId] = useState<string | undefined>();
@@ -182,9 +182,6 @@ export function AssistantWidget({ whatsappFallback }: { whatsappFallback: string
                   </span>
                 </button>
               ))}
-              <a href={whatsappFallback} target="_blank" rel="noreferrer" className="mt-auto text-center text-[12.5px] font-semibold text-[var(--text-muted)] underline-offset-2 hover:underline">
-                Prefiero hablar con una persona por WhatsApp
-              </a>
             </div>
           ) : (
             <>

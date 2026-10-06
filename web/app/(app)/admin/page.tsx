@@ -60,12 +60,14 @@ export default async function AdminPage() {
               count: rewards.length,
               content: <RewardsPanel rewards={rewards} />,
             },
-            {
-              id: 'knowledge',
-              label: 'IA de soporte',
-              count: docs.length,
-              content: <KnowledgePanel docs={docs} />,
-            },
+            ...(process.env.ASSISTANT_ENABLED === '1'
+              ? [{
+                  id: 'knowledge',
+                  label: 'IA de soporte',
+                  count: docs.length,
+                  content: <KnowledgePanel docs={docs} />,
+                }]
+              : []),
           ]}
         />
       </div>

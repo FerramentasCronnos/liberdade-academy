@@ -96,7 +96,7 @@ function NavLink({
   );
 }
 
-export function Sidebar({ user }: { user: SessionUser | null }) {
+export function Sidebar({ user, assistant = false }: { user: SessionUser | null; assistant?: boolean }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -178,6 +178,7 @@ export function Sidebar({ user }: { user: SessionUser | null }) {
           ))}
         </nav>
 
+        {assistant && (
         <nav className="mt-4 border-t border-white/12 pt-4">
           <button
             type="button"
@@ -189,11 +190,12 @@ export function Sidebar({ user }: { user: SessionUser | null }) {
             {!collapsed && (
               <>
                 <span className="flex-1 truncate text-left">Chat de soporte</span>
-                <span className="rounded-full bg-white/12 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">IA</span>
+                <span className="rounded-full bg-white/12 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">chat</span>
               </>
             )}
           </button>
         </nav>
+        )}
 
         {user?.isAdmin && (
           <nav className="mt-4 border-t border-white/12 pt-4">

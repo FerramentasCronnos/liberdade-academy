@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { grantAccess, revokeAccess } from '@/lib/access';
 import { sendAccessEmail } from '@/lib/email';
+import { hottoks } from '@/lib/hotmart';
 
 /**
  * Webhook da Hotmart (versão 2.0.0): acesso em tempo real.
@@ -21,9 +22,10 @@ const GRANT = ['PURCHASE_APPROVED', 'PURCHASE_COMPLETE'];
 const REVOKE = ['PURCHASE_REFUNDED', 'PURCHASE_CHARGEBACK', 'PURCHASE_CANCELED', 'PURCHASE_PROTEST'];
 
 export async function POST(request: Request) {
-  const hottok = process.env.HOTMART_HOTTOK;
-  if (!hottok) return NextResponse.json({ message: 'HOTMART_HOTTOK não configurado.' }, { status: 503 });
-  if (request.headers.get('x-hotmart-hottok') !== hottok) {
+  const accepted = hottoks();
+  if (!accepted.length) return NextResponse.json({ message: 'HOTMART_HOTTOK não configurado.' }, { status: 503 });
+  const received = request.headers.get('x-hotmart-hottok') ?? '';
+  if (!accepted.includes(received)) {
     return NextResponse.json({ message: 'Hottok inválido.' }, { status: 401 });
   }
 

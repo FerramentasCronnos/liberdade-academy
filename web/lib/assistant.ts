@@ -142,12 +142,12 @@ async function complete(messages: ChatMessage[]) {
   return data.choices?.[0]?.message?.content?.trim() ?? '';
 }
 
-const PLATFORM_FACTS = `DATOS FIJOS DE LA PLATAFORMA (úsalos con confianza):
+export const PLATFORM_FACTS = `DATOS FIJOS DE LA PLATAFORMA (úsalos con confianza):
 - Plataforma: Liberdade Academy, en https://catalogo.s4accelerator.com (acceso con el correo de la compra). La BRAIN (IA del curso) tiene acceso aparte, enviado por correo y WhatsApp.
 - Clase en vivo: una vez por semana, normalmente jueves a las 20:00 hora de Miami. El enlace se publica en el espacio "Novedades" de la comunidad, dentro de la plataforma.
 - Comunidad (menú Comunidad): espacios Networking (preséntate), Novedades (avisos y enlaces de clases en vivo), Soporte general (chat con el equipo), Tráfico y Resultados. Los tickets de soporte se abren en Comunidad → Soporte → "Nuevo ticket".
 - Catálogo: productos virales con filtros por nicho y por tienda (TikTok Shop, Amazon, Shopee). Cada producto muestra comisión estimada y enlace a la tienda.
-- Herramientas: Generar Enlace, Página de Presell, Página para Bio, Plantillas, Baúl de Anuncios, Misiones, Recompensas y Ranking.
+- Herramientas (menú lateral): Generar Enlace (pega la URL del producto; para Amazon primero registra tu tag de Amazon Associates ahí mismo y el enlace sale con tu tag), Página de Presell, Página para Bio, Plantillas, Baúl de Anuncios, Misiones, Recompensas y Ranking. TikTok Shop y Shopee generan el enlace rastreable en sus propios paneles de afiliados.
 - BRAIN: la inteligencia artificial del curso, en https://s4.brainexperts.com.br, con acceso propio (correo con contraseña temporal, enviado al comprar; remitente "Brain IA"). La compra incluye 500 créditos, 1 video y 3 imágenes.
 - ÚNICO canal humano: el WhatsApp del equipo de soporte, que aparece como botón en este chat cuando terminas con ${ESCALATE_TAG}. Todo lo que necesite a una persona (acceso que no llegó, contraseña, cobros, reembolsos, cancelación, créditos extra, cambio de perfil o de plan de la BRAIN, errores que se repiten, cualquier duda fuera del material) se deriva ahí. Aunque el material mencione un correo de soporte, NO lo des: pide que escriba por WhatsApp con el correo de su cuenta, lo que intentaba hacer y una captura.`;
 

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { after } from 'next/server';
 import { prisma } from '@/lib/db';
-import { ASSISTANTS, isAssistant, retrieve, whatsappLink, type AssistantId } from '@/lib/assistant';
+import { ASSISTANTS, isAssistant, PLATFORM_FACTS, retrieve, whatsappLink, type AssistantId } from '@/lib/assistant';
 import { addComment } from '@/lib/community-data';
 
 /**
@@ -91,6 +91,8 @@ Estás respondiendo EN PÚBLICO, como comentario en la comunidad del curso, a ${
 - Responde solo lo que respalden los FRAGMENTOS DE LAS CLASES o conocimiento general sólido. No inventes procedimientos, precios ni plazos del curso.
 - Si la respuesta sale de una clase, cierra recomendando verla, con módulo y clase como aparecen en el título del fragmento.
 - Si no puedes resolverlo con seguridad, o hace falta una persona del equipo (acceso, pagos, reembolsos, créditos, errores), dilo en una frase, pide que escriba al WhatsApp del equipo y termina con el texto exacto ${ESCALATE_TAG}.
+
+${PLATFORM_FACTS}
 
 FRAGMENTOS DE LAS CLASES:
 ${context}`;

@@ -84,7 +84,16 @@ async function retrieveRaw(assistant: AssistantId, question: string, limit: numb
     .filter((w) => w.length >= 3)
     .slice(0, 16);
   if (!terms.length) return [];
-  const tsquery = terms.join(' | ');
+
+  // primeiro exige todas as palavras (precisão); se achar pouco, relaxa para OU
+  const strict = await runQuery(assistant, terms.join(' & '), limit).catch(() => []);
+  if (strict.length >= 3) return strict;
+  const loose = await runQuery(assistant, terms.join(' | '), limit).catch(() => []);
+  const seen = new Set(strict.map((h) => h.content));
+  return [...strict, ...loose.filter((h) => !seen.has(h.content))];
+}
+
+async function runQuery(assistant: AssistantId, tsquery: string, limit: number): Promise<ChunkHit[]> {
   try {
     return await prisma.$queryRaw<ChunkHit[]>`
       SELECT c."content", d."title", ts_rank_cd(c."search", to_tsquery('spanish', ${tsquery})) AS rank

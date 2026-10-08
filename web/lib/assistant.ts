@@ -62,6 +62,21 @@ interface ChunkHit {
  * mais termos. Stopwords somem no próprio dicionário espanhol.
  */
 export async function retrieve(assistant: AssistantId, question: string, limit = 6): Promise<ChunkHit[]> {
+  const hits = await retrieveRaw(assistant, question, limit * 3);
+  // no máximo dois trechos por aula: uma aula longa não deve abafar as outras
+  const perDoc = new Map<string, number>();
+  const picked: ChunkHit[] = [];
+  for (const h of hits) {
+    const n = perDoc.get(h.title) ?? 0;
+    if (n >= 2) continue;
+    perDoc.set(h.title, n + 1);
+    picked.push(h);
+    if (picked.length >= limit) break;
+  }
+  return picked;
+}
+
+async function retrieveRaw(assistant: AssistantId, question: string, limit: number): Promise<ChunkHit[]> {
   const terms = question
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
@@ -118,6 +133,14 @@ async function complete(messages: ChatMessage[]) {
   return data.choices?.[0]?.message?.content?.trim() ?? '';
 }
 
+const PLATFORM_FACTS = `DATOS FIJOS DE LA PLATAFORMA (úsalos con confianza):
+- Plataforma: Liberdade Academy, en https://catalogo.s4accelerator.com (acceso con el correo de la compra). La BRAIN (IA del curso) tiene acceso aparte, enviado por correo y WhatsApp.
+- Clase en vivo: una vez por semana, normalmente jueves a las 20:00 hora de Miami. El enlace se publica en el espacio "Novedades" de la comunidad, dentro de la plataforma.
+- Comunidad (menú Comunidad): espacios Networking (preséntate), Novedades (avisos y enlaces de clases en vivo), Soporte general (chat con el equipo), Tráfico y Resultados. Los tickets de soporte se abren en Comunidad → Soporte → "Nuevo ticket".
+- Catálogo: productos virales con filtros por nicho y por tienda (TikTok Shop, Amazon, Shopee). Cada producto muestra comisión estimada y enlace a la tienda.
+- Herramientas: Generar Enlace, Página de Presell, Página para Bio, Plantillas, Baúl de Anuncios, Misiones, Recompensas y Ranking.
+- Soporte humano por WhatsApp: el botón aparece en este chat cuando hace falta.`;
+
 function systemPrompt(assistant: AssistantId, hits: ChunkHit[], hasKnowledge: boolean) {
   const a = ASSISTANTS[assistant];
   const context = hits.length
@@ -139,6 +162,8 @@ Reglas:
 - Sé breve: lo esencial en pocas líneas (máximo unas 180 palabras). Si hace falta más, ofrece ampliar.
 - Cuando la respuesta salga de una clase del curso, cierra recomendando verla en el área de miembros, nombrando módulo y clase tal como aparecen en el título del fragmento (ej.: "Esto lo ves completo en el Módulo 04, Clase 05: Cierre y objeciones, en el área de miembros").
 ${hasKnowledge ? '' : '\nAviso interno: todavía no hay material del curso cargado. Ayuda con lo que sepas con seguridad y, en dudas específicas del curso, deriva al equipo.'}
+
+${PLATFORM_FACTS}
 
 FRAGMENTOS DE LAS CLASES:
 ${context}`;

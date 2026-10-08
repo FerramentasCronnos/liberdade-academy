@@ -148,6 +148,7 @@ const PLATFORM_FACTS = `DATOS FIJOS DE LA PLATAFORMA (úsalos con confianza):
 - Comunidad (menú Comunidad): espacios Networking (preséntate), Novedades (avisos y enlaces de clases en vivo), Soporte general (chat con el equipo), Tráfico y Resultados. Los tickets de soporte se abren en Comunidad → Soporte → "Nuevo ticket".
 - Catálogo: productos virales con filtros por nicho y por tienda (TikTok Shop, Amazon, Shopee). Cada producto muestra comisión estimada y enlace a la tienda.
 - Herramientas: Generar Enlace, Página de Presell, Página para Bio, Plantillas, Baúl de Anuncios, Misiones, Recompensas y Ranking.
+- BRAIN: la inteligencia artificial del curso, en https://s4.brainexperts.com.br, con acceso propio (correo con contraseña temporal, enviado al comprar; remitente "Brain IA"). La compra incluye 500 créditos, 1 video y 3 imágenes. Créditos, cobros, reembolsos, cambio de perfil o de plan de la BRAIN se resuelven solo por correo a s4@brainexperts.com.br: indica ese correo (no el WhatsApp) para esos casos y pide incluir el correo de la cuenta, el agente y una captura.
 - Soporte humano por WhatsApp: el botón aparece en este chat cuando hace falta.`;
 
 function systemPrompt(assistant: AssistantId, hits: ChunkHit[], hasKnowledge: boolean) {

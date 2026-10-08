@@ -17,6 +17,7 @@ import {
 } from '@/lib/community-data';
 import { normalizeTag, SPACE_CATEGORY, TICKET_CATEGORIES } from '@/lib/community';
 import { getUserId, isAdmin } from '@/lib/session';
+import { scheduleReplyToComment, scheduleReplyToPost } from '@/lib/assistant-community';
 
 export type ComposerState = { error?: string; ok?: boolean };
 export type FormState = { error?: string; ok?: boolean };
@@ -75,6 +76,9 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
     return { error: message(e, 'No pude publicar ahora.') };
   }
 
+  // dúvida na comunidade: a IA de suporte responde depois (se for dúvida)
+  scheduleReplyToPost(created.post.id);
+
   // anúncio novo com aviso marcado: e-mail para todos antes de responder.
   // É um lote só (até 100 por chamada), então não vale esconder a falha.
   // agendado: o cron (ou a próxima visita) avisa na hora marcada
@@ -117,6 +121,9 @@ export async function comment(_prev: FormState, formData: FormData): Promise<For
   } catch (e) {
     return { error: message(e, 'No pude comentar ahora.') };
   }
+
+  // o membro seguiu a conversa com a IA na thread
+  scheduleReplyToComment(postId, userId);
 
   revalidatePath(`/comunidade/post/${postId}`);
   revalidatePath('/comunidade', 'layout');

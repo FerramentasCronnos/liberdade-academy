@@ -311,7 +311,11 @@ export async function publishDueAnnouncements() {
 export async function listNotifiableEmails() {
   const users = await prisma.user.findMany({
     where: {
-      NOT: [{ email: { endsWith: '@demo.liberdade.academy' } }, { planSource: 'kiwify_refunded' }],
+      NOT: [
+        { email: { endsWith: '@demo.liberdade.academy' } },
+        { email: { endsWith: '@bot.liberdade.academy' } },
+        { planSource: 'kiwify_refunded' },
+      ],
     },
     select: { email: true },
   });

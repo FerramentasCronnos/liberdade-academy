@@ -49,6 +49,54 @@ export function chunkText(text: string): string[] {
   return chunks.filter((c) => c.length > 40);
 }
 
+/**
+ * Traduz o material para espanhol antes de indexar. As aulas chegam em
+ * português e os membros perguntam em espanhol: sem isto a busca por
+ * palavras não encontra nada ("presupuesto" nunca casa com "orçamento").
+ */
+export async function translateToSpanish(text: string): Promise<string> {
+  const key = process.env.OPENROUTER_API_KEY;
+  if (!key) throw new Error('OPENROUTER_API_KEY não configurada.');
+  const model = process.env.OPENROUTER_TRANSLATE_MODEL || process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-5.5';
+
+  // blocos de ~6 mil caracteres cortados em parágrafo
+  const blocks: string[] = [];
+  let current = '';
+  for (const para of text.split(/\n{2,}|\n(?=[A-ZÁÉÍÓÚ])/)) {
+    if ((current + para).length > 6000 && current) {
+      blocks.push(current);
+      current = '';
+    }
+    current += (current ? '\n\n' : '') + para;
+  }
+  if (current) blocks.push(current);
+
+  const out: string[] = [];
+  for (const block of blocks) {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_tokens: 8000,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Traduce al español neutro (latinoamericano) el texto que recibas. Es la transcripción de una clase de un curso de ventas y marketing (MVA, Máquina de Ventas Automáticas). Mantén el tono coloquial y directo del profesor, los ejemplos, los números y los nombres propios (BRAIN, MVA, TikTok Shop, Caique, Thaís). No resumas, no omitas nada, no agregues comentarios. Devuelve solo la traducción.',
+          },
+          { role: 'user', content: block },
+        ],
+      }),
+    });
+    if (!response.ok) throw new Error(`Traducción falló: ${response.status}`);
+    const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    out.push(data.choices?.[0]?.message?.content?.trim() ?? '');
+  }
+  return out.join('\n\n');
+}
+
 export async function addDocument(input: { assistant: AssistantId; title: string; filename?: string; text: string }) {
   const chunks = chunkText(input.text);
   if (!chunks.length) throw new Error('No encontré texto legible en el archivo.');

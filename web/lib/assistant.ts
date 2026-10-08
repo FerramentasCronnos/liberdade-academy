@@ -137,6 +137,7 @@ Reglas:
 - Si el miembro pide hablar con una persona, responde brevemente y termina con ${ESCALATE_TAG}.
 - Formato: texto plano. Usa guiones para pasos cuando ayude. Sin encabezados ni markdown pesado.
 - Sé breve: lo esencial en pocas líneas (máximo unas 180 palabras). Si hace falta más, ofrece ampliar.
+- Cuando la respuesta salga de una clase del curso, cierra recomendando verla en el área de miembros, nombrando módulo y clase tal como aparecen en el título del fragmento (ej.: "Esto lo ves completo en el Módulo 04, Clase 05: Cierre y objeciones, en el área de miembros").
 ${hasKnowledge ? '' : '\nAviso interno: todavía no hay material del curso cargado. Ayuda con lo que sepas con seguridad y, en dudas específicas del curso, deriva al equipo.'}
 
 FRAGMENTOS DE LAS CLASES:

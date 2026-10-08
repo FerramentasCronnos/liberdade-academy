@@ -407,9 +407,46 @@ export async function addComment(input: {
         route: `/comunidade/post/${post.id}`,
       },
     });
+    await emailAuthorAboutReply(post.id, post.authorId, comment.author.name, comment.content).catch((e) =>
+      console.error('[comentarios] e-mail de resposta falhou', e),
+    );
   }
 
   return comment;
+}
+
+/**
+ * Avisa o autor por e-mail que responderam a publicação dele, com o link.
+ * No máximo um e-mail a cada 30 minutos por publicação: numa thread
+ * movimentada, o primeiro aviso já traz a pessoa de volta.
+ */
+async function emailAuthorAboutReply(postId: string, authorId: string, commenterName: string, content: string) {
+  const [author, post, recent] = await Promise.all([
+    prisma.user.findUnique({ where: { id: authorId }, select: { email: true, name: true, planSource: true } }),
+    prisma.post.findUnique({ where: { id: postId }, select: { space: { select: { name: true } } } }),
+    prisma.comment.findFirst({
+      where: { postId, authorId: { not: authorId }, createdAt: { gte: new Date(Date.now() - 30 * 60_000) } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    }),
+  ]);
+  if (!author || author.planSource === 'kiwify_refunded') return;
+  if (author.email.endsWith('@demo.liberdade.academy') || author.email.endsWith('@bot.liberdade.academy')) return;
+
+  // `recent` é a resposta mais antiga dos últimos 30 min; se não é esta, já avisamos
+  const latest = await prisma.comment.findFirst({ where: { postId, authorId: { not: authorId } }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+  if (recent && latest && recent.id !== latest.id) return;
+
+  const { sendReplyEmail, isDeliverable } = await import('./email');
+  if (!isDeliverable(author.email)) return;
+  await sendReplyEmail({
+    to: author.email,
+    authorName: author.name,
+    commenterName,
+    excerpt: content.slice(0, 400),
+    postId,
+    spaceName: post?.space?.name,
+  });
 }
 
 /* ----------------------------------------------------------------- membros */

@@ -174,6 +174,30 @@ export function announcementEmail(input: { title: string; excerpt: string; postI
   return { subject: `Nuevo anuncio: ${plainExcerpt(input.title, 80)}`, html: layout(body, preheader) };
 }
 
+/** Alguém respondeu a publicação do membro: convite para voltar e ver. */
+export function sendReplyEmail(input: {
+  to: string;
+  authorName: string;
+  commenterName: string;
+  excerpt: string;
+  postId: string;
+  spaceName?: string;
+}) {
+  const url = `${APP_URL}/comunidade/post/${input.postId}`;
+  const first = escape(input.authorName.split(' ')[0] || input.authorName);
+  const body = `
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#6d5ce7;">💬 Nueva respuesta${input.spaceName ? ` en ${escape(input.spaceName)}` : ''}</p>
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#17143a;line-height:1.25;">${first}, ${escape(input.commenterName)} te respondió</h1>
+    <blockquote style="margin:0 0 24px;padding:14px 18px;border-left:3px solid #6d5ce7;background:#f6f4ff;border-radius:0 12px 12px 0;font-size:15px;line-height:1.6;color:#4a4668;white-space:pre-line;">${escape(input.excerpt)}</blockquote>
+    <a href="${url}" style="display:inline-block;background:#6d5ce7;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver la respuesta</a>
+    <p style="margin:16px 0 0;font-size:13.5px;color:#8b87a6;">Si el botón no funciona, copia este enlace: <a href="${url}" style="color:#6d5ce7;">${url}</a></p>`;
+  return send(
+    input.to,
+    `${input.commenterName} respondió tu publicación`,
+    layout(body, plainExcerpt(input.excerpt) || 'Entra a la comunidad para ver la respuesta.'),
+  );
+}
+
 /** Boas-vindas com as credenciais. Em espanhol, como a plataforma. */
 export function sendAccessEmail(input: { name: string; email: string; password: string }) {
   const first = escape(input.name.split(' ')[0] || input.name);

@@ -415,6 +415,15 @@ export async function addComment(input: {
   return comment;
 }
 
+/** Corta no fim de uma frase ou linha, para o e-mail não parar no meio. */
+function excerptAtSentence(text: string, max: number) {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  const head = t.slice(0, max);
+  const cut = Math.max(head.lastIndexOf('. '), head.lastIndexOf('.\n'), head.lastIndexOf('\n'), head.lastIndexOf('! '), head.lastIndexOf('? '));
+  return (cut > max / 2 ? head.slice(0, cut + 1) : head).trim() + ' …';
+}
+
 /**
  * Avisa o autor por e-mail que responderam a publicação dele, com o link.
  * No máximo um e-mail a cada 30 minutos por publicação: numa thread
@@ -443,7 +452,7 @@ async function emailAuthorAboutReply(postId: string, authorId: string, commenter
     to: author.email,
     authorName: author.name,
     commenterName,
-    excerpt: content.slice(0, 400),
+    excerpt: excerptAtSentence(content, 400),
     postId,
     spaceName: post?.space?.name,
   });

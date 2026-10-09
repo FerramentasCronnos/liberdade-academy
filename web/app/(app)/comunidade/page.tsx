@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { listFeed, listSpaces } from '@/lib/community-data';
 
-export const metadata = { title: 'Comunidad · Liberdade Academy' };
+export const metadata = { title: 'Comunidad · MVA' };
 
 export default async function CommunityHome({ searchParams }: { searchParams: Promise<{ tag?: string }> }) {
   const user = await getCurrentUser();

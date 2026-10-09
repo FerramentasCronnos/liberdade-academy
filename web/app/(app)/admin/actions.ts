@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 import { getUserId, isAdmin } from '@/lib/session';
+import { notifyAccessWebhook } from '@/lib/access';
 
 /**
  * Ações da área administrativa.
@@ -46,6 +47,7 @@ export async function createMember(
       onboardingCompleted: true,
     },
   });
+  await notifyAccessWebhook({ email, password, name: name || email.split('@')[0] });
 
   revalidatePath('/admin');
   return { ok: `Miembro ${email} creado.` };

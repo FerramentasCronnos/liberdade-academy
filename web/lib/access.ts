@@ -14,6 +14,30 @@ import { prisma } from '@/lib/db';
  */
 const REVOKED = 'kiwify_refunded';
 
+/**
+ * Avisa a automação de boas-vindas da própria equipe (LeadConnector, env
+ * ACCESS_WEBHOOK_URL) que um acesso foi criado, com e-mail e senha, para o
+ * WhatsApp de boas-vindas. Só em criação, nunca em troca de senha. Uma
+ * falha não bloqueia a criação: fica no log.
+ */
+export async function notifyAccessWebhook(input: { email: string; password: string; name?: string }) {
+  const url = process.env.ACCESS_WEBHOOK_URL;
+  if (!url) return { sent: false as const, reason: 'ACCESS_WEBHOOK_URL não configurada' };
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: input.email, senha: input.password, name: input.name ?? '', platform: 'MVA' }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) console.error(`[access-webhook] ${response.status} para ${input.email}`);
+    return { sent: response.ok, status: response.status };
+  } catch (error) {
+    console.error('[access-webhook] falhou', input.email, error);
+    return { sent: false as const, reason: error instanceof Error ? error.message : 'erro' };
+  }
+}
+
 /** Senha legível, sem caracteres que se confundem (0/O, 1/l/I). */
 export function generatePassword(length = 10) {
   const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -48,12 +72,14 @@ export async function grantAccess(input: {
   if (existing) {
     // voltou depois de um reembolso: reativa com senha nova
     await prisma.user.update({ where: { id: existing.id }, data: { passwordHash, ...stamp } });
+    await notifyAccessWebhook({ email, password, name: existing.name });
     return { created: true, userId: existing.id, name: existing.name, email, password };
   }
 
   const user = await prisma.user.create({
     data: { name, email, passwordHash, onboardingCompleted: true, ...stamp },
   });
+  await notifyAccessWebhook({ email, password, name });
   return { created: true, userId: user.id, name, email, password };
 }
 

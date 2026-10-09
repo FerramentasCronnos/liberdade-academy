@@ -9,7 +9,7 @@ import { prisma } from '@/lib/db';
 import { listRewards } from '@/lib/queries';
 import { getUserId, isAdmin } from '@/lib/session';
 
-export const metadata = { title: 'Administración · Liberdade Academy' };
+export const metadata = { title: 'Administración · MVA' };
 
 export default async function AdminPage() {
   const userId = await getUserId();

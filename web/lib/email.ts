@@ -6,7 +6,7 @@
  * e devolve erro em vez de derrubar o fluxo que chamou.
  */
 const APP_URL = process.env.APP_URL || 'https://catalogo.s4accelerator.com';
-const FROM = process.env.EMAIL_FROM || 'Liberdade Academy <onboarding@resend.dev>';
+const FROM = process.env.EMAIL_FROM || 'Máquina de Ventas Automáticas <onboarding@resend.dev>';
 /** Caixa que recebe respostas e pedidos de descadastro: conta para a reputação. */
 const REPLY_TO = process.env.EMAIL_REPLY_TO || 'ferramentas@brainexperts.com.br';
 
@@ -116,8 +116,8 @@ function escape(value: string) {
 function brand() {
   return `
     <div style="padding:0 0 28px 0;">
-      <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;letter-spacing:-0.3px;color:#17143a;line-height:1;">Liberdade</div>
-      <div style="font-family:Helvetica,Arial,sans-serif;font-size:10.5px;font-weight:700;letter-spacing:0.24em;text-transform:uppercase;color:#6d5ce7;margin-top:6px;">Academy</div>
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:700;letter-spacing:-0.5px;color:#17143a;line-height:1;">MVA</div>
+      <div style="font-family:Helvetica,Arial,sans-serif;font-size:10.5px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6d5ce7;margin-top:6px;">Máquina de Ventas Automáticas</div>
     </div>`;
 }
 
@@ -141,7 +141,7 @@ export function plainExcerpt(text: string, max = 110) {
 
 function layout(body: string, preheader?: string) {
   return `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Liberdade Academy</title></head>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Máquina de Ventas Automáticas</title></head>
 <body style="margin:0;padding:0;background:#f3f1fb;">
   ${preheader ? preheaderBlock(preheader) : ''}
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f1fb;padding:32px 16px;">
@@ -150,9 +150,9 @@ function layout(body: string, preheader?: string) {
         <tr><td>${brand()}${body}</td></tr>
       </table>
       <p style="max-width:560px;margin:20px auto 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#8b87a6;text-align:center;line-height:1.6;">
-        Recibiste este correo porque eres miembro de Liberdade Academy, la plataforma de Máquina de Ventas Automáticas.<br>
+        Recibiste este correo porque eres miembro de Máquina de Ventas Automáticas (MVA).<br>
         Para dejar de recibir avisos, responde a este correo con la palabra <strong>baja</strong>.<br>
-        Liberdade Academy · Brain Experts · ${escape(APP_URL.replace(/^https?:\/\//, ''))}
+        Máquina de Ventas Automáticas · Brain Experts · ${escape(APP_URL.replace(/^https?:\/\//, ''))}
       </p>
     </td></tr>
   </table>
@@ -206,7 +206,7 @@ export function sendAccessEmail(input: { name: string; email: string; password: 
   const body = `
     <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;color:#17143a;line-height:1.2;">¡Bienvenida, ${first}! 🎉</h1>
     <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#4a4668;">
-      Tu acceso a <strong>Liberdade Academy</strong> ya está listo. Adentro vas a encontrar el catálogo de productos virales, las páginas de presell, la comunidad y las misiones para ganar puntos.
+      Tu acceso a <strong>Máquina de Ventas Automáticas</strong> ya está listo. Adentro vas a encontrar el catálogo de productos virales, las páginas de presell, la comunidad y las misiones para ganar puntos.
     </p>
 
     <div style="background:#f6f4ff;border:1px solid #e4e0f7;border-radius:16px;padding:20px 22px;margin:0 0 24px;">
@@ -226,7 +226,7 @@ export function sendAccessEmail(input: { name: string; email: string; password: 
 
   return send(
     input.email,
-    'Tu acceso a Liberdade Academy está listo',
+    'Tu acceso a Máquina de Ventas Automáticas está listo',
     layout(body, 'Tus datos de acceso están adentro. Entra y empieza por el catálogo de productos virales.'),
   );
 }

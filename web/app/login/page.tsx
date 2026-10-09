@@ -3,7 +3,7 @@ import { getUserId } from '@/lib/session';
 import { LoginForm } from './login-form';
 import { Logo } from '@/components/logo';
 
-export const metadata = { title: 'Entrar · Liberdade Academy' };
+export const metadata = { title: 'Entrar · MVA' };
 
 export default async function LoginPage() {
   if (await getUserId()) redirect('/catalogo');
@@ -25,7 +25,7 @@ export default async function LoginPage() {
         </div>
 
         <p className="text-[12.5px] text-white/45">
-          © {new Date().getFullYear()} Liberdade Academy
+          © {new Date().getFullYear()} Máquina de Ventas Automáticas
         </p>
 
         <div

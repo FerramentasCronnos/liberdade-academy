@@ -22,7 +22,7 @@ type Params = Promise<{ id: string }>;
 export async function generateMetadata({ params }: { params: Params }) {
   const { id } = await params;
   const product = await getProduct(id).catch(() => null);
-  return { title: product ? `${product.name} · Liberdade Academy` : 'Producto' };
+  return { title: product ? `${product.name} · MVA` : 'Producto' };
 }
 
 export default async function ProductPage({ params }: { params: Params }) {

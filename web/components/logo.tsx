@@ -7,7 +7,7 @@ export function Logo({ compact = false, onDark = false }: { compact?: boolean; o
           onDark ? 'text-white' : 'text-[var(--text)]'
         }`}
       >
-        LA
+        MVA
       </span>
     );
   }
@@ -15,18 +15,18 @@ export function Logo({ compact = false, onDark = false }: { compact?: boolean; o
   return (
     <span className="select-none leading-none">
       <span
-        className={`block font-display text-[19px] font-semibold tracking-tight ${
+        className={`block font-display text-[22px] font-bold tracking-tight ${
           onDark ? 'text-white' : 'text-[var(--text)]'
         }`}
       >
-        Liberdade
+        MVA
       </span>
       <span
-        className={`block text-[10.5px] font-semibold uppercase tracking-[0.24em] ${
+        className={`block text-[9.5px] font-semibold uppercase tracking-[0.14em] ${
           onDark ? 'text-white/60' : 'text-[var(--accent-text)]'
         }`}
       >
-        Academy
+        Máquina de Ventas Automáticas
       </span>
     </span>
   );

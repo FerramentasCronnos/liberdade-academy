@@ -4,7 +4,7 @@ import { getCurrentUser, getUserId } from '@/lib/session';
 import { listRanking } from '@/lib/queries';
 import { avatarColor, initials } from '@/lib/community';
 
-export const metadata = { title: 'Ranking · Liberdade Academy' };
+export const metadata = { title: 'Ranking · MVA' };
 
 interface RankingUser {
   id: string;

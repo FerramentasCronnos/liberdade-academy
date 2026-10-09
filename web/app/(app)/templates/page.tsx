@@ -5,7 +5,7 @@ import { getUserId } from '@/lib/session';
 import { listTemplates } from '@/lib/queries';
 import type { OfferTemplate } from '@/lib/affiliate';
 
-export const metadata = { title: 'Plantillas de Ofertas · Liberdade Academy' };
+export const metadata = { title: 'Plantillas de Ofertas · MVA' };
 
 export default async function TemplatesPage() {
   const userId = await getUserId();

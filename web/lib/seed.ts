@@ -21,7 +21,7 @@ const MISSIONS = [
   { slug: 'primeiros-5000', title: 'Primeros US$ 5.000 en comisiones', description: 'Acumula US$ 5.000 en comisiones y gana 500 puntos.', points: 500, category: 'vendas', kind: 'proof', repeatable: false, order: 8 },
   { slug: 'finalizar-curso', title: 'Terminar el curso', description: 'Mira todas las clases hasta el final y gana 150 puntos.', points: 150, category: 'curso', kind: 'proof', repeatable: false, order: 9 },
   { slug: 'indicou-e-comprou', title: 'Recomendó y compró', description: 'Recomienda a una amiga que compre y gana 500 puntos.', points: 500, category: 'indicacoes', kind: 'proof', repeatable: true, order: 10 },
-  { slug: 'recomende', title: 'Recomienda Liberdade Academy', description: 'Publica un video en una red social abierta contando tu experiencia y gana 500 puntos.', points: 500, category: 'outras', kind: 'proof', repeatable: true, order: 11 },
+  { slug: 'recomende', title: 'Recomienda Máquina de Ventas Automáticas', description: 'Publica un video en una red social abierta contando tu experiencia y gana 500 puntos.', points: 500, category: 'outras', kind: 'proof', repeatable: true, order: 11 },
 ];
 
 const REWARDS = [

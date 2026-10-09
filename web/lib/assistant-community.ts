@@ -52,7 +52,7 @@ async function chat(messages: Array<{ role: 'system' | 'user' | 'assistant'; con
   const model = process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-5.5';
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'Liberdade Academy' },
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'Máquina de Ventas Automáticas' },
     body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.3 }),
   });
   if (!response.ok) throw new Error(`OpenRouter ${response.status}`);

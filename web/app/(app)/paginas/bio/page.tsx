@@ -7,7 +7,7 @@ import { getUserId } from '@/lib/session';
 import { listPages } from '@/lib/queries';
 import { BIO_MODELS, type LandingPage } from '@/lib/pages';
 
-export const metadata = { title: 'Página para BIO · Liberdade Academy' };
+export const metadata = { title: 'Página para BIO · MVA' };
 
 export default async function BioListPage() {
   const userId = await getUserId();

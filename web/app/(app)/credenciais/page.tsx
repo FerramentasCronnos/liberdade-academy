@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getUserId } from '@/lib/session';
 import { ComingSoon } from '@/components/coming-soon';
 
-export const metadata = { title: 'Configurar Credenciais · Liberdade Academy' };
+export const metadata = { title: 'Configurar Credenciais · MVA' };
 
 export default async function Page() {
   if (!(await getUserId())) redirect('/login');

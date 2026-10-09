@@ -13,7 +13,7 @@ import {
   type Reward,
 } from '@/lib/gamification';
 
-export const metadata = { title: 'Recompensas · Liberdade Academy' };
+export const metadata = { title: 'Recompensas · MVA' };
 
 function RewardGrid({ rewards }: { rewards: Reward[] }) {
   if (rewards.length === 0) {

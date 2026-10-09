@@ -19,9 +19,9 @@ const display = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: 'Liberdade Academy',
+  title: 'Máquina de Ventas Automáticas',
   description:
-    'Catálogo de productos virales, comunidad y misiones para afiliados de Liberdade Academy.',
+    'Catálogo de productos virales, comunidad y misiones para afiliados de Máquina de Ventas Automáticas (MVA).',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

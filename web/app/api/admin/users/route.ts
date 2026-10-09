@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 import { sendAccessEmail } from '@/lib/email';
+import { notifyAccessWebhook } from '@/lib/access';
 
 /**
  * Criação de membro pela administração.
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
     );
   }
 
+  const existed = Boolean(await prisma.user.findUnique({ where: { email }, select: { id: true } }));
   const user = await prisma.user.upsert({
     where: { email },
     update: {
@@ -52,11 +54,15 @@ export async function POST(request: Request) {
   const mail = body.sendEmail
     ? await sendAccessEmail({ name: user.name, email, password: body.password })
     : null;
+  // acesso novo: avisa a automação de boas-vindas (WhatsApp)
+  const webhook = existed ? null : await notifyAccessWebhook({ email, password: body.password, name: user.name });
 
   return NextResponse.json({
     ok: true,
     user: { id: user.id, name: user.name, email: user.email, isAdmin: user.isAdmin },
     ...(mail ? { emailSent: mail.ok, emailError: mail.error } : {}),
+    created: !existed,
+    ...(webhook ? { webhook } : {}),
   });
 }
 

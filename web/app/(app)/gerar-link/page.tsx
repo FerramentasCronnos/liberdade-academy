@@ -6,7 +6,7 @@ import { getUserId } from '@/lib/session';
 import { listAffiliateAccounts, listAffiliateLinks } from '@/lib/queries';
 import type { AffiliateAccount, AffiliateLink } from '@/lib/affiliate';
 
-export const metadata = { title: 'Gerar Link · Liberdade Academy' };
+export const metadata = { title: 'Gerar Link · MVA' };
 
 export default async function GenerateLinkPage() {
   const userId = await getUserId();

@@ -12,7 +12,7 @@ import {
   type PointsSummary,
 } from '@/lib/gamification';
 
-export const metadata = { title: 'Misiones · Liberdade Academy' };
+export const metadata = { title: 'Misiones · MVA' };
 
 function MissionGrid({ missions, empty }: { missions: Mission[]; empty: string }) {
   if (missions.length === 0) {

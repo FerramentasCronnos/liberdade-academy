@@ -7,7 +7,7 @@ import { listProducts } from '@/lib/queries';
 import type { Product } from '@/lib/types';
 
 export const metadata = {
-  title: 'Catálogo · Liberdade Academy',
+  title: 'Catálogo · MVA',
 };
 
 export default async function CatalogPage() {

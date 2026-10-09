@@ -6,7 +6,7 @@ import { getUserId } from '@/lib/session';
 import { listPages } from '@/lib/queries';
 import { PRESELL_TEMPLATES, type LandingPage } from '@/lib/pages';
 
-export const metadata = { title: 'Página de Presell · Liberdade Academy' };
+export const metadata = { title: 'Página de Presell · MVA' };
 
 export default async function PresellListPage() {
   const userId = await getUserId();

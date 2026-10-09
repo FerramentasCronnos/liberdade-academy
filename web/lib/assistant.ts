@@ -22,7 +22,7 @@ export const ASSISTANTS: Record<AssistantId, { name: string; agent: string; emoj
     emoji: '🛟',
     tagline: 'Plataforma, acceso, herramientas y cómo empezar.',
     persona:
-      'Te llamas Sofía y eres parte del equipo de soporte de Liberdade Academy, la plataforma del curso Máquina de Ventas Automáticas (MVA). Atiendes a los miembros con la plataforma (catálogo, enlaces, presell, comunidad, misiones), con el acceso y con los primeros pasos como afiliados de TikTok Shop, Amazon y Shopee.',
+      'Te llamas Sofía y eres parte del equipo de soporte de Máquina de Ventas Automáticas (MVA), la plataforma del curso. Atiendes a los miembros con la plataforma (catálogo, enlaces, presell, comunidad, misiones), con el acceso y con los primeros pasos como afiliados de TikTok Shop, Amazon y Shopee.',
   },
   trafico: {
     name: 'Tráfico',
@@ -30,7 +30,7 @@ export const ASSISTANTS: Record<AssistantId, { name: string; agent: string; emoj
     emoji: '🚀',
     tagline: 'Meta Ads, Google Ads, TikTok y contenido que vende.',
     persona:
-      'Te llamas Mateo y eres el especialista en tráfico del equipo de soporte de Liberdade Academy (curso MVA). Atiendes a los miembros en tráfico pago y orgánico: Meta Ads, Google Ads, TikTok, ganchos, creativos, presupuesto, métricas y optimización de campañas para vender como afiliados.',
+      'Te llamas Mateo y eres el especialista en tráfico del equipo de soporte de Máquina de Ventas Automáticas (MVA). Atiendes a los miembros en tráfico pago y orgánico: Meta Ads, Google Ads, TikTok, ganchos, creativos, presupuesto, métricas y optimización de campañas para vender como afiliados.',
   },
 };
 
@@ -42,7 +42,7 @@ const ESCALATE_TAG = '[[ESCALAR]]';
 
 export function whatsappLink(assistant: AssistantId, question?: string) {
   const number = process.env.SUPPORT_WHATSAPP || '5588951574640';
-  const text = `Hola, vengo de Liberdade Academy (${ASSISTANTS[assistant].name}). ${question ? `Mi duda: ${question}` : 'Necesito ayuda.'}`;
+  const text = `Hola, vengo de la plataforma MVA (${ASSISTANTS[assistant].name}). ${question ? `Mi duda: ${question}` : 'Necesito ayuda.'}`;
   return `https://wa.me/${number}?text=${encodeURIComponent(text.slice(0, 500))}`;
 }
 
@@ -129,7 +129,7 @@ async function complete(messages: ChatMessage[]) {
       Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.APP_URL || 'https://catalogo.s4accelerator.com',
-      'X-Title': 'Liberdade Academy',
+      'X-Title': 'Máquina de Ventas Automáticas',
     },
     body: JSON.stringify({ model, messages, max_tokens: 1400, temperature: 0.3 }),
   });
@@ -143,7 +143,7 @@ async function complete(messages: ChatMessage[]) {
 }
 
 export const PLATFORM_FACTS = `DATOS FIJOS DE LA PLATAFORMA (úsalos con confianza):
-- Plataforma: Liberdade Academy, en https://catalogo.s4accelerator.com (acceso con el correo de la compra). La BRAIN (IA del curso) tiene acceso aparte, enviado por correo y WhatsApp.
+- Plataforma: Máquina de Ventas Automáticas (MVA), en https://catalogo.s4accelerator.com (acceso con el correo de la compra). La BRAIN (IA del curso) tiene acceso aparte, enviado por correo y WhatsApp.
 - Clase en vivo: una vez por semana, normalmente jueves a las 20:00 hora de Miami. El enlace se publica en el espacio "Novedades" de la comunidad, dentro de la plataforma.
 - Comunidad (menú Comunidad): espacios Networking (preséntate), Novedades (avisos y enlaces de clases en vivo), Soporte general (chat con el equipo), Tráfico y Resultados. Los tickets de soporte se abren en Comunidad → Soporte → "Nuevo ticket".
 - Catálogo: productos virales con filtros por nicho y por tienda (TikTok Shop, Amazon, Shopee). Cada producto muestra comisión estimada y enlace a la tienda.

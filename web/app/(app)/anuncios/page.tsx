@@ -4,7 +4,7 @@ import { AdVault, type AdCreative } from '@/components/ad-vault';
 import { getUserId, isAdmin } from '@/lib/session';
 import { AD_CATEGORIES, listAds } from '@/lib/queries';
 
-export const metadata = { title: 'Baúl de Anuncios · Liberdade Academy' };
+export const metadata = { title: 'Baúl de Anuncios · MVA' };
 
 type Search = Promise<{ categoria?: string }>;
 

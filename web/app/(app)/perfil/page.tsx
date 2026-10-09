@@ -5,7 +5,7 @@ import { AppearanceCard } from '@/components/appearance-card';
 import { LogoutButton } from '@/components/logout-button';
 import { getCurrentUser, getUserId } from '@/lib/session';
 
-export const metadata = { title: 'Perfil · Liberdade Academy' };
+export const metadata = { title: 'Perfil · MVA' };
 
 export default async function ProfilePage() {
   if (!(await getUserId())) redirect('/login');

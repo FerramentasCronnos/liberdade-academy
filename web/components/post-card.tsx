@@ -20,7 +20,7 @@ export function TeamBadge() {
 
 /** Linha abaixo do nome, como o "Founder @ ModernMind" do Circle. */
 function roleLine(post: CommunityPost) {
-  if (post.author.isAdmin) return 'Equipo @ Liberdade Academy';
+  if (post.author.isAdmin) return 'Equipo @ MVA';
   return `Nivel ${post.author.level} · ${relativeTime(post.createdAt)}`;
 }
 

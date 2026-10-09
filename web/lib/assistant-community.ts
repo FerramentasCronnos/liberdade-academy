@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { after } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 import { prisma } from '@/lib/db';
 import { ASSISTANTS, isAssistant, PLATFORM_FACTS, retrieve, whatsappLink, type AssistantId } from '@/lib/assistant';
 import { addComment } from '@/lib/community-data';
@@ -185,13 +185,27 @@ export async function processComment(postId: string, commentAuthorId: string): P
   return 'replied';
 }
 
-/** Versões agendadas: rodam depois da resposta HTTP, sem segurar a tela. */
+/**
+ * Versões agendadas: rodam depois da resposta HTTP, sem segurar a tela.
+ * waitUntil (Vercel) mantém a função viva até a promessa terminar.
+ */
 export function scheduleReplyToPost(postId: string) {
-  if (!enabled()) return;
-  after(() => processPost(postId).catch((error) => console.error('[assistant-community] post', postId, error)));
+  if (!enabled()) {
+    console.log('[assistant-community] desligado (ASSISTANT_ENABLED/OPENROUTER_API_KEY)');
+    return;
+  }
+  waitUntil(
+    processPost(postId)
+      .then((r) => console.log('[assistant-community] post', postId, r))
+      .catch((error) => console.error('[assistant-community] post', postId, error)),
+  );
 }
 
 export function scheduleReplyToComment(postId: string, commentAuthorId: string) {
   if (!enabled()) return;
-  after(() => processComment(postId, commentAuthorId).catch((error) => console.error('[assistant-community] comment', postId, error)));
+  waitUntil(
+    processComment(postId, commentAuthorId)
+      .then((r) => console.log('[assistant-community] comment', postId, r))
+      .catch((error) => console.error('[assistant-community] comment', postId, error)),
+  );
 }

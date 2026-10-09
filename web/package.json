@@ -12,6 +12,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@vercel/blob": "^2.8.0",
+    "@vercel/functions": "^3.9.11",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.8",
     "mammoth": "^1.8.0",

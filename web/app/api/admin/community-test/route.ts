@@ -17,15 +17,26 @@ export async function POST(request: Request) {
   }
   const body = (await request.json().catch(() => ({}))) as { email?: string; space?: string; content?: string; followUp?: string; cleanup?: boolean; postId?: string; latest?: string };
 
-  // inspeção: últimas publicações de um espaço, ou processar uma existente
+  // inspeção: últimas conversas do widget de suporte
+  if (body.latest === 'chats') {
+    const chats = await prisma.supportChat.findMany({
+      orderBy: { updatedAt: 'desc' },
+      take: 5,
+      include: { user: { select: { name: true, email: true } }, messages: { orderBy: { createdAt: 'asc' } } },
+    });
+    return NextResponse.json({
+      chats: chats.map((c) => ({ id: c.id, at: c.updatedAt, by: c.user.name, assistant: c.assistant, escalated: c.escalated, messages: c.messages.map((m) => `${m.role}: ${m.content.slice(0, 160)}`) })),
+    });
+  }
+  // inspeção: últimas publicações de um espaço (ou de todos com "*"), ou processar uma existente
   if (body.latest) {
     const posts = await prisma.post.findMany({
-      where: { space: { slug: body.latest } },
+      where: body.latest === '*' ? {} : { space: { slug: body.latest } },
       orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: { author: { select: { name: true, email: true, isAdmin: true } }, comments: { include: { author: { select: { name: true } } } } },
+      take: 8,
+      include: { space: { select: { slug: true } }, author: { select: { name: true, email: true, isAdmin: true } }, comments: { include: { author: { select: { name: true } } } } },
     });
-    return NextResponse.json({ posts: posts.map((p) => ({ id: p.id, at: p.createdAt, by: p.author.name, admin: p.author.isAdmin, content: p.content.slice(0, 160), replies: p.comments.map((c) => c.author.name) })) });
+    return NextResponse.json({ posts: posts.map((p) => ({ id: p.id, at: p.createdAt, space: p.space?.slug, by: p.author.name, admin: p.author.isAdmin, content: p.content.slice(0, 160), replies: p.comments.map((c) => c.author.name) })) });
   }
   if (body.postId) {
     return NextResponse.json({ postId: body.postId, result: await processPost(body.postId) });

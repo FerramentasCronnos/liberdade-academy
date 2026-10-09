@@ -119,7 +119,7 @@ async function loadThread(postId: string): Promise<Thread | null> {
   if (!post?.space) return null;
   const assistant = SPACE_ASSISTANT[post.space.slug];
   if (!assistant || !isAssistant(assistant)) return null;
-  if (post.author.isAdmin) return null; // equipe não precisa de resposta automática
+  if (isBotEmail(post.author.email)) return null; // a IA não responde a si mesma
 
   return {
     postId: post.id,

@@ -59,6 +59,20 @@ function GrowthBadge({ value }: { value?: number }) {
 }
 
 function Avatar({ creator, size = 44 }: { creator: CreatorListItem; size?: number }) {
+  if (creator.avatar) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={creator.avatar}
+        alt=""
+        width={size}
+        height={size}
+        loading="lazy"
+        className="shrink-0 rounded-full object-cover"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <span
       className="grid shrink-0 place-items-center rounded-full font-display font-semibold text-white"
@@ -140,6 +154,9 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
   const [query, setQuery] = useState('');
   // Favoritos alterados nesta sessão: a aba e o contador reagem na hora, antes do servidor revalidar.
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  // 10 por página: a lista parece maior e cada página carrega menos
+  const PAGE_SIZE = 10;
+  const [page, setPage] = useState(1);
 
   const isFavorite = (c: CreatorListItem) => overrides[c.id] ?? c.favorite;
   const favoriteCount = creators.filter(isFavorite).length;
@@ -147,7 +164,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
   // Posição do ranking é a da Kalodata, não a da ordenação escolhida.
   const rankOf = useMemo(() => new Map(creators.map((c, i) => [c.id, c.rank ?? i + 1])), [creators]);
 
-  const visible = useMemo(() => {
+  const all = useMemo(() => {
     let list = creators;
     if (tab === 'favoritos') list = list.filter((c) => overrides[c.id] ?? c.favorite);
 
@@ -187,6 +204,17 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
     return sorted;
   }, [creators, tab, sort, query, overrides]);
 
+  const pageCount = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  const current = Math.min(page, pageCount);
+  const visible = all.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const changeAnd = (fn: () => void) => {
+    fn();
+    setPage(1);
+  };
+  const changeAndTab = (value: Tab) => changeAnd(() => setTab(value));
+  const changeAndSort = (value: SortId) => changeAnd(() => setSort(value));
+  const changeAndQuery = (value: string) => changeAnd(() => setQuery(value));
+
   const lastSync = creators.reduce<string | undefined>(
     (acc, c) => (c.rankSyncedAt && (!acc || c.rankSyncedAt > acc) ? c.rankSyncedAt : acc),
     undefined,
@@ -216,7 +244,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
             <button
               key={t.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => changeAndTab(t.id)}
               aria-pressed={active}
               className={`-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2.5 text-[13.5px] font-medium transition ${
                 active
@@ -245,7 +273,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
             <button
               key={option.id}
               type="button"
-              onClick={() => setSort(option.id)}
+              onClick={() => changeAndSort(option.id)}
               className={`shrink-0 rounded-full border px-4 py-2.5 text-[13px] font-medium shadow-[var(--shadow-soft)] transition ${
                 sort === option.id
                   ? 'border-[var(--brand)] bg-[var(--brand)] text-[var(--text-inverse)]'
@@ -262,7 +290,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
             type="search"
             aria-label="Buscar creador, @usuario o producto"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => changeAndQuery(e.target.value)}
             placeholder="Creador, @usuario o producto..."
             className="w-full appearance-none bg-transparent text-[13px] text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] [&::-webkit-search-cancel-button]:appearance-none"
           />
@@ -274,7 +302,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
         {lastSync && <> · Última actualización: {formatDate(lastSync)}</>}
       </p>
 
-      {visible.length === 0 ? (
+      {all.length === 0 ? (
         <div className="mt-6 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 px-5 py-16 text-center">
           <IconTrophy className="mx-auto h-8 w-8 text-[var(--text-faint)]" />
           <p className="mt-3 font-display text-lg font-semibold text-[var(--text)]">
@@ -451,10 +479,47 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
             })}
           </ol>
 
-          <p className="mt-3 text-[12px] text-[var(--text-faint)]">
-            {visible.length} creador{visible.length === 1 ? '' : 'es'}
-            {tab === 'favoritos' ? ' guardados' : ''}
-          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[12px] text-[var(--text-faint)]">
+              {all.length} creador{all.length === 1 ? '' : 'es'}
+              {tab === 'favoritos' ? ' guardados' : ''} · página {current} de {pageCount}
+            </p>
+            {pageCount > 1 && (
+              <nav className="flex items-center gap-1" aria-label="Páginas">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={current === 1}
+                  className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)] disabled:opacity-40"
+                >
+                  Anterior
+                </button>
+                {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setPage(n)}
+                    aria-current={n === current ? 'page' : undefined}
+                    className={`h-8 w-8 rounded-full text-[12.5px] font-semibold transition ${
+                      n === current
+                        ? 'bg-[var(--brand)] text-white'
+                        : 'border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                  disabled={current === pageCount}
+                  className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--text)] transition hover:border-[var(--border-strong)] disabled:opacity-40"
+                >
+                  Siguiente
+                </button>
+              </nav>
+            )}
+          </div>
         </>
       )}
     </div>

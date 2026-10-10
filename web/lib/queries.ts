@@ -541,6 +541,8 @@ export type CreatorListItem = {
   externalId: string;
   handle: string;
   nickname: string;
+  /** Foto de perfil (Blob); ausente = mostrar iniciais. */
+  avatar?: string;
   currency: string;
   rank?: number;
   revenue: number;
@@ -596,6 +598,7 @@ const creatorBase = {
   externalId: true,
   handle: true,
   nickname: true,
+  avatar: true,
   currency: true,
   rank: true,
   revenue: true,
@@ -635,6 +638,7 @@ export async function listCreators(userId: string): Promise<CreatorListItem[]> {
     externalId: c.externalId,
     handle: c.handle,
     nickname: c.nickname,
+    avatar: c.avatar || undefined,
     currency: c.currency,
     rank: c.rank ?? undefined,
     revenue: c.revenue,
@@ -676,6 +680,7 @@ export async function getCreator(id: string, userId: string): Promise<CreatorDet
     externalId: creator.externalId,
     handle: creator.handle,
     nickname: creator.nickname,
+    avatar: creator.avatar || undefined,
     currency: creator.currency,
     rank: creator.rank ?? undefined,
     revenue: creator.revenue,

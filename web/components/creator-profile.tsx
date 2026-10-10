@@ -61,9 +61,14 @@ function Header({ creator }: { creator: CreatorDetail }) {
   return (
     <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[image:var(--sidebar-bg)] font-display text-[22px] font-bold text-white">
-          {initials(creator.nickname || creator.handle)}
-        </span>
+        {creator.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={creator.avatar} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+        ) : (
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[image:var(--sidebar-bg)] font-display text-[22px] font-bold text-white">
+            {initials(creator.nickname || creator.handle)}
+          </span>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

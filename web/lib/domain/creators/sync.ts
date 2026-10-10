@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { backfillCreatorVideoThumbnails } from '@/lib/domain/catalog/video-thumbs';
+import { backfillCreatorAvatars } from './avatars';
 import {
   KalodataError,
   kalodataBaseBody,
@@ -50,6 +51,7 @@ export interface SyncCreatorsResult {
   created: number;
   profiles: number;
   thumbs?: { pending: number; done: number; failed: number };
+  avatars?: { pending: number; done: number; notFound: number };
   errors: string[];
   message: string;
 }
@@ -497,6 +499,8 @@ export async function syncCreators(options: SyncCreatorsOptions = {}): Promise<S
   // capas dos vídeos novos com o tempo que sobrou
   const thumbsDeadline = Math.min(deadline + 30_000, started + HARD_LIMIT_MS);
   const thumbs = Date.now() < deadline ? await backfillCreatorVideoThumbnails(60, thumbsDeadline) : undefined;
+  // fotos de perfil novas (criadores que entraram no ranking)
+  const avatars = Date.now() < thumbsDeadline ? await backfillCreatorAvatars(20, thumbsDeadline) : undefined;
 
   const pending = Math.max(0, candidates.length - profiles);
   const message =
@@ -505,5 +509,5 @@ export async function syncCreators(options: SyncCreatorsOptions = {}): Promise<S
     (errors.length ? `, ${errors.length} con error` : '') +
     '.';
 
-  return { region, ranked, created, profiles, thumbs, errors, message };
+  return { region, ranked, created, profiles, thumbs, avatars, errors, message };
 }

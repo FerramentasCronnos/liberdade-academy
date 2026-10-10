@@ -373,6 +373,8 @@ model Creator {
   contactWhatsapp  String?
   contactInstagram String?
   contactFacebook  String?
+  /// Foto de perfil do TikTok copiada pro Blob (fonte pública); '' = tentou e não achou.
+  avatar           String?
   /// Posição no último ranking (1 = maior receita); null = saiu do top.
   rank             Int?
   revenue          Float             @default(0)

@@ -6,6 +6,7 @@ import { useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { createPost } from '@/app/(app)/comunidade/actions';
 import { upload } from '@vercel/blob/client';
+import { COVER_PRESETS, ImageCropDialog, POST_PRESETS } from './image-crop-dialog';
 import { avatarColor, initials, normalizeTag, SUGGESTED_TAGS, type Space } from '@/lib/community';
 import { Avatar } from './avatar';
 import { PostCard } from './post-card';
@@ -52,6 +53,7 @@ export function PostComposer({
   const [open, setOpen] = useState(forceOpen);
   const [image, setImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [pending, setPending] = useState<File | null>(null); // imagem escolhida, aguardando recorte
   const [error, setError] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState('');
@@ -242,7 +244,20 @@ export function PostComposer({
           </button>
         </div>
       )}
-      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onPickFile(f); }} />
+      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) { if (f.type === 'image/gif') void onPickFile(f); else setPending(f); } e.target.value = ''; }} />
+      {pending && (
+        <ImageCropDialog
+          file={pending}
+          title={isAnnouncement ? 'Ajustar portada' : 'Ajustar foto'}
+          presets={isAnnouncement ? COVER_PRESETS : POST_PRESETS}
+          outputWidth={1600}
+          onCancel={() => setPending(null)}
+          onConfirm={(cropped) => {
+            setPending(null);
+            void onPickFile(cropped);
+          }}
+        />
+      )}
 
       {isAnnouncement && (
         <div className="mt-3 flex flex-col gap-2 rounded-2xl bg-[var(--bg-sunken)] p-3">

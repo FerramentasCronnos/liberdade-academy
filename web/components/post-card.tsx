@@ -247,6 +247,32 @@ export function PostCard({
             {post.comments} {post.comments === 1 ? 'comentario' : 'comentarios'}
           </Link>
         )}
+        {!isAnnouncement && post.commenters && post.commenters.length > 0 && (
+          <Link
+            href={detail ? '#comentarios' : href}
+            className="ml-1 inline-flex min-w-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 transition hover:bg-[var(--bg-sunken)]"
+            aria-label="Ver comentarios"
+          >
+            <span className="flex -space-x-2">
+              {post.commenters.map((person) => (
+                <span key={person.id} className="rounded-full ring-2 ring-[var(--bg-elevated)]">
+                  <Avatar
+                    name={person.name}
+                    src={person.avatar}
+                    size={26}
+                    color={avatarColor(person.name)}
+                    fallback={initials(person.name)}
+                  />
+                </span>
+              ))}
+            </span>
+            {post.lastCommentAt && (
+              <span className="truncate text-[12.5px] font-semibold text-[var(--brand)]">
+                Nuevo comentario {relativeTime(post.lastCommentAt)}
+              </span>
+            )}
+          </Link>
+        )}
       </footer>
       </div>
     </article>

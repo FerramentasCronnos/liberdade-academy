@@ -78,6 +78,8 @@ type PostRow = Post & {
   likes: PostLike[];
   space: SpaceRow | null;
   _count: { comments: number };
+  /** Últimos comentários, só pra mostrar quem participou (avatares) e quando. */
+  comments?: Array<{ createdAt: Date; author: { id: string; name: string; avatar: string | null } }>;
 };
 
 const postInclude = {
@@ -85,6 +87,11 @@ const postInclude = {
   likes: true,
   space: true,
   _count: { select: { comments: true } },
+  comments: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 8,
+    select: { createdAt: true, author: { select: { id: true, name: true, avatar: true } } },
+  },
 } as const;
 
 function author(user: User) {
@@ -97,6 +104,19 @@ function author(user: User) {
   };
 }
 
+/** Até 5 pessoas distintas, na ordem do comentário mais recente. */
+function uniqueCommenters(comments: NonNullable<PostRow['comments']>) {
+  const seen = new Set<string>();
+  const out: Array<{ id: string; name: string; avatar?: string }> = [];
+  for (const comment of comments) {
+    if (seen.has(comment.author.id)) continue;
+    seen.add(comment.author.id);
+    out.push({ id: comment.author.id, name: comment.author.name, avatar: comment.author.avatar ?? undefined });
+    if (out.length === 5) break;
+  }
+  return out;
+}
+
 function serializePost(post: PostRow, viewerId: string): CommunityPost {
   return {
     id: post.id,
@@ -107,6 +127,8 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
     pinned: post.pinned,
     likes: post.likes.length,
     comments: post._count.comments,
+    commenters: uniqueCommenters(post.comments ?? []),
+    lastCommentAt: post.comments?.[0]?.createdAt.toISOString(),
     isLiked: post.likes.some((like) => like.userId === viewerId),
     createdAt: (post.scheduledAt ?? post.createdAt).toISOString(),
     category: post.category,

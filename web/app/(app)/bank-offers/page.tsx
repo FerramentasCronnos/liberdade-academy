@@ -1,27 +1,25 @@
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
-import { BankOffersView } from '@/components/bank-offers-view';
+import { CreatorsRanking } from '@/components/creators-ranking';
 import { getUserId } from '@/lib/session';
-import { listReferenceVideos, type ReferenceVideoView } from '@/lib/queries';
+import { listCreators, type CreatorListItem } from '@/lib/queries';
 
 export const metadata = { title: 'Bank Offers · MVA' };
 
 /**
- * Bank Offers: os mesmos vídeos de referência que aparecem dentro de cada
- * oferta, reunidos numa vitrine só de vídeos para inspiração.
+ * Bank Offers: ranking dos 50 criadores que mais vendem no TikTok Shop US,
+ * atualizado a cada 2 dias pela Kalodata. Cada linha abre o perfil do criador.
  */
 export default async function BankOffersPage() {
-  if (!(await getUserId())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
 
-  const videos = await listReferenceVideos().catch(() => [] as ReferenceVideoView[]);
+  const creators = await listCreators(userId).catch(() => [] as CreatorListItem[]);
 
   return (
     <>
-      <PageHeader
-        title="Bank Offers"
-        subtitle="Los videos de creadores que más vendieron cada oferta del catálogo"
-      />
-      <BankOffersView videos={videos} />
+      <PageHeader title="Bank Offers" subtitle="Los 50 creadores que más venden en TikTok Shop US" />
+      <CreatorsRanking creators={creators} />
     </>
   );
 }

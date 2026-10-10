@@ -61,6 +61,7 @@ model User {
   affiliateLinks      AffiliateLink[]
   landingPages        LandingPage[]
   adCreatives         AdCreative[]
+  creatorFavorites    CreatorFavorite[]
 }
 
 /// Anúncio do Baú: criativo em imagem que a administração sobe e os membros
@@ -348,6 +349,117 @@ model ProductVideo {
 
   @@unique([productId, videoId])
   @@index([productId, revenue])
+}
+
+/// Criador do TikTok Shop ranqueado pela Kalodata (aba Bank Offers).
+/// Métricas do período (últimos 30 dias) renovadas pelo cron; o perfil
+/// completo (vídeos, produtos) é renovado com menos frequência por custar
+/// 3 chamadas por criador.
+model Creator {
+  id               String            @id @default(cuid())
+  /// creator_id da Kalodata / TikTok.
+  externalId       String
+  region           String            @default("US")
+  currency         String            @default("USD")
+  handle           String
+  nickname         String
+  status           String?
+  bio              String?
+  contactEmail     String?
+  contactWhatsapp  String?
+  contactInstagram String?
+  contactFacebook  String?
+  /// Posição no último ranking (1 = maior receita); null = saiu do top.
+  rank             Int?
+  revenue          Float             @default(0)
+  revenueGrowth    Float?
+  salesCount       Int               @default(0)
+  unitPrice        Float?
+  videoRevenue     Float?
+  liveRevenue      Float?
+  videoViews       Float?
+  liveViews        Float?
+  videoGpm         Float?
+  liveGpm          Float?
+  followers        Int?
+  newFollowers     Int?
+  videoCount       Int?
+  liveCount        Int?
+  shopCount        Int?
+  productCount     Int?
+  /// Data do primeiro vídeo (creator_debut dos vídeos).
+  debutDate        DateTime?
+  /// (likes+comentários+shares)/views dos vídeos guardados, em %.
+  engagementRate   Float?
+  /// [{d:'2026-10-10', r: receita, v: views, f: seguidores}] — até 60 pontos.
+  trend            Json?
+  active           Boolean           @default(true)
+  rankSyncedAt     DateTime?
+  profileSyncedAt  DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  videos           CreatorVideo[]
+  products         CreatorProduct[]
+  favorites        CreatorFavorite[]
+
+  @@unique([region, externalId])
+  @@index([active, rank])
+  @@index([active, revenue])
+}
+
+model CreatorVideo {
+  id          String    @id @default(cuid())
+  creatorId   String
+  videoId     String
+  title       String    @default("")
+  url         String
+  thumbnail   String?
+  revenue     Float     @default(0)
+  views       Int       @default(0)
+  likes       Int       @default(0)
+  comments    Int       @default(0)
+  shares      Int       @default(0)
+  isAd        Boolean   @default(false)
+  adsRoas     Float?
+  publishedAt DateTime?
+  syncedAt    DateTime  @default(now())
+  creator     Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@unique([creatorId, videoId])
+  @@index([creatorId, revenue])
+}
+
+/// Produto vendido pelo criador (product/rank filtrado por creator_id). Sem
+/// imagem: a API não entrega no ranking. `productId` liga ao catálogo quando
+/// o mesmo produto já está nele.
+model CreatorProduct {
+  id                String    @id @default(cuid())
+  creatorId         String
+  productExternalId String
+  productId         String?
+  name              String
+  revenue           Float     @default(0)
+  revenueGrowth     Float?
+  salesCount        Int       @default(0)
+  unitPrice         Float?
+  commission        Int?
+  launchDate        DateTime?
+  syncedAt          DateTime  @default(now())
+  creator           Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@unique([creatorId, productExternalId])
+  @@index([creatorId, revenue])
+}
+
+model CreatorFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  creatorId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, creatorId])
 }
 
 model Post {

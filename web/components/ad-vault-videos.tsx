@@ -18,7 +18,7 @@ const SORTS: Array<{ id: SortId; label: string }> = [
 ];
 const PAGE = 24;
 
-export function BankOffersView({ videos }: { videos: ReferenceVideoView[] }) {
+export function AdVaultVideos({ videos }: { videos: ReferenceVideoView[] }) {
   const [category, setCategory] = useState<CategoryId>('todos');
   const [sort, setSort] = useState<SortId>('ventas');
   const [query, setQuery] = useState('');

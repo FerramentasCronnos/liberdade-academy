@@ -7,6 +7,7 @@ import { saveProfile, uploadAvatar, type ProfileState } from '@/app/(app)/perfil
 import { avatarColor, initials } from '@/lib/community';
 import type { SessionUser } from '@/lib/session';
 import { Avatar } from './avatar';
+import { AVATAR_PRESETS, ImageCropDialog } from './image-crop-dialog';
 import { IconCheck, IconMedal, IconUpload } from './icons';
 
 const field =
@@ -33,6 +34,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
   const [bio, setBio] = useState(user.bio ?? '');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [pending, setPending] = useState<File | null>(null); // foto escolhida, aguardando recorte
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onPickFile = async (file: File) => {
@@ -70,10 +72,26 @@ export function ProfileForm({ user }: { user: SessionUser }) {
           className="sr-only"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) void onPickFile(file);
+            if (file) setPending(file);
+            e.target.value = '';
           }}
         />
         <input type="hidden" name="avatar" value={avatar ?? ''} />
+
+        {pending && (
+          <ImageCropDialog
+            file={pending}
+            title="Ajustar foto de perfil"
+            presets={AVATAR_PRESETS}
+            shape="circle"
+            outputWidth={512}
+            onCancel={() => setPending(null)}
+            onConfirm={(cropped) => {
+              setPending(null);
+              void onPickFile(cropped);
+            }}
+          />
+        )}
 
         <button
           type="button"

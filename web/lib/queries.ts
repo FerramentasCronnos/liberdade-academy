@@ -109,7 +109,7 @@ export async function listReferenceVideos(limit = 300): Promise<ReferenceVideoVi
     title: video.title,
     url: video.url,
     creatorHandle: video.creatorHandle,
-    thumbnail: video.thumbnail ?? undefined,
+    thumbnail: video.thumbnail || undefined,
     views: video.views,
     revenue: video.revenue,
     likes: video.likes,
@@ -134,7 +134,7 @@ export async function listProductVideos(productId: string): Promise<ProductVideo
     title: video.title,
     url: video.url,
     creatorHandle: video.creatorHandle,
-    thumbnail: video.thumbnail ?? undefined,
+    thumbnail: video.thumbnail || undefined,
     views: video.views,
     revenue: video.revenue,
     likes: video.likes,
@@ -499,3 +499,241 @@ export const AD_CATEGORIES = [
   'casa',
   'tech',
 ] as const;
+
+/* ------------------------------------------------------------- criadores */
+
+export type TrendPointView = { d: string; r: number; v?: number; f?: number };
+
+export type CreatorProductView = {
+  id: string;
+  productExternalId: string;
+  /** Id no catálogo quando o produto também está nele (para linkar). */
+  productId?: string;
+  name: string;
+  revenue: number;
+  revenueGrowth?: number;
+  salesCount: number;
+  unitPrice?: number;
+  commission?: number;
+  launchDate?: string;
+  /** Foto do catálogo, quando ligado. */
+  image?: string;
+};
+
+export type CreatorVideoView = {
+  id: string;
+  videoId: string;
+  title: string;
+  url: string;
+  thumbnail?: string;
+  revenue: number;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  isAd: boolean;
+  adsRoas?: number;
+  publishedAt?: string;
+};
+
+export type CreatorListItem = {
+  id: string;
+  externalId: string;
+  handle: string;
+  nickname: string;
+  currency: string;
+  rank?: number;
+  revenue: number;
+  revenueGrowth?: number;
+  salesCount: number;
+  followers?: number;
+  newFollowers?: number;
+  videoViews?: number;
+  engagementRate?: number;
+  unitPrice?: number;
+  debutDate?: string;
+  trend: TrendPointView[];
+  topProducts: Array<{ name: string; revenue: number; productId?: string }>;
+  favorite: boolean;
+  rankSyncedAt?: string;
+};
+
+export type CreatorDetail = CreatorListItem & {
+  status?: string;
+  bio?: string;
+  contactEmail?: string;
+  contactWhatsapp?: string;
+  contactInstagram?: string;
+  contactFacebook?: string;
+  videoRevenue?: number;
+  liveRevenue?: number;
+  liveViews?: number;
+  videoGpm?: number;
+  liveGpm?: number;
+  videoCount?: number;
+  liveCount?: number;
+  shopCount?: number;
+  productCount?: number;
+  profileSyncedAt?: string;
+  videos: CreatorVideoView[];
+  products: CreatorProductView[];
+};
+
+function trendOf(value: unknown): TrendPointView[] {
+  if (!Array.isArray(value)) return [];
+  return (value as Array<Record<string, unknown>>)
+    .filter((p) => p && typeof p.d === 'string' && typeof p.r === 'number')
+    .map((p) => ({
+      d: String(p.d),
+      r: Number(p.r),
+      ...(typeof p.v === 'number' ? { v: p.v } : {}),
+      ...(typeof p.f === 'number' ? { f: p.f } : {}),
+    }));
+}
+
+const creatorBase = {
+  id: true,
+  externalId: true,
+  handle: true,
+  nickname: true,
+  currency: true,
+  rank: true,
+  revenue: true,
+  revenueGrowth: true,
+  salesCount: true,
+  followers: true,
+  newFollowers: true,
+  videoViews: true,
+  engagementRate: true,
+  unitPrice: true,
+  debutDate: true,
+  trend: true,
+  rankSyncedAt: true,
+} as const;
+
+/** Top criadores ativos (ranking), com os 3 produtos mais vendidos e se é favorito. */
+export async function listCreators(userId: string): Promise<CreatorListItem[]> {
+  const [creators, favorites] = await Promise.all([
+    prisma.creator.findMany({
+      where: { active: true },
+      orderBy: [{ rank: 'asc' }, { revenue: 'desc' }],
+      take: 100,
+      select: {
+        ...creatorBase,
+        products: {
+          orderBy: { revenue: 'desc' },
+          take: 3,
+          select: { name: true, revenue: true, productId: true },
+        },
+      },
+    }),
+    prisma.creatorFavorite.findMany({ where: { userId }, select: { creatorId: true } }),
+  ]);
+  const favorite = new Set(favorites.map((f) => f.creatorId));
+  return creators.map((c) => ({
+    id: c.id,
+    externalId: c.externalId,
+    handle: c.handle,
+    nickname: c.nickname,
+    currency: c.currency,
+    rank: c.rank ?? undefined,
+    revenue: c.revenue,
+    revenueGrowth: c.revenueGrowth ?? undefined,
+    salesCount: c.salesCount,
+    followers: c.followers ?? undefined,
+    newFollowers: c.newFollowers ?? undefined,
+    videoViews: c.videoViews ?? undefined,
+    engagementRate: c.engagementRate ?? undefined,
+    unitPrice: c.unitPrice ?? undefined,
+    debutDate: c.debutDate?.toISOString().slice(0, 10),
+    trend: trendOf(c.trend),
+    topProducts: c.products.map((p) => ({ name: p.name, revenue: p.revenue, productId: p.productId ?? undefined })),
+    favorite: favorite.has(c.id),
+    rankSyncedAt: c.rankSyncedAt?.toISOString(),
+  }));
+}
+
+/** Perfil completo do criador com vídeos (até 20) e produtos (até 20). */
+export async function getCreator(id: string, userId: string): Promise<CreatorDetail | null> {
+  const creator = await prisma.creator.findUnique({
+    where: { id },
+    include: {
+      videos: { orderBy: [{ revenue: 'desc' }, { views: 'desc' }], take: 20 },
+      products: { orderBy: { revenue: 'desc' }, take: 20 },
+      favorites: { where: { userId }, select: { id: true } },
+    },
+  });
+  if (!creator) return null;
+
+  const linked = creator.products.filter((p) => p.productId).map((p) => p.productId!);
+  const images = linked.length
+    ? await prisma.product.findMany({ where: { id: { in: linked } }, select: { id: true, image: true } })
+    : [];
+  const imageOf = new Map(images.map((p) => [p.id, p.image]));
+
+  return {
+    id: creator.id,
+    externalId: creator.externalId,
+    handle: creator.handle,
+    nickname: creator.nickname,
+    currency: creator.currency,
+    rank: creator.rank ?? undefined,
+    revenue: creator.revenue,
+    revenueGrowth: creator.revenueGrowth ?? undefined,
+    salesCount: creator.salesCount,
+    followers: creator.followers ?? undefined,
+    newFollowers: creator.newFollowers ?? undefined,
+    videoViews: creator.videoViews ?? undefined,
+    engagementRate: creator.engagementRate ?? undefined,
+    unitPrice: creator.unitPrice ?? undefined,
+    debutDate: creator.debutDate?.toISOString().slice(0, 10),
+    trend: trendOf(creator.trend),
+    topProducts: creator.products.slice(0, 3).map((p) => ({ name: p.name, revenue: p.revenue, productId: p.productId ?? undefined })),
+    favorite: creator.favorites.length > 0,
+    rankSyncedAt: creator.rankSyncedAt?.toISOString(),
+    status: creator.status ?? undefined,
+    bio: creator.bio ?? undefined,
+    contactEmail: creator.contactEmail ?? undefined,
+    contactWhatsapp: creator.contactWhatsapp ?? undefined,
+    contactInstagram: creator.contactInstagram ?? undefined,
+    contactFacebook: creator.contactFacebook ?? undefined,
+    videoRevenue: creator.videoRevenue ?? undefined,
+    liveRevenue: creator.liveRevenue ?? undefined,
+    liveViews: creator.liveViews ?? undefined,
+    videoGpm: creator.videoGpm ?? undefined,
+    liveGpm: creator.liveGpm ?? undefined,
+    videoCount: creator.videoCount ?? undefined,
+    liveCount: creator.liveCount ?? undefined,
+    shopCount: creator.shopCount ?? undefined,
+    productCount: creator.productCount ?? undefined,
+    profileSyncedAt: creator.profileSyncedAt?.toISOString(),
+    videos: creator.videos.map((v) => ({
+      id: v.id,
+      videoId: v.videoId,
+      title: v.title,
+      url: v.url,
+      thumbnail: v.thumbnail || undefined,
+      revenue: v.revenue,
+      views: v.views,
+      likes: v.likes,
+      comments: v.comments,
+      shares: v.shares,
+      isAd: v.isAd,
+      adsRoas: v.adsRoas ?? undefined,
+      publishedAt: v.publishedAt?.toISOString().slice(0, 10),
+    })),
+    products: creator.products.map((p) => ({
+      id: p.id,
+      productExternalId: p.productExternalId,
+      productId: p.productId ?? undefined,
+      name: p.name,
+      revenue: p.revenue,
+      revenueGrowth: p.revenueGrowth ?? undefined,
+      salesCount: p.salesCount,
+      unitPrice: p.unitPrice ?? undefined,
+      commission: p.commission ?? undefined,
+      launchDate: p.launchDate?.toISOString().slice(0, 10),
+      image: p.productId ? imageOf.get(p.productId) : undefined,
+    })),
+  };
+}

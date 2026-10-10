@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/publish-scheduled",
       "schedule": "5 13 * * *"
+    },
+    {
+      "path": "/api/cron/sync-creators",
+      "schedule": "0 10 */2 * *"
     }
   ]
 }

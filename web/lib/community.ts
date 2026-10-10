@@ -31,6 +31,9 @@ export interface CommunityPost {
   pinned: boolean;
   likes: number;
   comments: number;
+  /** Quem comentou por último (até 5, sem repetir), pra mostrar os avatares. */
+  commenters?: Array<{ id: string; name: string; avatar?: string }>;
+  lastCommentAt?: string;
   isLiked: boolean;
   createdAt: string;
   category: PostCategory | string;

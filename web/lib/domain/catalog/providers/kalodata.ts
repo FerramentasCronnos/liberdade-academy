@@ -142,7 +142,7 @@ interface ApiResponse<T> {
   code?: string | null;
 }
 
-class KalodataError extends Error {
+export class KalodataError extends Error {
   constructor(message: string, readonly notFound = false) {
     super(message);
     this.name = 'KalodataError';
@@ -177,7 +177,12 @@ function throttled<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-async function call<T>(path: string, body: Record<string, unknown>): Promise<T> {
+/**
+ * Chamada genérica à Open API, já na fila e com retry. Exportada para que
+ * outros syncs (criadores) compartilhem a mesma fila — duas filas em paralelo
+ * estourariam o controle de tráfego da Kalodata.
+ */
+export async function kalodataCall<T>(path: string, body: Record<string, unknown>): Promise<T> {
   let attempt = 0;
   for (;;) {
     try {
@@ -190,6 +195,8 @@ async function call<T>(path: string, body: Record<string, unknown>): Promise<T> 
     }
   }
 }
+
+const call = kalodataCall;
 
 async function request<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const response = await fetch(`${BASE_URL}/${path}`, {
@@ -216,6 +223,11 @@ async function request<T>(path: string, body: Record<string, unknown>): Promise<
     throw new KalodataError(`Kalodata ${path}: ${message}`, /not found/i.test(message));
   }
   return payload.data as T;
+}
+
+/** Corpo comum das chamadas (região, idioma, moeda e período). */
+export function kalodataBaseBody(region: Region) {
+  return baseBody(region);
 }
 
 function baseBody(region: Region) {
@@ -325,7 +337,7 @@ function productUrl(productId: string, region: Region) {
 }
 
 /** "2026/10/04 20:17:18" → Date (a API não informa fuso; tratamos como UTC). */
-function parsePublishDate(value?: string): Date | undefined {
+export function parsePublishDate(value?: string): Date | undefined {
   if (!value) return undefined;
   const match = value.match(/^(\d{4})[/-](\d{2})[/-](\d{2})(?:\s+(\d{2}):(\d{2}):(\d{2}))?/);
   if (!match) return undefined;

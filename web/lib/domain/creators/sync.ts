@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { backfillCreatorVideoThumbnails } from '@/lib/domain/catalog/video-thumbs';
 import { backfillCreatorAvatars } from './avatars';
+import { dominantCategory } from './category';
 import {
   KalodataError,
   kalodataBaseBody,
@@ -438,6 +439,7 @@ async function syncProfile(creator: { id: string; externalId: string; region: st
         ...(toInt(detail.creator_followers) !== null ? { followers: toInt(detail.creator_followers) } : {}),
         debutDate: debut ?? null,
         engagementRate: views > 0 ? (interactions / views) * 100 : null,
+        category: dominantCategory(productRows.map((row) => row.name)),
         profileSyncedAt: now,
       },
     }),

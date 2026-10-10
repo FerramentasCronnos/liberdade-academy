@@ -543,6 +543,12 @@ export type CreatorListItem = {
   nickname: string;
   /** Foto de perfil (Blob); ausente = mostrar iniciais. */
   avatar?: string;
+  /** Categoria interna predominante (beleza, moda...). */
+  category?: string;
+  /** INDEPENDENT, ou vinculado a loja. */
+  status?: string;
+  videoRevenue?: number;
+  liveRevenue?: number;
   currency: string;
   rank?: number;
   revenue: number;
@@ -561,14 +567,11 @@ export type CreatorListItem = {
 };
 
 export type CreatorDetail = CreatorListItem & {
-  status?: string;
   bio?: string;
   contactEmail?: string;
   contactWhatsapp?: string;
   contactInstagram?: string;
   contactFacebook?: string;
-  videoRevenue?: number;
-  liveRevenue?: number;
   liveViews?: number;
   videoGpm?: number;
   liveGpm?: number;
@@ -599,6 +602,10 @@ const creatorBase = {
   handle: true,
   nickname: true,
   avatar: true,
+  category: true,
+  status: true,
+  videoRevenue: true,
+  liveRevenue: true,
   currency: true,
   rank: true,
   revenue: true,
@@ -639,6 +646,10 @@ export async function listCreators(userId: string): Promise<CreatorListItem[]> {
     handle: c.handle,
     nickname: c.nickname,
     avatar: c.avatar || undefined,
+    category: c.category ?? undefined,
+    status: c.status ?? undefined,
+    videoRevenue: c.videoRevenue ?? undefined,
+    liveRevenue: c.liveRevenue ?? undefined,
     currency: c.currency,
     rank: c.rank ?? undefined,
     revenue: c.revenue,
@@ -681,6 +692,7 @@ export async function getCreator(id: string, userId: string): Promise<CreatorDet
     handle: creator.handle,
     nickname: creator.nickname,
     avatar: creator.avatar || undefined,
+    category: creator.category ?? undefined,
     currency: creator.currency,
     rank: creator.rank ?? undefined,
     revenue: creator.revenue,

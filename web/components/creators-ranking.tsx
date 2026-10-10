@@ -141,6 +141,177 @@ function Trend({ creator, width, height }: { creator: CreatorListItem; width: nu
 const COLS =
   'xl:grid-cols-[2rem_minmax(10rem,1.4fr)_minmax(6.5rem,1fr)_4.5rem_minmax(5.5rem,.9fr)_4.5rem_minmax(7rem,1fr)_6rem_2.5rem] 2xl:grid-cols-[2rem_minmax(10rem,1.4fr)_minmax(6.5rem,1fr)_4.5rem_minmax(5.5rem,.9fr)_4.5rem_minmax(7rem,1fr)_6rem_4rem_5rem_2.5rem]';
 
+
+/* -------------------------------------------------------------- filtros */
+
+type Range = { id: string; label: string; min?: number; max?: number };
+type FilterDef = { key: FilterKey; label: string; options: Range[]; pick: (c: CreatorListItem) => number | string | undefined };
+type FilterKey = 'category' | 'revenue' | 'growth' | 'followers' | 'engagement' | 'views' | 'price' | 'source' | 'account';
+
+const CATEGORY_OPTIONS: Range[] = [
+  { id: 'todos', label: 'Categoría: todas' },
+  { id: 'beleza', label: 'Belleza' },
+  { id: 'saude', label: 'Salud' },
+  { id: 'fitness', label: 'Fitness' },
+  { id: 'moda', label: 'Moda' },
+  { id: 'casa', label: 'Casa y Cocina' },
+  { id: 'tech', label: 'Electrónicos' },
+  { id: 'fisico', label: 'Otros' },
+];
+
+const FILTERS: FilterDef[] = [
+  { key: 'category', label: 'Categoría', options: CATEGORY_OPTIONS, pick: (c) => c.category },
+  {
+    key: 'revenue',
+    label: 'Ingresos',
+    options: [
+      { id: 'todos', label: 'Ingresos: todos' },
+      { id: '100k', label: 'Ingresos ≥ $100K', min: 100_000 },
+      { id: '500k', label: 'Ingresos ≥ $500K', min: 500_000 },
+      { id: '1m', label: 'Ingresos ≥ $1M', min: 1_000_000 },
+    ],
+    pick: (c) => c.revenue,
+  },
+  {
+    key: 'growth',
+    label: 'Crecimiento',
+    options: [
+      { id: 'todos', label: 'Crecimiento: todos' },
+      { id: 'up', label: 'En crecimiento', min: 0.000001 },
+      { id: '25', label: 'Crecimiento ≥ 25%', min: 25 },
+      { id: '50', label: 'Crecimiento ≥ 50%', min: 50 },
+      { id: 'down', label: 'En caída', max: 0 },
+    ],
+    pick: (c) => c.revenueGrowth,
+  },
+  {
+    key: 'followers',
+    label: 'Seguidores',
+    options: [
+      { id: 'todos', label: 'Seguidores: todos' },
+      { id: 'lt100k', label: 'Menos de 100K', max: 100_000 },
+      { id: '100k-500k', label: '100K – 500K', min: 100_000, max: 500_000 },
+      { id: '500k-1m', label: '500K – 1M', min: 500_000, max: 1_000_000 },
+      { id: 'gt1m', label: 'Más de 1M', min: 1_000_000 },
+    ],
+    pick: (c) => c.followers,
+  },
+  {
+    key: 'engagement',
+    label: 'Engagement',
+    options: [
+      { id: 'todos', label: 'Engagement: todos' },
+      { id: '1', label: 'Engagement ≥ 1%', min: 1 },
+      { id: '3', label: 'Engagement ≥ 3%', min: 3 },
+      { id: '5', label: 'Engagement ≥ 5%', min: 5 },
+    ],
+    pick: (c) => c.engagementRate,
+  },
+  {
+    key: 'views',
+    label: 'Vistas',
+    options: [
+      { id: 'todos', label: 'Vistas: todas' },
+      { id: '1m', label: 'Vistas ≥ 1M', min: 1_000_000 },
+      { id: '10m', label: 'Vistas ≥ 10M', min: 10_000_000 },
+      { id: '50m', label: 'Vistas ≥ 50M', min: 50_000_000 },
+    ],
+    pick: (c) => c.videoViews,
+  },
+  {
+    key: 'price',
+    label: 'Precio medio',
+    options: [
+      { id: 'todos', label: 'Precio medio: todos' },
+      { id: 'lt30', label: 'Menos de $30', max: 30 },
+      { id: '30-100', label: '$30 – $100', min: 30, max: 100 },
+      { id: 'gt100', label: 'Más de $100', min: 100 },
+    ],
+    pick: (c) => c.unitPrice,
+  },
+  {
+    key: 'source',
+    label: 'Fuente de ingresos',
+    options: [
+      { id: 'todos', label: 'Fuente: todas' },
+      { id: 'video', label: 'Principalmente videos' },
+      { id: 'live', label: 'Principalmente lives' },
+      { id: 'haslive', label: 'Con ingresos en vivo' },
+    ],
+    pick: (c) => {
+      const video = c.videoRevenue ?? 0;
+      const live = c.liveRevenue ?? 0;
+      if (live > 0 && live >= video) return 'live';
+      if (live > 0) return 'haslive';
+      return video > 0 ? 'video' : undefined;
+    },
+  },
+  {
+    key: 'account',
+    label: 'Tipo de cuenta',
+    options: [
+      { id: 'todos', label: 'Cuenta: todas' },
+      { id: 'independent', label: 'Independiente' },
+      { id: 'shop', label: 'Vinculada a tienda' },
+    ],
+    pick: (c) => (c.status ? (c.status.toUpperCase() === 'INDEPENDENT' ? 'independent' : 'shop') : undefined),
+  },
+];
+
+const NO_FILTERS: Record<FilterKey, string> = {
+  category: 'todos',
+  revenue: 'todos',
+  growth: 'todos',
+  followers: 'todos',
+  engagement: 'todos',
+  views: 'todos',
+  price: 'todos',
+  source: 'todos',
+  account: 'todos',
+};
+
+/** Sem valor no criador só passa em "todos". Opções textuais comparam pelo id; "haslive" aceita live também. */
+function passes(def: FilterDef, optionId: string, c: CreatorListItem) {
+  if (optionId === 'todos') return true;
+  const option = def.options.find((o) => o.id === optionId);
+  if (!option) return true;
+  const value = def.pick(c);
+  if (value == null) return false;
+  if (typeof value === 'string') {
+    if (optionId === 'haslive') return value === 'haslive' || value === 'live';
+    return value === optionId;
+  }
+  if (option.min != null && value < option.min) return false;
+  if (option.max != null && value >= option.max) return false;
+  return true;
+}
+
+function FilterSelect({ def, value, onChange }: { def: FilterDef; value: string; onChange: (id: string) => void }) {
+  const active = value !== 'todos';
+  return (
+    <select
+      aria-label={def.label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`appearance-none rounded-full border py-2 pl-3.5 pr-8 text-[12.5px] font-medium shadow-[var(--shadow-soft)] outline-none transition bg-[length:14px] bg-[right_10px_center] bg-no-repeat ${
+        active
+          ? 'border-[var(--brand)] bg-[var(--brand)] text-[var(--text-inverse)]'
+          : 'border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text)] hover:border-[var(--border-strong)]'
+      }`}
+      style={{
+        backgroundImage:
+          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>\")",
+      }}
+    >
+      {def.options.map((o) => (
+        <option key={o.id} value={o.id}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
   const [tab, setTab] = useState<Tab>('todos');
   const [sort, setSort] = useState<SortId>('ingresos');
@@ -150,6 +321,8 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
   // 10 por página: a lista parece maior e cada página carrega menos
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<Record<FilterKey, string>>(NO_FILTERS);
+  const activeFilters = (Object.keys(filters) as FilterKey[]).filter((k) => filters[k] !== 'todos').length;
 
   const isFavorite = (c: CreatorListItem) => overrides[c.id] ?? c.favorite;
   const favoriteCount = creators.filter(isFavorite).length;
@@ -170,6 +343,8 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
           c.topProducts.some((p) => p.name.toLowerCase().includes(q)),
       );
     }
+
+    list = list.filter((c) => FILTERS.every((def) => passes(def, filters[def.key], c)));
 
     const sorted = [...list];
     // Sem dado vai pro fim, não pro topo.
@@ -195,7 +370,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
         sorted.sort(by((c) => c.revenue));
     }
     return sorted;
-  }, [creators, tab, sort, query, overrides]);
+  }, [creators, tab, sort, query, overrides, filters]);
 
   const pageCount = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
   const current = Math.min(page, pageCount);
@@ -207,6 +382,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
   const changeAndTab = (value: Tab) => changeAnd(() => setTab(value));
   const changeAndSort = (value: SortId) => changeAnd(() => setSort(value));
   const changeAndQuery = (value: string) => changeAnd(() => setQuery(value));
+  const changeFilter = (key: FilterKey, value: string) => changeAnd(() => setFilters((f) => ({ ...f, [key]: value })));
 
   const favoriteButton = (c: CreatorListItem) => (
     <CreatorFavoriteButton
@@ -285,6 +461,22 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
         </div>
       </div>
 
+      {/* Filtros (estilo painel da Kalodata) */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        {FILTERS.map((def) => (
+          <FilterSelect key={def.key} def={def} value={filters[def.key]} onChange={(v) => changeFilter(def.key, v)} />
+        ))}
+        {activeFilters > 0 && (
+          <button
+            type="button"
+            onClick={() => changeAnd(() => setFilters(NO_FILTERS))}
+            className="text-[12.5px] font-medium text-[var(--text-muted)] underline-offset-2 hover:underline"
+          >
+            Limpiar filtros ({activeFilters})
+          </button>
+        )}
+      </div>
+
       {all.length === 0 ? (
         <div className="mt-6 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 px-5 py-16 text-center">
           <IconTrophy className="mx-auto h-8 w-8 text-[var(--text-faint)]" />
@@ -293,7 +485,9 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
               ? 'El ranking se llena con la próxima actualización'
               : tab === 'favoritos' && !query
                 ? 'Todavía no guardaste creadores'
-                : 'Ningún creador coincide con la búsqueda'}
+                : activeFilters > 0
+                  ? 'Ningún creador coincide con los filtros'
+                  : 'Ningún creador coincide con la búsqueda'}
           </p>
           <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">
             {creators.length === 0

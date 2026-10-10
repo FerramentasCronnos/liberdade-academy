@@ -144,7 +144,41 @@ function apiKey() {
   return key;
 }
 
+/**
+ * A API tem controle de tráfego ("Try again later, exceeding traffic control")
+ * e derruba rajadas. Todas as chamadas passam por uma fila única com intervalo
+ * mínimo entre elas; quando mesmo assim o limite aparece, espera e tenta de novo.
+ */
+const MIN_GAP_MS = Number(process.env.KALODATA_MIN_GAP_MS || 450);
+let queue: Promise<unknown> = Promise.resolve();
+let lastCallAt = 0;
+
+function throttled<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(async () => {
+    const wait = lastCallAt + MIN_GAP_MS - Date.now();
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    lastCallAt = Date.now();
+    return fn();
+  });
+  queue = run.catch(() => undefined);
+  return run;
+}
+
 async function call<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  let attempt = 0;
+  for (;;) {
+    try {
+      return await throttled(() => request<T>(path, body));
+    } catch (error) {
+      const throttledByApi = error instanceof KalodataError && /traffic control|try again later|too many/i.test(error.message);
+      if (!throttledByApi || attempt >= 4) throw error;
+      attempt += 1;
+      await new Promise((resolve) => setTimeout(resolve, 1500 * 2 ** (attempt - 1)));
+    }
+  }
+}
+
+async function request<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const response = await fetch(`${BASE_URL}/${path}`, {
     method: 'POST',
     headers: {

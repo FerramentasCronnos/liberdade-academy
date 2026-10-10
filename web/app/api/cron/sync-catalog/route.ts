@@ -40,10 +40,12 @@ export async function GET(request: Request) {
 
   try {
     if ([...params.keys()].length === 0) {
-      // cron: TikTok todo dia; Amazon (US) e Shopee (BR) só às segundas,
-      // porque cada execução traz ~100 produtos e custa na Apify
-      const monday = new Date().getUTCDay() === 1;
-      const skipped = { skipped: 'solo los lunes' };
+      // cron a cada 2 dias (ver vercel.json) pra economizar créditos da
+      // Kalodata. Amazon (US) e Shopee (BR) uma vez por semana: como o cron cai
+      // em dias alternados, segunda OU terça garante uma execução semanal.
+      const weekday = new Date().getUTCDay();
+      const monday = weekday === 1 || weekday === 2;
+      const skipped = { skipped: 'solo una vez por semana (lunes o martes)' };
       const all = await Promise.all([
         syncCatalog({}),
         monday ? syncCatalog({ marketplace: 'amazon', regions: ['US'] }).catch((e: Error) => ({ error: e.message })) : skipped,

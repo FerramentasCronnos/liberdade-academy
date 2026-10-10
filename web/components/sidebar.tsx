@@ -46,7 +46,6 @@ const TOOLS: Item[] = [
   { href: '/templates', label: 'Plantillas', icon: IconPages },
   { href: '/paginas/presell', label: 'Página de Presell', icon: IconMegaphone },
   { href: '/paginas/bio', label: 'Página para BIO', icon: IconIdCard },
-  { href: '/anuncios', label: 'Baúl de Anuncios', icon: IconArchive },
   { href: '/credenciais', label: 'Credenciales', icon: IconSettings, soon: true },
 ];
 

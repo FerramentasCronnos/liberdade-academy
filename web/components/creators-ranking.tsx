@@ -35,13 +35,6 @@ function initials(name: string, handle: string) {
   return letters.toUpperCase();
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-419', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 function GrowthBadge({ value }: { value?: number }) {
   if (value == null) return null;
@@ -215,11 +208,6 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
   const changeAndSort = (value: SortId) => changeAnd(() => setSort(value));
   const changeAndQuery = (value: string) => changeAnd(() => setQuery(value));
 
-  const lastSync = creators.reduce<string | undefined>(
-    (acc, c) => (c.rankSyncedAt && (!acc || c.rankSyncedAt > acc) ? c.rankSyncedAt : acc),
-    undefined,
-  );
-
   const favoriteButton = (c: CreatorListItem) => (
     <CreatorFavoriteButton
       creatorId={c.id}
@@ -296,11 +284,6 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
           />
         </div>
       </div>
-
-      <p className="mt-3 text-[12px] text-[var(--text-faint)]">
-        Actualizado cada 2 días · Fuente: Kalodata · últimos 30 días
-        {lastSync && <> · Última actualización: {formatDate(lastSync)}</>}
-      </p>
 
       {all.length === 0 ? (
         <div className="mt-6 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 px-5 py-16 text-center">

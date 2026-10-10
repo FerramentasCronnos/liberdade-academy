@@ -25,7 +25,9 @@ export async function listProducts(params: {
 
   const products = await prisma.product.findMany({
     where: {
-      active: true,
+      // CATALOG_SHOW_DRAFTS=1 (só em preview) mostra também os produtos gravados
+      // como rascunho por um provider em teste; produção segue só os ativos
+      ...(process.env.CATALOG_SHOW_DRAFTS === '1' ? {} : { active: true }),
       // produto sem foto não vai pra vitrine — card vazio parece bug
       image: { startsWith: 'http' },
       ...(params.region
@@ -52,6 +54,47 @@ export async function listProducts(params: {
 export async function getProduct(id: string) {
   const product = await prisma.product.findUnique({ where: { id } });
   return product ? serializeProduct(product) : null;
+}
+
+export type ProductVideoView = {
+  id: string;
+  videoId: string;
+  title: string;
+  url: string;
+  creatorHandle: string;
+  thumbnail?: string;
+  views: number;
+  revenue: number;
+  likes: number;
+  comments: number;
+  isAd: boolean;
+  /** ISO (só a data) ou undefined quando a fonte não informou. */
+  publishedAt?: string;
+  syncedAt: string;
+};
+
+/** Vídeos de referência do produto, do que mais vendeu pro que menos (máx. 5). */
+export async function listProductVideos(productId: string): Promise<ProductVideoView[]> {
+  const videos = await prisma.productVideo.findMany({
+    where: { productId },
+    orderBy: [{ revenue: 'desc' }, { views: 'desc' }],
+    take: 5,
+  });
+  return videos.map((video) => ({
+    id: video.id,
+    videoId: video.videoId,
+    title: video.title,
+    url: video.url,
+    creatorHandle: video.creatorHandle,
+    thumbnail: video.thumbnail ?? undefined,
+    views: video.views,
+    revenue: video.revenue,
+    likes: video.likes,
+    comments: video.comments,
+    isAd: video.isAd,
+    publishedAt: video.publishedAt?.toISOString().slice(0, 10),
+    syncedAt: video.syncedAt.toISOString(),
+  }));
 }
 
 /* --------------------------------------------------------------- comunidade */

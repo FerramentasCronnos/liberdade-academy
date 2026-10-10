@@ -11,56 +11,56 @@ datasource db {
 }
 
 model User {
-  id                   String            @id @default(cuid())
-  name                 String
-  email                String            @unique
-  passwordHash         String
-  avatar               String?
-  bio                  String?
-  instagram            String?
-  tiktok               String?
-  points               Int               @default(0)
-  level                Int               @default(1)
-  xp                   Int               @default(0)
-  rank                 Int               @default(999)
-  joinedAt             DateTime          @default(now())
-  onboardingCompleted  Boolean           @default(false)
-  niche                String?
-  alreadySelling       Boolean?
-  revenueRange         String?
-  goal                 String?
-  onboardingAt         DateTime?
-  productsViewed       Int               @default(0)
-  salesMade            Int               @default(0)
-  communityPosts       Int               @default(0)
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  isAdmin              Boolean           @default(false)
+  id                  String              @id @default(cuid())
+  name                String
+  email               String              @unique
+  passwordHash        String
+  avatar              String?
+  bio                 String?
+  instagram           String?
+  tiktok              String?
+  points              Int                 @default(0)
+  level               Int                 @default(1)
+  xp                  Int                 @default(0)
+  rank                Int                 @default(999)
+  joinedAt            DateTime            @default(now())
+  onboardingCompleted Boolean             @default(false)
+  niche               String?
+  alreadySelling      Boolean?
+  revenueRange        String?
+  goal                String?
+  onboardingAt        DateTime?
+  productsViewed      Int                 @default(0)
+  salesMade           Int                 @default(0)
+  communityPosts      Int                 @default(0)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  isAdmin             Boolean             @default(false)
   /// free | mensal_97 | anual_147 — o anual libera tudo.
-  plan                 String            @default("free")
-  planExpiresAt        DateTime?
+  plan                String              @default("free")
+  planExpiresAt       DateTime?
   /// De onde veio o plano: manual | hotmart | kiwify | eduzz ...
-  planSource           String?
-  planUpdatedAt        DateTime?
-  posts                Post[]
-  likes                PostLike[]
-  comments             Comment[]
-  selling              SellingProduct[]
-  notifications        Notification[]
-  notificationReads    NotificationRead[]
-  missionCompletions   MissionCompletion[]
-  redemptions          Redemption[]
-  pointsEntries        PointsEntry[]
-  tickets              Ticket[]
-  ticketMessages       TicketMessage[]
-  supportChats         SupportChat[]
+  planSource          String?
+  planUpdatedAt       DateTime?
+  posts               Post[]
+  likes               PostLike[]
+  comments            Comment[]
+  selling             SellingProduct[]
+  notifications       Notification[]
+  notificationReads   NotificationRead[]
+  missionCompletions  MissionCompletion[]
+  redemptions         Redemption[]
+  pointsEntries       PointsEntry[]
+  tickets             Ticket[]
+  ticketMessages      TicketMessage[]
+  supportChats        SupportChat[]
   /// Quando se apresentou no espaço de presentaciones.
-  introducedAt         DateTime?
-  affiliateAccounts    AffiliateAccount[]
-  offerTemplates       OfferTemplate[]
-  affiliateLinks       AffiliateLink[]
-  landingPages         LandingPage[]
-  adCreatives          AdCreative[]
+  introducedAt        DateTime?
+  affiliateAccounts   AffiliateAccount[]
+  offerTemplates      OfferTemplate[]
+  affiliateLinks      AffiliateLink[]
+  landingPages        LandingPage[]
+  adCreatives         AdCreative[]
 }
 
 /// Anúncio do Baú: criativo em imagem que a administração sobe e os membros
@@ -144,7 +144,6 @@ model PageClick {
   @@index([pageId, createdAt])
 }
 
-
 /// Conta de afiliado do membro em cada marketplace.
 /// `secret` guarda credenciais cifradas (AES-256-GCM); `publicId` é a tag ou
 /// id que aparece no próprio link e não precisa de sigilo.
@@ -163,14 +162,14 @@ model AffiliateAccount {
 
 /// Link gerado, guardado para histórico e para o membro reaproveitar.
 model AffiliateLink {
-  id          String   @id @default(cuid())
-  userId      String
-  marketplace String
-  originalUrl String
+  id           String   @id @default(cuid())
+  userId       String
+  marketplace  String
+  originalUrl  String
   affiliateUrl String
-  title       String?
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
@@ -192,20 +191,20 @@ model OfferTemplate {
 /// Missão da gamificação. "automatic" é creditada por evento no sistema;
 /// "proof" exige print e passa por revisão.
 model Mission {
-  id          String              @id @default(cuid())
-  slug        String              @unique
-  title       String
-  description String
-  points      Int
-  category    String              @default("outras")
-  kind        String              @default("proof")
-  repeatable  Boolean             @default(false)
+  id            String              @id @default(cuid())
+  slug          String              @unique
+  title         String
+  description   String
+  points        Int
+  category      String              @default("outras")
+  kind          String              @default("proof")
+  repeatable    Boolean             @default(false)
   /// Janela mínima entre repetições, em horas (24 = uma vez por dia).
   cooldownHours Int?
-  active      Boolean             @default(true)
-  order       Int                 @default(0)
-  createdAt   DateTime            @default(now())
-  completions MissionCompletion[]
+  active        Boolean             @default(true)
+  order         Int                 @default(0)
+  createdAt     DateTime            @default(now())
+  completions   MissionCompletion[]
 }
 
 model MissionCompletion {
@@ -242,17 +241,17 @@ model Reward {
 }
 
 model Redemption {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   rewardId   String
   userId     String
   costPoints Int
   /// requested | approved | delivered | rejected
-  status     String    @default("requested")
+  status     String   @default("requested")
   note       String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  reward     Reward    @relation(fields: [rewardId], references: [id], onDelete: Restrict)
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  reward     Reward   @relation(fields: [rewardId], references: [id], onDelete: Restrict)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -274,31 +273,34 @@ model PointsEntry {
 }
 
 model Product {
-  id            String           @id @default(cuid())
-  externalId    String?
-  provider      String           @default("seed")
+  id             String           @id @default(cuid())
+  externalId     String?
+  provider       String           @default("seed")
   /// tiktok_shop | amazon | shopee | mercado_livre
-  marketplace   String           @default("tiktok_shop")
-  region        String           @default("BR")
-  currency      String           @default("BRL")
-  productUrl    String?
-  name          String
-  image         String
-  price         Float
-  category      String
-  supplier      String
-  rating        Float            @default(4.5)
-  salesCount    Int              @default(0)
-  tiktokViews   Int?
-  isViral       Boolean          @default(false)
-  commission    Int?
-  description   String
-  supplierShips Boolean          @default(true)
-  active        Boolean          @default(true)
-  syncedAt      DateTime?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  selling       SellingProduct[]
+  marketplace    String           @default("tiktok_shop")
+  region         String           @default("BR")
+  currency       String           @default("BRL")
+  productUrl     String?
+  name           String
+  image          String
+  price          Float
+  category       String
+  supplier       String
+  rating         Float            @default(4.5)
+  salesCount     Int              @default(0)
+  tiktokViews    Int?
+  isViral        Boolean          @default(false)
+  commission     Int?
+  description    String
+  supplierShips  Boolean          @default(true)
+  active         Boolean          @default(true)
+  syncedAt       DateTime?
+  /// Última vez que os vídeos de referência foram renovados (null = nunca).
+  videosSyncedAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  selling        SellingProduct[]
+  videos         ProductVideo[]
 
   @@unique([provider, region, externalId])
   @@index([region, category, active])
@@ -306,37 +308,63 @@ model Product {
   @@index([region, isViral, salesCount])
 }
 
+/// Vídeo de criador que vendeu o produto (fonte: Kalodata). Mostrado na
+/// página do produto como referência de conteúdo; 3–5 por produto.
+model ProductVideo {
+  id            String    @id @default(cuid())
+  productId     String
+  videoId       String
+  title         String    @default("")
+  url           String
+  creatorHandle String
+  creatorId     String?
+  thumbnail     String?
+  views         Int       @default(0)
+  /// Receita estimada do vídeo na moeda do produto.
+  revenue       Float     @default(0)
+  likes         Int       @default(0)
+  comments      Int       @default(0)
+  shares        Int       @default(0)
+  isAd          Boolean   @default(false)
+  publishedAt   DateTime?
+  syncedAt      DateTime  @default(now())
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, videoId])
+  @@index([productId, revenue])
+}
+
 model Post {
-  id        String     @id @default(cuid())
-  title     String?
-  content   String
-  category  String
-  image     String?
-  pinned    Boolean    @default(false)
+  id          String     @id @default(cuid())
+  title       String?
+  content     String
+  category    String
+  image       String?
+  pinned      Boolean    @default(false)
   /// Etiquetas livres para dar contexto (tiktok, meta ads, primera venta…).
-  tags      String[]   @default([])
+  tags        String[]   @default([])
   /// Fotos, áudios e arquivos (espaços em modo chat).
-  attachments String[] @default([])
+  attachments String[]   @default([])
   /// Em espaços de chat: atendimento finalizado (pela equipe ou pelo autor).
-  resolvedAt DateTime?
+  resolvedAt  DateTime?
   /// Anúncios: botão de ação opcional.
-  link      String?
+  link        String?
   /// Anúncios agendados: só aparecem (e avisam) a partir desta hora.
   scheduledAt DateTime?
   /// Enviar e-mail aos membros ao publicar.
-  notifyEmail Boolean   @default(false)
+  notifyEmail Boolean    @default(false)
   /// Quando o e-mail foi enviado (evita reenvio pelo cron).
   notifiedAt  DateTime?
   /// Reenvio do e-mail agendado para uma hora, sem esconder o post.
   notifyAt    DateTime?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  authorId  String
-  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  spaceId   String?
-  space     Space?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
-  likes     PostLike[]
-  comments  Comment[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  spaceId     String?
+  space       Space?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  likes       PostLike[]
+  comments    Comment[]
 
   @@index([spaceId, pinned, createdAt])
   @@index([scheduledAt, notifiedAt])
@@ -370,17 +398,17 @@ model PostLike {
 }
 
 model Comment {
-  id        String    @id @default(cuid())
-  content   String
-  attachments String[] @default([])
-  postId    String
-  authorId  String
-  parentId  String?
-  createdAt DateTime  @default(now())
-  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Comment[] @relation("CommentReplies")
+  id          String    @id @default(cuid())
+  content     String
+  attachments String[]  @default([])
+  postId      String
+  authorId    String
+  parentId    String?
+  createdAt   DateTime  @default(now())
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReplies")
 
   @@index([postId, createdAt])
 }
@@ -495,14 +523,14 @@ model SupportChat {
 
 /// role: user | assistant
 model SupportMessage {
-  id        String      @id @default(cuid())
-  chatId    String
-  role      String
-  content   String
+  id          String      @id @default(cuid())
+  chatId      String
+  role        String
+  content     String
   /// Fotos ou prints enviados pelo membro (URLs no Blob).
-  attachments String[]  @default([])
-  createdAt DateTime    @default(now())
-  chat      SupportChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  attachments String[]    @default([])
+  createdAt   DateTime    @default(now())
+  chat        SupportChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
   @@index([chatId, createdAt])
 }

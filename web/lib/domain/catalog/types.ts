@@ -53,6 +53,30 @@ export interface FetchOptions {
    * execução traz um conjunto diferente.
    */
   terms?: string[];
+  /**
+   * externalIds que já existem no banco com imagem. O provider pode pular as
+   * chamadas caras (detalhe do produto) para eles e devolver só os campos que
+   * mudam todo dia (vendas, comissão); o sync completa o resto do que já tem.
+   */
+  knownIds?: Set<string>;
+}
+
+/** Vídeo de criador que vendeu o produto — referência de conteúdo pro afiliado. */
+export interface RawReferenceVideo {
+  videoId: string;
+  title?: string;
+  url: string;
+  creatorHandle: string;
+  creatorId?: string;
+  thumbnail?: string;
+  views?: number;
+  /** Receita estimada gerada pelo vídeo, na moeda do produto. */
+  revenue?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  isAd?: boolean;
+  publishedAt?: Date;
 }
 
 export type Marketplace = 'tiktok_shop' | 'amazon' | 'shopee' | 'mercado_livre';
@@ -74,6 +98,12 @@ export interface CatalogProvider {
   missingConfigMessage(): string;
 
   fetchTopProducts(options: FetchOptions): Promise<RawCatalogProduct[]>;
+
+  /**
+   * Vídeos de referência (3–5) de um produto, do mais vendedor pro menos.
+   * Opcional: só providers com dados de criadores (Kalodata) implementam.
+   */
+  fetchReferenceVideos?(externalId: string, region: Region): Promise<RawReferenceVideo[]>;
 }
 
 /** Erro de configuração — a rota traduz em HTTP 422 em vez de 502. */

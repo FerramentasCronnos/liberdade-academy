@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getUserId } from '@/lib/session';
 import { formatCompact, formatPrice, toProduct } from '@/lib/api';
-import { getProduct } from '@/lib/queries';
+import { getProduct, listProductVideos } from '@/lib/queries';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { CopyLinkButton } from '@/components/copy-link-button';
+import { ProductVideos } from '@/components/product-videos';
 import {
   IconArrowLeft,
   IconExternal,
@@ -32,6 +33,7 @@ export default async function ProductPage({ params }: { params: Params }) {
   const raw = await getProduct(id).catch(() => null);
   if (!raw) notFound();
   const product = toProduct(raw);
+  const videos = await listProductVideos(product.id);
 
   const marketplace = MARKETPLACE_BY_ID[product.marketplace];
   const rate = product.commission ?? product.commissionEstimated;
@@ -113,6 +115,8 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </div>
               </div>
             </div>
+
+            <ProductVideos videos={videos} currency={product.currency ?? "USD"} />
 
             <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
               <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">

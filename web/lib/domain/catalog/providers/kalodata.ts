@@ -222,23 +222,24 @@ function baseBody(region: Region) {
   return { region, language: LANGUAGE, currency: region === 'BR' ? 'BRL' : 'USD', date_range: dateRange() };
 }
 
-/** Ranking por receita, paginado até juntar `wanted` produtos. */
-async function fetchRank(region: Region, wanted: number, categoryIds?: string[]): Promise<RankProduct[]> {
-  const rows: RankProduct[] = [];
-  for (let page = 1; rows.length < wanted && page <= 10; page += 1) {
-    const data = await call<RankProduct[]>('product/rank', {
-      ...baseBody(region),
-      ...(categoryIds?.length ? { category_ids: categoryIds } : {}),
-      is_affiliate: 1, // só produto com programa de afiliados
-      sort_field: { field: 'revenue', type: 'DESC' },
-      page_number: page,
-      page_size: Math.min(PAGE_SIZE, Math.max(1, wanted - rows.length)),
-    });
-    if (!data?.length) break;
-    rows.push(...data);
-    if (data.length < PAGE_SIZE) break;
-  }
-  return rows;
+/** Uma página do ranking por receita (até PAGE_SIZE itens). */
+async function fetchRankPage(
+  region: Region,
+  pageSize: number,
+  page: number,
+  range: string,
+  categoryIds?: string[],
+): Promise<RankProduct[]> {
+  const data = await call<RankProduct[]>('product/rank', {
+    ...baseBody(region),
+    date_range: range,
+    ...(categoryIds?.length ? { category_ids: categoryIds } : {}),
+    is_affiliate: 1, // só produto com programa de afiliados
+    sort_field: { field: 'revenue', type: 'DESC' },
+    page_number: page,
+    page_size: Math.min(PAGE_SIZE, Math.max(1, pageSize)),
+  });
+  return data ?? [];
 }
 
 async function fetchDetail(productId: string, region: Region): Promise<ProductDetail | null> {
@@ -375,9 +376,7 @@ export const kalodataProvider: CatalogProvider = {
     apiKey();
     const known = knownIds ?? new Set<string>();
     const newBudget = maxNew ?? Number.POSITIVE_INFINITY;
-    let accepted = 0; // novos aceitos (com imagem)
 
-    // 1. ranking por grupo de categoria (+ geral); a fila serializa as chamadas
     const wanted = (
       category && INTERNAL_CATEGORIES.includes(category as InternalCategory)
         ? [category as InternalCategory]
@@ -390,76 +389,104 @@ export const kalodataProvider: CatalogProvider = {
     }));
     if (!category) queries.push({}); // ranking geral: pega campeões fora dos grupos
 
-    // ~60% dos produtos têm imagem na descrição; buscamos folga pra fechar o limite
-    const perQuery = Math.ceil((limit * 1.8) / queries.length);
-    const lists = await mapConcurrent(queries, 2, async (query) => {
-      const rows = await fetchRank(region, perQuery, query.categoryIds);
-      return rows.map((row) => ({ row, internal: query.internal }));
-    });
-
-    // 2. intercala e remove duplicatas (produto aparece em mais de um ranking)
-    const seen = new Set<string>();
-    const candidates = roundRobin(lists).filter(({ row }) => {
-      if (!row.product_id || seen.has(row.product_id)) return false;
-      seen.add(row.product_id);
-      // sem comissão não dá pra afiliar — não entra no catálogo
-      return (row.commission_rate ?? 0) > 0;
-    });
-
-    // 3. detalhe só de quem é novo; os conhecidos levam apenas o que muda
     const results: RawCatalogProduct[] = [];
+    const seen = new Set<string>();
+    let updated = 0; // conhecidos devolvidos (atualização diária), até `limit`
+    let accepted = 0; // novos aceitos (com imagem), até `maxNew`
+    const perPage = Math.min(PAGE_SIZE, Math.max(10, Math.ceil((limit * 1.8) / queries.length)));
     const BATCH = 6;
-    for (let start = 0; start < candidates.length && results.length < limit; start += BATCH) {
-      // sem tempo: devolve o que já tem; o resto entra na execução seguinte
+    const MAX_PAGES = 4;
+
+    /**
+     * Página a página: a 1ª traz o topo de cada categoria (30 dias) e também o
+     * ranking dos últimos 7 dias, que revela o que está subindo agora. Quando o
+     * topo já é todo conhecido, as páginas seguintes buscam novidade mais
+     * abaixo — assim todo dia entram ofertas novas até fechar a cota.
+     */
+    for (let page = 1; page <= MAX_PAGES; page += 1) {
       if (deadline && Date.now() > deadline) break;
-      const batch = candidates.slice(start, start + BATCH);
-      const mapped = await mapConcurrent(batch, BATCH, async ({ row, internal }): Promise<RawCatalogProduct | null> => {
-        if (!known.has(row.product_id) && accepted >= newBudget) return null; // cota de novos do dia esgotada
-        const base: RawCatalogProduct = {
-          externalId: row.product_id,
-          name: row.product_name,
-          productUrl: productUrl(row.product_id, region),
-          price: row.unit_price,
-          category: internal,
-          supplier: row.seller_name,
-          rating: 0, // a API não tem avaliação; 0 esconde a estrela em vez de inventar
-          salesCount: row.sales_volumn,
-          commission: row.commission_rate ?? undefined,
-          // métricas que mudam todo dia vêm do ranking, sem chamada extra
-          revenue: row.revenue,
-          revenueGrowth: row.revenue_growth_rate ?? undefined,
-          unitPrice: row.unit_price,
-          videoRevenue: row.video_revenue ?? undefined,
-          liveRevenue: row.live_revenue ?? undefined,
-          launchDate: parsePublishDate(row.launch_date),
-        };
-        if (known.has(row.product_id)) return base; // sync completa imagem/descrição do banco
-
-        const detail = await fetchDetail(row.product_id, region);
-        if (!detail) return null;
-        const images = imagesFromDetail(detail);
-        if (!images.length) return null;
-
-        const minPrice = detail.min_price ?? 0;
-        const unit = detail.unit_price ?? row.unit_price;
-        accepted += 1;
-        const main = await persistImage(images[0], row.product_id);
-        return {
-          ...base,
-          image: main,
-          images: [main, ...images.slice(1)],
-          price: minPrice > 0 && minPrice <= unit * 2 ? minPrice : unit,
-          category: internal ?? (detail.pri_cate_id ? CATEGORY_BY_ID[detail.pri_cate_id] : undefined),
-          description: descriptionFromDetail(detail),
-          commission: detail.commission_rate ?? base.commission,
-          reviewCount: detail.product_review_count,
-          creatorCount: detail.creator_number,
-          videoCount: detail.video_number,
-        };
+      const lists = await mapConcurrent(queries, 2, async (query) => {
+        const rows = await fetchRankPage(region, perPage, page, dateRange(), query.categoryIds);
+        const rising = page === 1 ? await fetchRankPage(region, perPage, 1, 'last7Day', query.categoryIds) : [];
+        return [...rows, ...rising].map((row) => ({ row, internal: query.internal }));
       });
-      for (const item of mapped) if (item && results.length < limit) results.push(item);
-      // só restam candidatos novos e a cota acabou: não vale gastar mais chamadas
-      if (accepted >= newBudget && candidates.slice(start + BATCH).every(({ row }) => !known.has(row.product_id))) break;
+
+      const candidates = roundRobin(lists).filter(({ row }) => {
+        if (!row.product_id || seen.has(row.product_id)) return false;
+        seen.add(row.product_id);
+        // sem comissão não dá pra afiliar — não entra no catálogo
+        return (row.commission_rate ?? 0) > 0;
+      });
+      if (!candidates.length) break;
+
+      for (let start = 0; start < candidates.length; start += BATCH) {
+        if (deadline && Date.now() > deadline) break;
+        const batch = candidates
+          .slice(start, start + BATCH)
+          // conhecido além do limite diário ou novo além da cota: nem gasta chamada
+          .filter(({ row }) => (known.has(row.product_id) ? updated < limit : accepted < newBudget));
+        if (!batch.length) {
+          if (updated >= limit && accepted >= newBudget) break;
+          continue;
+        }
+        const mapped = await mapConcurrent(batch, BATCH, async ({ row, internal }): Promise<RawCatalogProduct | null> => {
+          const base: RawCatalogProduct = {
+            externalId: row.product_id,
+            name: row.product_name,
+            productUrl: productUrl(row.product_id, region),
+            price: row.unit_price,
+            category: internal,
+            supplier: row.seller_name,
+            rating: 0, // a API não tem avaliação; 0 esconde a estrela em vez de inventar
+            salesCount: row.sales_volumn,
+            commission: row.commission_rate ?? undefined,
+            // métricas que mudam todo dia vêm do ranking, sem chamada extra
+            revenue: row.revenue,
+            revenueGrowth: row.revenue_growth_rate ?? undefined,
+            unitPrice: row.unit_price,
+            videoRevenue: row.video_revenue ?? undefined,
+            liveRevenue: row.live_revenue ?? undefined,
+            launchDate: parsePublishDate(row.launch_date),
+          };
+          if (known.has(row.product_id)) return base; // sync completa imagem/descrição do banco
+
+          const detail = await fetchDetail(row.product_id, region);
+          if (!detail) return null;
+          const images = imagesFromDetail(detail);
+          if (!images.length) return null;
+
+          const minPrice = detail.min_price ?? 0;
+          const unit = detail.unit_price ?? row.unit_price;
+          const main = await persistImage(images[0], row.product_id);
+          return {
+            ...base,
+            image: main,
+            images: [main, ...images.slice(1)],
+            price: minPrice > 0 && minPrice <= unit * 2 ? minPrice : unit,
+            category: internal ?? (detail.pri_cate_id ? CATEGORY_BY_ID[detail.pri_cate_id] : undefined),
+            description: descriptionFromDetail(detail),
+            commission: detail.commission_rate ?? base.commission,
+            reviewCount: detail.product_review_count,
+            creatorCount: detail.creator_number,
+            videoCount: detail.video_number,
+          };
+        });
+        for (const item of mapped) {
+          if (!item) continue;
+          if (known.has(item.externalId)) {
+            if (updated >= limit) continue;
+            updated += 1;
+          } else {
+            if (accepted >= newBudget) continue;
+            accepted += 1;
+          }
+          results.push(item);
+        }
+      }
+
+      if (updated >= limit && accepted >= newBudget) break;
+      // sem cota de novos (maxNew ausente) o objetivo é só o limite diário
+      if (!Number.isFinite(newBudget) && results.length >= limit) break;
     }
 
     return results;

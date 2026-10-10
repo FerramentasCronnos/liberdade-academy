@@ -236,7 +236,7 @@ function Stat({
     <div className="rounded-2xl bg-[var(--bg-sunken)] px-3 py-2.5">
       <p className="text-[10.5px] font-medium uppercase tracking-wide text-[var(--text-faint)]">{label}</p>
       <div className="mt-0.5 flex flex-wrap items-center gap-2">
-        <p className={`font-display ${strong ? 'text-[22px]' : 'text-[16px]'} font-semibold leading-tight text-[var(--text)]`}>{value}</p>
+        <p className={`${strong ? 'text-[22px]' : 'text-[17px]'} font-semibold leading-tight tracking-tight tabular-nums text-[var(--text)]`}>{value}</p>
         {badge}
       </div>
       {hint && <p className="mt-0.5 text-[11px] text-[var(--text-faint)]">{hint}</p>}
@@ -459,16 +459,12 @@ function ShopsTab({ creator }: { creator: CreatorDetail }) {
           <IconStore className="h-5 w-5" />
         </span>
         <div>
-          <p className="font-display text-[20px] font-semibold leading-tight text-[var(--text)]">{compact(shops)}</p>
+          <p className="text-[20px] font-semibold leading-tight tabular-nums text-[var(--text)]">{compact(shops)}</p>
           <p className="text-[12.5px] text-[var(--text-muted)]">
             {shops != null ? `Vendió productos de ${shops} ${shops === 1 ? 'tienda' : 'tiendas'} en el período` : 'Sin dato de tiendas en el período'}
           </p>
         </div>
       </div>
-      <p className="mt-4 rounded-xl bg-[var(--bg-sunken)] px-3 py-2.5 text-[12.5px] leading-relaxed text-[var(--text-muted)]">
-        La API de Kalodata informa cuántas tiendas, pero no cuáles. Para ver las tiendas, abre los productos en
-        la pestaña “Productos”: {creator.products.length} {creator.products.length === 1 ? 'producto registrado' : 'productos registrados'} de este creador.
-      </p>
     </section>
   );
 }

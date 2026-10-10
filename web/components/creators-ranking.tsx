@@ -93,7 +93,7 @@ function RankNumber({ rank }: { rank: number }) {
   const podium = rank <= 3;
   return (
     <span
-      className={`font-display text-[15px] font-semibold tabular-nums ${
+      className={`text-[15px] font-semibold tabular-nums ${
         podium ? 'text-[var(--accent)]' : 'text-[var(--text-faint)]'
       }`}
     >
@@ -366,7 +366,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
                     </div>
 
                     <div className="min-w-0">
-                      <p className="font-display text-[15px] font-semibold tabular-nums text-[var(--money)]">
+                      <p className="text-[15px] font-semibold tabular-nums text-[var(--money)]">
                         {formatPrice(c.revenue, c.currency)}
                       </p>
                       <GrowthBadge value={c.revenueGrowth} />
@@ -422,7 +422,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
                     <div className="mt-3 flex items-end justify-between gap-3">
                       <div>
                         <p className="text-[10.5px] font-medium uppercase tracking-wide text-[var(--text-faint)]">Ingresos 30d</p>
-                        <p className="font-display text-[20px] font-semibold leading-tight tabular-nums text-[var(--money)]">
+                        <p className="text-[20px] font-semibold leading-tight tabular-nums text-[var(--money)]">
                           {formatPrice(c.revenue, c.currency)}
                         </p>
                         <div className="mt-1">

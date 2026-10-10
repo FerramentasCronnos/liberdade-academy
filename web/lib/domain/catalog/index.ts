@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { normalizeProduct } from './normalize';
+import { backfillVideoThumbnails } from './video-thumbs';
 import { apifyProvider } from './providers/apify';
 import { apifyAmazonProvider } from './providers/apify-amazon';
 import { apifyShopeeProvider } from './providers/apify-shopee';
@@ -101,6 +102,8 @@ export interface SyncRegionResult {
 export interface SyncResult {
   provider: string;
   results: SyncRegionResult[];
+  /** Capas de vídeo preenchidas nesta execução. */
+  thumbs?: { pending: number; done: number; failed: number };
   synced: number;
   created: number;
   message: string;
@@ -323,6 +326,12 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
     }
   }
 
+  // capas dos vídeos novos, com o tempo que sobrou da execução
+  const thumbs =
+    provider.fetchReferenceVideos && Date.now() - started < TOTAL_BUDGET_MS
+      ? await backfillVideoThumbnails(60, started + TOTAL_BUDGET_MS + 30_000)
+      : undefined;
+
   const synced = results.reduce((total, result) => total + result.saved, 0);
   const created = results.reduce((total, result) => total + result.created, 0);
   const videos = results.reduce((total, result) => total + result.videos, 0);
@@ -331,6 +340,7 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
   return {
     provider: provider.name,
     results,
+    thumbs,
     synced,
     created,
     message: failed.length

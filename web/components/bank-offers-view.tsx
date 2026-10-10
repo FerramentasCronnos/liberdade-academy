@@ -8,6 +8,7 @@ import type { ReferenceVideoView } from '@/lib/queries';
 import { CATEGORIES, CATEGORY_LABEL, type CategoryId } from '@/lib/types';
 import { CATEGORY_ICONS } from './category-icons';
 import { IconExternal, IconHeart, IconSearch, IconTikTok } from './icons';
+import { VideoPlayer } from './video-player';
 
 type SortId = 'ventas' | 'views' | 'recientes';
 const SORTS: Array<{ id: SortId; label: string }> = [
@@ -16,11 +17,6 @@ const SORTS: Array<{ id: SortId; label: string }> = [
   { id: 'recientes', label: 'Más recientes' },
 ];
 const PAGE = 24;
-
-function playerUrl(videoId: string) {
-  const params = new URLSearchParams({ controls: '1', description: '1', music_info: '1', rel: '0', loop: '1' });
-  return `https://www.tiktok.com/player/v1/${videoId}?${params}`;
-}
 
 export function BankOffersView({ videos }: { videos: ReferenceVideoView[] }) {
   const [category, setCategory] = useState<CategoryId>('todos');
@@ -141,14 +137,12 @@ export function BankOffersView({ videos }: { videos: ReferenceVideoView[] }) {
               key={video.id}
               className="flex flex-col overflow-hidden rounded-[22px] bg-[var(--bg-elevated)] shadow-[var(--shadow-soft)]"
             >
-              <div className="relative m-2 aspect-[9/16] overflow-hidden rounded-[16px] bg-[var(--color-ink-900)]">
-                <iframe
-                  src={playerUrl(video.videoId)}
+              <div className="m-2">
+                <VideoPlayer
+                  videoId={video.videoId}
                   title={video.title || `Video de @${video.creatorHandle}`}
-                  className="absolute inset-0 h-full w-full border-0"
-                  loading="lazy"
-                  allow="fullscreen; encrypted-media; picture-in-picture"
-                  referrerPolicy="strict-origin-when-cross-origin"
+                  cover={video.thumbnail}
+                  fallbackCover={video.product.image}
                 />
               </div>
 

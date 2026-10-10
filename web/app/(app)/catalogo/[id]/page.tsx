@@ -110,7 +110,7 @@ export default async function ProductPage({ params }: { params: Params }) {
               />
             )}
 
-            <ProductVideos videos={videos} currency={product.currency ?? 'USD'} />
+            <ProductVideos videos={videos} currency={product.currency ?? 'USD'} productImage={product.image} />
 
             <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
               <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">

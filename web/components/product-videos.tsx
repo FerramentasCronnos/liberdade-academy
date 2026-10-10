@@ -1,19 +1,25 @@
 import { formatCompact, formatPrice } from '@/lib/api';
 import type { ProductVideoView } from '@/lib/queries';
 import { IconExternal, IconHeart, IconTikTok } from '@/components/icons';
+import { VideoPlayer } from '@/components/video-player';
 
 /**
  * Vídeos de criadores que mais venderam o produto (dados da Kalodata).
  *
- * O vídeo em si vem do Player oficial do TikTok (player/v1/<id>), que toca
- * dentro de um iframe sem login. A Kalodata não entrega capa nem URL, por isso
- * o player é montado só com o id do vídeo; os números (vendas, views) vêm dela.
+ * O vídeo toca no Player oficial do TikTok, carregado só ao clicar na capa
+ * (ver video-player.tsx). A Kalodata entrega id, criador e números; a capa
+ * vem do oEmbed do TikTok no sync.
  */
-function playerUrl(videoId: string) {
-  const params = new URLSearchParams({ controls: '1', description: '1', music_info: '1', rel: '0', loop: '1' });
-  return `https://www.tiktok.com/player/v1/${videoId}?${params}`;
-}
-export function ProductVideos({ videos, currency }: { videos: ProductVideoView[]; currency: string }) {
+
+export function ProductVideos({
+  videos,
+  currency,
+  productImage,
+}: {
+  videos: ProductVideoView[];
+  currency: string;
+  productImage: string;
+}) {
   if (!videos.length) return null;
 
   const syncedAt = videos[0].syncedAt.slice(0, 10);
@@ -62,16 +68,12 @@ export function ProductVideos({ videos, currency }: { videos: ProductVideoView[]
               </div>
             </div>
 
-            <div className="relative aspect-[9/16] overflow-hidden rounded-[14px] bg-[var(--color-ink-900)]">
-              <iframe
-                src={playerUrl(video.videoId)}
-                title={video.title || `Video de @${video.creatorHandle}`}
-                className="absolute inset-0 h-full w-full border-0"
-                loading="lazy"
-                allow="fullscreen; encrypted-media; picture-in-picture"
-                referrerPolicy="strict-origin-when-cross-origin"
-              />
-            </div>
+            <VideoPlayer
+              videoId={video.videoId}
+              title={video.title || `Video de @${video.creatorHandle}`}
+              cover={video.thumbnail}
+              fallbackCover={productImage}
+            />
 
             {video.title && (
               <p className="line-clamp-2 text-[13px] leading-snug text-[var(--text-muted)]">{video.title}</p>

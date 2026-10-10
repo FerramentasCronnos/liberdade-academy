@@ -59,6 +59,8 @@ export interface FetchOptions {
    * mudam todo dia (vendas, comissão); o sync completa o resto do que já tem.
    */
   knownIds?: Set<string>;
+  /** Instante (ms) a partir do qual o provider deve parar de buscar e devolver o que tem. */
+  deadline?: number;
 }
 
 /** Vídeo de criador que vendeu o produto — referência de conteúdo pro afiliado. */

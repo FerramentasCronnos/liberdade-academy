@@ -25,8 +25,9 @@ import {
  *     primeiro bloco de imagem da descrição do produto; produto sem nenhuma
  *     imagem é descartado (o normalizador exige foto).
  *   - o rank não traz categoria; por isso buscamos o rank por categoria do
- *     TikTok (ids abaixo) e o produto herda a categoria interna da busca. O
- *     rank geral usa `pri_cate_id` do detalhe para classificar.
+ *     TikTok (`category_ids`, lista — `category_id` é ignorado em silêncio) e o
+ *     produto herda a categoria interna da busca. O rank geral usa
+ *     `pri_cate_id` do detalhe para classificar.
  *   - os vídeos não vêm com URL nem thumbnail: a URL é montada com o handle do
  *     criador e o id do vídeo (formato público do TikTok).
  */
@@ -149,7 +150,7 @@ function apiKey() {
  * e derruba rajadas. Todas as chamadas passam por uma fila única com intervalo
  * mínimo entre elas; quando mesmo assim o limite aparece, espera e tenta de novo.
  */
-const MIN_GAP_MS = Number(process.env.KALODATA_MIN_GAP_MS || 450);
+const MIN_GAP_MS = Number(process.env.KALODATA_MIN_GAP_MS || 750);
 let queue: Promise<unknown> = Promise.resolve();
 let lastCallAt = 0;
 
@@ -209,16 +210,23 @@ function baseBody(region: Region) {
   return { region, language: LANGUAGE, currency: region === 'BR' ? 'BRL' : 'USD', date_range: dateRange() };
 }
 
-async function fetchRank(region: Region, pageSize: number, categoryId?: string): Promise<RankProduct[]> {
-  const data = await call<RankProduct[]>('product/rank', {
-    ...baseBody(region),
-    ...(categoryId ? { category_id: categoryId } : {}),
-    is_affiliate: 1, // só produto com programa de afiliados
-    sort_field: { field: 'revenue', type: 'DESC' },
-    page_number: 1,
-    page_size: Math.min(PAGE_SIZE, Math.max(1, pageSize)),
-  });
-  return data ?? [];
+/** Ranking por receita, paginado até juntar `wanted` produtos. */
+async function fetchRank(region: Region, wanted: number, categoryIds?: string[]): Promise<RankProduct[]> {
+  const rows: RankProduct[] = [];
+  for (let page = 1; rows.length < wanted && page <= 10; page += 1) {
+    const data = await call<RankProduct[]>('product/rank', {
+      ...baseBody(region),
+      ...(categoryIds?.length ? { category_ids: categoryIds } : {}),
+      is_affiliate: 1, // só produto com programa de afiliados
+      sort_field: { field: 'revenue', type: 'DESC' },
+      page_number: page,
+      page_size: Math.min(PAGE_SIZE, Math.max(1, wanted - rows.length)),
+    });
+    if (!data?.length) break;
+    rows.push(...data);
+    if (data.length < PAGE_SIZE) break;
+  }
+  return rows;
 }
 
 async function fetchDetail(productId: string, region: Region): Promise<ProductDetail | null> {
@@ -350,26 +358,27 @@ export const kalodataProvider: CatalogProvider = {
     return 'KALODATA_API_KEY no está configurada (clave de la Open API de Kalodata, en Open Center).';
   },
 
-  async fetchTopProducts({ region, limit, category, knownIds }: FetchOptions): Promise<RawCatalogProduct[]> {
+  async fetchTopProducts({ region, limit, category, knownIds, deadline }: FetchOptions): Promise<RawCatalogProduct[]> {
     apiKey();
     const known = knownIds ?? new Set<string>();
 
-    // 1. ranking por grupo de categoria (+ geral), em paralelo
+    // 1. ranking por grupo de categoria (+ geral); a fila serializa as chamadas
     const wanted = (
       category && INTERNAL_CATEGORIES.includes(category as InternalCategory)
         ? [category as InternalCategory]
         : (Object.keys(CATEGORY_IDS) as InternalCategory[])
     ).filter((internal) => CATEGORY_IDS[internal].length);
 
-    const queries: Array<{ internal?: InternalCategory; categoryId?: string }> = wanted.flatMap((internal) =>
-      CATEGORY_IDS[internal].map((categoryId) => ({ internal, categoryId })),
-    );
+    const queries: Array<{ internal?: InternalCategory; categoryIds?: string[] }> = wanted.map((internal) => ({
+      internal,
+      categoryIds: CATEGORY_IDS[internal],
+    }));
     if (!category) queries.push({}); // ranking geral: pega campeões fora dos grupos
 
     // ~60% dos produtos têm imagem na descrição; buscamos folga pra fechar o limite
     const perQuery = Math.ceil((limit * 1.8) / queries.length);
-    const lists = await mapConcurrent(queries, 4, async (query) => {
-      const rows = await fetchRank(region, perQuery, query.categoryId);
+    const lists = await mapConcurrent(queries, 2, async (query) => {
+      const rows = await fetchRank(region, perQuery, query.categoryIds);
       return rows.map((row) => ({ row, internal: query.internal }));
     });
 
@@ -386,6 +395,8 @@ export const kalodataProvider: CatalogProvider = {
     const results: RawCatalogProduct[] = [];
     const BATCH = 6;
     for (let start = 0; start < candidates.length && results.length < limit; start += BATCH) {
+      // sem tempo: devolve o que já tem; o resto entra na execução seguinte
+      if (deadline && Date.now() > deadline) break;
       const batch = candidates.slice(start, start + BATCH);
       const mapped = await mapConcurrent(batch, BATCH, async ({ row, internal }): Promise<RawCatalogProduct | null> => {
         const base: RawCatalogProduct = {

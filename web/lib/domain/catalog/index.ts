@@ -108,6 +108,15 @@ export interface SyncResult {
 const VIDEOS_REFRESH_MS = Number(process.env.CATALOG_VIDEOS_REFRESH_DAYS || 7) * 24 * 60 * 60 * 1000;
 
 /**
+ * Orçamento de tempo da execução. A rota tem maxDuration de 300 s e a API da
+ * Kalodata aceita ~1 chamada por segundo, então o sync precisa parar antes do
+ * limite e deixar o que faltou (vídeos, produtos novos) pro dia seguinte.
+ */
+const FETCH_BUDGET_MS = Number(process.env.CATALOG_FETCH_BUDGET_MS || 150_000);
+const TOTAL_BUDGET_MS = Number(process.env.CATALOG_SYNC_BUDGET_MS || 250_000);
+const VIDEOS_PER_RUN = Number(process.env.CATALOG_VIDEOS_PER_RUN || 80);
+
+/**
  * Troca os vídeos de referência do produto pelos atuais. Falha de um produto
  * não interrompe o sync: fica no log e tenta de novo no dia seguinte.
  */
@@ -187,6 +196,7 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
   }
 
   const results: SyncRegionResult[] = [];
+  const started = Date.now();
 
   for (const region of regions) {
     try {
@@ -212,6 +222,7 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
         category: options.category,
         terms: options.terms,
         knownIds: new Set(existing.keys()),
+        deadline: started + FETCH_BUDGET_MS,
       });
       const normalized = raw
         .map((item) => {
@@ -248,7 +259,8 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
         if (!exists) created += 1;
 
         const lastVideos = exists?.videosSyncedAt?.getTime() ?? 0;
-        if (provider.fetchReferenceVideos && now.getTime() - lastVideos > VIDEOS_REFRESH_MS) {
+        const hasTime = Date.now() - started < TOTAL_BUDGET_MS && videos < VIDEOS_PER_RUN;
+        if (provider.fetchReferenceVideos && hasTime && now.getTime() - lastVideos > VIDEOS_REFRESH_MS) {
           if (await refreshVideos(provider, row.id, externalId, region)) videos += 1;
         }
       }

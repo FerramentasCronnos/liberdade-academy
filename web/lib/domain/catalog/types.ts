@@ -37,6 +37,19 @@ export interface RawCatalogProduct {
   commission?: number;
   description?: string;
   supplierShips?: boolean;
+  /** Galeria (a principal pode repetir aqui). */
+  images?: string[];
+  /** Métricas de venda do período (Kalodata: últimos 30 dias). */
+  revenue?: number;
+  /** Crescimento da receita em %. */
+  revenueGrowth?: number;
+  unitPrice?: number;
+  videoRevenue?: number;
+  liveRevenue?: number;
+  reviewCount?: number;
+  creatorCount?: number;
+  videoCount?: number;
+  launchDate?: Date;
 }
 
 export interface FetchOptions {

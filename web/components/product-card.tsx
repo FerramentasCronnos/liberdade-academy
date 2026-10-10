@@ -65,6 +65,25 @@ export function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
+        {product.metrics && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px]">
+            <span className="font-semibold text-[var(--text)]">
+              {formatPrice(product.metrics.revenue, product.currency)}
+              <span className="font-normal text-[var(--text-faint)]"> / 30 días</span>
+            </span>
+            {product.metrics.revenueGrowth != null && (
+              <span
+                className={`rounded-md px-1.5 py-0.5 font-semibold ${
+                  product.metrics.revenueGrowth >= 0 ? 'bg-[var(--money)]/12 text-[var(--money)]' : 'bg-[#d64545]/10 text-[#d64545]'
+                }`}
+              >
+                {product.metrics.revenueGrowth > 0 ? '+' : ''}
+                {Math.round(product.metrics.revenueGrowth)}%
+              </span>
+            )}
+          </div>
+        )}
+
         <div className="mt-auto pt-1">
           <p className="text-[12px] text-[var(--text-faint)]">Precio</p>
           <p className="text-[17px] font-bold leading-tight tracking-tight text-[var(--text)]">

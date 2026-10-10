@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getUserId } from '@/lib/session';
@@ -8,10 +7,11 @@ import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { CopyLinkButton } from '@/components/copy-link-button';
 import { ProductVideos } from '@/components/product-videos';
+import { ProductGallery } from '@/components/product-gallery';
+import { ProductMetrics } from '@/components/product-metrics';
 import {
   IconArrowLeft,
   IconExternal,
-  IconFlame,
   IconStar,
   IconStore,
   IconTruck,
@@ -56,22 +56,7 @@ export default async function ProductPage({ params }: { params: Params }) {
           {/* Coluna principal */}
           <div className="flex flex-col gap-5">
             <div className="grid gap-5 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)] sm:grid-cols-[280px_minmax(0,1fr)]">
-              <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[var(--bg-sunken)]">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  sizes="280px"
-                  className="object-cover"
-                  unoptimized
-                />
-                {product.isViral && (
-                  <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg bg-[var(--color-gold-400)] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--color-ink-900)]">
-                    <IconFlame className="h-3 w-3" />
-                    Viral
-                  </span>
-                )}
-              </div>
+              <ProductGallery images={product.images ?? [product.image]} name={product.name} isViral={product.isViral} />
 
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -116,7 +101,16 @@ export default async function ProductPage({ params }: { params: Params }) {
               </div>
             </div>
 
-            <ProductVideos videos={videos} currency={product.currency ?? "USD"} />
+            {product.metrics && (
+              <ProductMetrics
+                metrics={product.metrics}
+                currency={product.currency ?? 'USD'}
+                salesCount={product.salesCount}
+                commission={rate ?? undefined}
+              />
+            )}
+
+            <ProductVideos videos={videos} currency={product.currency ?? 'USD'} />
 
             <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
               <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">

@@ -68,6 +68,24 @@ export function serializeProduct(product: Product) {
     /** Entrou no catálogo nos últimos 14 dias. */
     isNew: Date.now() - product.createdAt.getTime() < 14 * 86_400_000,
     createdAt: product.createdAt.toISOString(),
+    images: product.images.length ? product.images : [product.image],
+    metrics:
+      product.revenue == null
+        ? undefined
+        : {
+            revenue: product.revenue,
+            revenueGrowth: product.revenueGrowth ?? undefined,
+            unitPrice: product.unitPrice ?? undefined,
+            videoRevenue: product.videoRevenue ?? undefined,
+            liveRevenue: product.liveRevenue ?? undefined,
+            reviewCount: product.reviewCount ?? undefined,
+            creatorCount: product.creatorCount ?? undefined,
+            videoCount: product.videoCount ?? undefined,
+            launchDate: product.launchDate?.toISOString().slice(0, 10),
+            trend: Array.isArray(product.revenueTrend)
+              ? (product.revenueTrend as Array<{ d: string; r: number }>).map((p) => ({ d: String(p.d), r: Number(p.r) }))
+              : [],
+          },
   };
 }
 

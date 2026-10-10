@@ -6,13 +6,53 @@ import { CATEGORY_ICONS } from './category-icons';
 import { IconChevronDown, IconSearch, IconSort } from './icons';
 import {
   CATEGORIES,
+  COMMISSION_FILTERS,
+  GROWTH_FILTERS,
   MARKETPLACES,
+  PRICE_FILTERS,
+  REVENUE_FILTERS,
+  SOLD_FILTERS,
   SORTS,
   type CategoryId,
   type Marketplace,
   type Product,
+  type RangeOption,
   type SortId,
 } from '@/lib/types';
+
+/** true quando o valor cai na faixa; sem valor só passa na opção "todos". */
+function inRange(option: RangeOption, value: number | null | undefined) {
+  if (option.min == null && option.max == null) return true;
+  if (value == null) return false;
+  if (option.min != null && value < option.min) return false;
+  if (option.max != null && value >= option.max) return false;
+  return true;
+}
+
+function RangeSelect({ options, value, onChange }: { options: RangeOption[]; value: string; onChange: (id: string) => void }) {
+  const active = value !== 'todos';
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`appearance-none rounded-full border px-4 py-2.5 pr-8 text-[13px] font-medium shadow-[var(--shadow-soft)] outline-none transition bg-[length:14px] bg-[right_10px_center] bg-no-repeat ${
+        active
+          ? 'border-[var(--brand)] bg-[var(--brand)] text-[var(--text-inverse)]'
+          : 'border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text)] hover:border-[var(--border-strong)]'
+      }`}
+      style={{
+        backgroundImage:
+          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>\")",
+      }}
+    >
+      {options.map((option) => (
+        <option key={option.id} value={option.id}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export function CatalogView({ products }: { products: Product[] }) {
   const [category, setCategory] = useState<CategoryId>('todos');
@@ -20,6 +60,14 @@ export function CatalogView({ products }: { products: Product[] }) {
   const [sort, setSort] = useState<SortId>('novedades');
   const [query, setQuery] = useState('');
   const [sortOpen, setSortOpen] = useState(false);
+  const [revenue, setRevenue] = useState('todos');
+  const [growth, setGrowth] = useState('todos');
+  const [sold, setSold] = useState('todos');
+  const [commission, setCommission] = useState('todos');
+  const [price, setPrice] = useState('todos');
+
+  const hasMetrics = useMemo(() => products.some((p) => p.metrics), [products]);
+  const filtersActive = [revenue, growth, sold, commission, price].some((v) => v !== 'todos');
 
   const visible = useMemo(() => {
     let list = products;
@@ -30,8 +78,28 @@ export function CatalogView({ products }: { products: Product[] }) {
     const q = query.trim().toLowerCase();
     if (q) list = list.filter((p) => p.name.toLowerCase().includes(q));
 
+    const revenueOpt = REVENUE_FILTERS.find((o) => o.id === revenue)!;
+    const growthOpt = GROWTH_FILTERS.find((o) => o.id === growth)!;
+    const soldOpt = SOLD_FILTERS.find((o) => o.id === sold)!;
+    const commissionOpt = COMMISSION_FILTERS.find((o) => o.id === commission)!;
+    const priceOpt = PRICE_FILTERS.find((o) => o.id === price)!;
+    list = list.filter(
+      (p) =>
+        inRange(revenueOpt, p.metrics?.revenue) &&
+        inRange(growthOpt, p.metrics?.revenueGrowth) &&
+        inRange(soldOpt, p.salesCount) &&
+        inRange(commissionOpt, p.commission ?? p.commissionEstimated) &&
+        inRange(priceOpt, p.metrics?.unitPrice ?? p.price),
+    );
+
     const sorted = [...list];
     switch (sort) {
+      case 'ingresos':
+        sorted.sort((a, b) => (b.metrics?.revenue ?? -1) - (a.metrics?.revenue ?? -1));
+        break;
+      case 'crecimiento':
+        sorted.sort((a, b) => (b.metrics?.revenueGrowth ?? -Infinity) - (a.metrics?.revenueGrowth ?? -Infinity));
+        break;
       case 'preco_asc':
         sorted.sort((a, b) => a.price - b.price);
         break;
@@ -57,7 +125,7 @@ export function CatalogView({ products }: { products: Product[] }) {
         sorted.sort((a, b) => b.salesCount - a.salesCount);
     }
     return sorted;
-  }, [products, category, marketplace, sort, query]);
+  }, [products, category, marketplace, sort, query, revenue, growth, sold, commission, price]);
 
   const sortLabel = SORTS.find((s) => s.id === sort)?.label ?? 'Ordenar';
 
@@ -188,6 +256,35 @@ export function CatalogView({ products }: { products: Product[] }) {
           />
         </div>
       </div>
+
+      {/* Filtros por datos de venta (Kalodata) */}
+      {hasMetrics && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <RangeSelect options={REVENUE_FILTERS} value={revenue} onChange={setRevenue} />
+          <RangeSelect options={GROWTH_FILTERS} value={growth} onChange={setGrowth} />
+          <RangeSelect options={SOLD_FILTERS} value={sold} onChange={setSold} />
+          <RangeSelect options={COMMISSION_FILTERS} value={commission} onChange={setCommission} />
+          <RangeSelect options={PRICE_FILTERS} value={price} onChange={setPrice} />
+          {filtersActive && (
+            <button
+              type="button"
+              onClick={() => {
+                setRevenue('todos');
+                setGrowth('todos');
+                setSold('todos');
+                setCommission('todos');
+                setPrice('todos');
+              }}
+              className="text-[12.5px] font-medium text-[var(--text-muted)] underline-offset-2 hover:underline"
+            >
+              Limpiar filtros
+            </button>
+          )}
+          <span className="ml-auto text-[12px] text-[var(--text-faint)]">
+            {visible.length} producto{visible.length === 1 ? '' : 's'}
+          </span>
+        </div>
+      )}
 
       {visible.length === 0 ? (
         <div className="mt-10 rounded-[22px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)]/60 py-20 text-center">

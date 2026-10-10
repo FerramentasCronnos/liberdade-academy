@@ -80,6 +80,23 @@ export interface NormalizedProduct {
   commission: number | null;
   description: string;
   supplierShips: boolean;
+  images: string[];
+  revenue: number | null;
+  revenueGrowth: number | null;
+  unitPrice: number | null;
+  videoRevenue: number | null;
+  liveRevenue: number | null;
+  reviewCount: number | null;
+  creatorCount: number | null;
+  videoCount: number | null;
+  launchDate: Date | null;
+}
+
+function optionalNumber(value: unknown, integer = false): number | null {
+  if (value == null) return null;
+  const parsed = toNumber(value, Number.NaN);
+  if (!Number.isFinite(parsed)) return null;
+  return integer ? Math.round(parsed) : parsed;
 }
 
 /**
@@ -129,5 +146,15 @@ export function normalizeProduct(
       raw.commission == null ? null : Math.round(clamp(toNumber(raw.commission), 0, 100)),
     description: (raw.description || name).slice(0, 2000),
     supplierShips: raw.supplierShips ?? true,
+    images: Array.from(new Set([image, ...(raw.images ?? [])].filter((url) => /^https?:\/\//i.test(url)))).slice(0, 10),
+    revenue: optionalNumber(raw.revenue),
+    revenueGrowth: optionalNumber(raw.revenueGrowth),
+    unitPrice: optionalNumber(raw.unitPrice),
+    videoRevenue: optionalNumber(raw.videoRevenue),
+    liveRevenue: optionalNumber(raw.liveRevenue),
+    reviewCount: optionalNumber(raw.reviewCount, true),
+    creatorCount: optionalNumber(raw.creatorCount, true),
+    videoCount: optionalNumber(raw.videoCount, true),
+    launchDate: raw.launchDate ?? null,
   };
 }

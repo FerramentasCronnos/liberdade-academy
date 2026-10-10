@@ -84,6 +84,10 @@ interface RankProduct {
   commission_rate: number | null;
   sales_volumn: number;
   unit_price: number;
+  revenue_growth_rate?: number | null;
+  live_revenue?: number | null;
+  video_revenue?: number | null;
+  showcase_revenue?: number | null;
   launch_date?: string;
   master_image_url?: string | null;
   seller_id?: string;
@@ -105,6 +109,14 @@ interface ProductDetail {
   unit_price?: number;
   commission_rate?: number | null;
   sales_volumn?: number;
+  revenue?: number;
+  video_revenue?: number;
+  live_revenue?: number;
+  creator_number?: number;
+  video_number?: number;
+  live_number?: number;
+  product_review_count?: number;
+  launch_date?: string;
   master_image_url?: string | null;
   product_description?: DescriptionBlock[];
 }
@@ -257,14 +269,15 @@ async function fetchVideos(productId: string, region: Region, range: string): Pr
 
 /* ------------------------------------------------------------- utilidades */
 
-/** Primeira imagem da descrição, sem a query string assinada (a URL base é estável). */
-function imageFromDetail(detail: ProductDetail): string | undefined {
-  if (detail.master_image_url && /^https?:\/\//.test(detail.master_image_url)) return detail.master_image_url;
+/** Imagens da descrição, sem a query string assinada (a URL base é estável). */
+function imagesFromDetail(detail: ProductDetail): string[] {
+  const urls: string[] = [];
+  if (detail.master_image_url && /^https?:\/\//.test(detail.master_image_url)) urls.push(detail.master_image_url);
   for (const block of detail.product_description ?? []) {
     const url = block.type === 'image' ? block.image?.url_list?.[0] : undefined;
-    if (url && /^https?:\/\//.test(url)) return url.split('?')[0];
+    if (url && /^https?:\/\//.test(url)) urls.push(url.split('?')[0]);
   }
-  return undefined;
+  return Array.from(new Set(urls)).slice(0, 10);
 }
 
 function descriptionFromDetail(detail: ProductDetail): string | undefined {
@@ -409,23 +422,35 @@ export const kalodataProvider: CatalogProvider = {
           rating: 0, // a API não tem avaliação; 0 esconde a estrela em vez de inventar
           salesCount: row.sales_volumn,
           commission: row.commission_rate ?? undefined,
+          // métricas que mudam todo dia vêm do ranking, sem chamada extra
+          revenue: row.revenue,
+          revenueGrowth: row.revenue_growth_rate ?? undefined,
+          unitPrice: row.unit_price,
+          videoRevenue: row.video_revenue ?? undefined,
+          liveRevenue: row.live_revenue ?? undefined,
+          launchDate: parsePublishDate(row.launch_date),
         };
         if (known.has(row.product_id)) return base; // sync completa imagem/descrição do banco
 
         const detail = await fetchDetail(row.product_id, region);
         if (!detail) return null;
-        const image = imageFromDetail(detail);
-        if (!image) return null;
+        const images = imagesFromDetail(detail);
+        if (!images.length) return null;
 
         const minPrice = detail.min_price ?? 0;
         const unit = detail.unit_price ?? row.unit_price;
+        const main = await persistImage(images[0], row.product_id);
         return {
           ...base,
-          image: await persistImage(image, row.product_id),
+          image: main,
+          images: [main, ...images.slice(1)],
           price: minPrice > 0 && minPrice <= unit * 2 ? minPrice : unit,
           category: internal ?? (detail.pri_cate_id ? CATEGORY_BY_ID[detail.pri_cate_id] : undefined),
           description: descriptionFromDetail(detail),
           commission: detail.commission_rate ?? base.commission,
+          reviewCount: detail.product_review_count,
+          creatorCount: detail.creator_number,
+          videoCount: detail.video_number,
         };
       });
       for (const item of mapped) if (item && results.length < limit) results.push(item);

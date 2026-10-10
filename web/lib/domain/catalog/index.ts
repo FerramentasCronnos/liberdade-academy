@@ -116,6 +116,24 @@ const FETCH_BUDGET_MS = Number(process.env.CATALOG_FETCH_BUDGET_MS || 150_000);
 const TOTAL_BUDGET_MS = Number(process.env.CATALOG_SYNC_BUDGET_MS || 250_000);
 const VIDEOS_PER_RUN = Number(process.env.CATALOG_VIDEOS_PER_RUN || 80);
 
+/** Ponto diário do histórico de receita gravado no produto. */
+export type TrendPoint = { d: string; r: number };
+
+/**
+ * Acrescenta a receita de hoje ao histórico (um ponto por dia, até 60). A API
+ * não devolve a série; o gráfico de tendência nasce desses pontos acumulados
+ * pelo cron diário.
+ */
+function appendTrend(current: unknown, revenue: number | null, now: Date): TrendPoint[] {
+  const points = Array.isArray(current)
+    ? (current as unknown[]).filter((p): p is TrendPoint => typeof p === 'object' && p !== null && 'd' in p && 'r' in p)
+    : [];
+  if (revenue == null) return points;
+  const day = now.toISOString().slice(0, 10);
+  const without = points.filter((p) => p.d !== day);
+  return [...without, { d: day, r: revenue }].slice(-60);
+}
+
 /**
  * Troca os vídeos de referência do produto pelos atuais. Falha de um produto
  * não interrompe o sync: fica no log e tenta de novo no dia seguinte.
@@ -207,21 +225,27 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
           id: true,
           externalId: true,
           image: true,
+          images: true,
           price: true,
           description: true,
           category: true,
           productUrl: true,
+          reviewCount: true,
+          creatorCount: true,
+          videoCount: true,
           videosSyncedAt: true,
         },
       });
       const existing = new Map(existingRows.map((row) => [row.externalId ?? '', row]));
+      // só é "conhecido" quem já tem galeria: produto gravado antes das fotos extras volta ao detalhe uma vez
+      const knownIds = new Set(existingRows.filter((row) => row.images.length > 0).map((row) => row.externalId ?? ''));
 
       const raw = await provider.fetchTopProducts({
         region,
         limit,
         category: options.category,
         terms: options.terms,
-        knownIds: new Set(existing.keys()),
+        knownIds,
         deadline: started + FETCH_BUDGET_MS,
       });
       const normalized = raw
@@ -232,10 +256,14 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
           return {
             ...item,
             image: known.image,
-            price: item.price && item.price > 0 ? item.price : known.price,
+            images: known.images,
+            price: known.price,
             description: item.description ?? known.description,
             category: item.category ?? known.category,
             productUrl: item.productUrl ?? known.productUrl ?? undefined,
+            reviewCount: item.reviewCount ?? known.reviewCount ?? undefined,
+            creatorCount: item.creatorCount ?? known.creatorCount ?? undefined,
+            videoCount: item.videoCount ?? known.videoCount ?? undefined,
           };
         })
         .map((item) => normalizeProduct(item, provider.name, region, provider.marketplace))
@@ -248,11 +276,15 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
       for (const product of normalized) {
         const { externalId, ...data } = product;
         const where = { provider_region_externalId: { provider: provider.name, region, externalId } };
-        const exists = await prisma.product.findUnique({ where, select: { id: true, videosSyncedAt: true } });
+        const exists = await prisma.product.findUnique({
+          where,
+          select: { id: true, videosSyncedAt: true, revenueTrend: true },
+        });
+        const revenueTrend = appendTrend(exists?.revenueTrend, data.revenue, now);
         const row = await prisma.product.upsert({
           where,
-          update: { ...data, externalId, syncedAt: now, ...(options.draft ? {} : { active: true }) },
-          create: { ...data, externalId, syncedAt: now, active: !options.draft },
+          update: { ...data, externalId, revenueTrend, syncedAt: now, ...(options.draft ? {} : { active: true }) },
+          create: { ...data, externalId, revenueTrend, syncedAt: now, active: !options.draft },
           select: { id: true },
         });
         saved += 1;

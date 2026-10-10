@@ -12,6 +12,13 @@ import { nextAvailableAt } from './domain/missions';
 
 /* ------------------------------------------------------------------ catálogo */
 
+function hiddenProviders(): string[] {
+  return (process.env.CATALOG_HIDDEN_PROVIDERS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 export async function listProducts(params: {
   /** Só vale para o TikTok Shop; Amazon e Shopee têm região própria. */
   region?: string;
@@ -28,6 +35,9 @@ export async function listProducts(params: {
       // CATALOG_SHOW_DRAFTS=1 (só em preview) mostra também os produtos gravados
       // como rascunho por um provider em teste; produção segue só os ativos
       ...(process.env.CATALOG_SHOW_DRAFTS === '1' ? {} : { active: true }),
+      // CATALOG_HIDDEN_PROVIDERS=apify esconde uma fonte sem desativar nada no
+      // banco (o preview usa o mesmo Postgres da produção)
+      ...(hiddenProviders().length ? { provider: { notIn: hiddenProviders() } } : {}),
       // produto sem foto não vai pra vitrine — card vazio parece bug
       image: { startsWith: 'http' },
       ...(params.region

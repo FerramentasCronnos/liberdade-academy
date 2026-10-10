@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { CommunityShell } from '@/components/community/shell';
 import { prisma } from '@/lib/db';
-import { listSpaces, publishDueAnnouncements } from '@/lib/community-data';
+import { CommunityCard } from '@/components/community/community-card';
+import { getCommunitySidebar, listSpaces, publishDueAnnouncements, touchPresence } from '@/lib/community-data';
 import { getCurrentUser } from '@/lib/session';
 
 export default async function CommunityLayout({ children }: { children: React.ReactNode }) {
@@ -12,8 +13,12 @@ export default async function CommunityLayout({ children }: { children: React.Re
   // anúncios agendados que venceram (uma consulta indexada, barata)
   await publishDueAnnouncements().catch(() => undefined);
 
-  const [spaces, openTickets] = await Promise.all([
+  // presença para o "online agora" do card lateral (grava no máximo a cada 5 min)
+  await touchPresence(user.id).catch(() => undefined);
+
+  const [spaces, sidebar, openTickets] = await Promise.all([
     listSpaces(),
+    getCommunitySidebar().catch(() => null),
     prisma.ticket.count({
       where: user.isAdmin
         ? { status: { not: 'resuelto' } }
@@ -22,7 +27,12 @@ export default async function CommunityLayout({ children }: { children: React.Re
   ]);
 
   return (
-    <CommunityShell spaces={spaces} isAdmin={user.isAdmin} openTickets={openTickets}>
+    <CommunityShell
+      spaces={spaces}
+      isAdmin={user.isAdmin}
+      openTickets={openTickets}
+      rail={sidebar ? <CommunityCard data={sidebar} /> : undefined}
+    >
       {children}
     </CommunityShell>
   );

@@ -12,11 +12,14 @@ export function CommunityShell({
   spaces,
   isAdmin,
   openTickets,
+  rail,
   children,
 }: {
   spaces: Space[];
   isAdmin: boolean;
   openTickets: number;
+  /** Coluna direita (card da comunidade e ranking); some em telas menores. */
+  rail?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -92,6 +95,12 @@ export function CommunityShell({
         </div>
         {children}
       </div>
+
+      {rail && (
+        <aside className="sticky top-0 hidden h-dvh w-[320px] shrink-0 scroll-subtle scroll-subtle-light overflow-y-auto px-4 py-5 xl:block">
+          {rail}
+        </aside>
+      )}
     </div>
   );
 }

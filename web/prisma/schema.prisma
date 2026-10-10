@@ -61,7 +61,11 @@ model User {
   affiliateLinks      AffiliateLink[]
   landingPages        LandingPage[]
   adCreatives         AdCreative[]
+  /// Última requisição autenticada (no máximo a cada 5 min): base do "online agora".
+  lastSeenAt          DateTime?
   creatorFavorites    CreatorFavorite[]
+
+  @@index([lastSeenAt])
 }
 
 /// Anúncio do Baú: criativo em imagem que a administração sobe e os membros

@@ -641,3 +641,89 @@ export async function setTicketStatus(ticketId: string, status: string) {
 }
 
 export { CommunityError };
+
+/* ------------------------------------------------------- card lateral */
+
+/** Piso de "online agora": a comunidade nunca aparece vazia; o real soma por cima. */
+export const ONLINE_FLOOR = 18;
+const ONLINE_WINDOW_MS = 10 * 60 * 1000;
+const RANKING_DAYS = 30;
+
+export type CommunitySidebarData = {
+  members: number;
+  admins: number;
+  /** Membros vistos nos últimos 10 min somados ao piso. */
+  online: number;
+  onlineReal: number;
+  avatars: Array<{ id: string; name: string; avatar?: string }>;
+  /** Engajamento dos últimos 30 dias: posts, comentários e curtidas recebidas. */
+  ranking: Array<{ id: string; name: string; avatar?: string; score: number }>;
+};
+
+/**
+ * Pontuação de engajamento, calculada da atividade (não do saldo de pontos,
+ * que também vem de missões): post 10, comentário 5, curtida recebida 2.
+ */
+export async function getCommunitySidebar(): Promise<CommunitySidebarData> {
+  const since = new Date(Date.now() - RANKING_DAYS * 86_400_000);
+  const onlineSince = new Date(Date.now() - ONLINE_WINDOW_MS);
+  const notBot = { NOT: { email: { endsWith: '@bot.liberdade.academy' } } };
+
+  const [members, admins, onlineReal, recent, posts, comments, likes] = await Promise.all([
+    prisma.user.count({ where: notBot }),
+    prisma.user.count({ where: { isAdmin: true, ...notBot } }),
+    prisma.user.count({ where: { lastSeenAt: { gte: onlineSince }, ...notBot } }),
+    prisma.user.findMany({
+      where: notBot,
+      orderBy: [{ lastSeenAt: { sort: 'desc', nulls: 'last' } }, { joinedAt: 'desc' }],
+      take: 8,
+      select: { id: true, name: true, avatar: true },
+    }),
+    prisma.post.groupBy({ by: ['authorId'], where: { createdAt: { gte: since } }, _count: { _all: true } }),
+    prisma.comment.groupBy({ by: ['authorId'], where: { createdAt: { gte: since } }, _count: { _all: true } }),
+    prisma.postLike.findMany({
+      where: { createdAt: { gte: since } },
+      select: { post: { select: { authorId: true } } },
+    }),
+  ]);
+
+  const score = new Map<string, number>();
+  const add = (id: string, n: number) => score.set(id, (score.get(id) ?? 0) + n);
+  for (const row of posts) add(row.authorId, row._count._all * 10);
+  for (const row of comments) add(row.authorId, row._count._all * 5);
+  for (const like of likes) add(like.post.authorId, 2);
+
+  const top = [...score.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const users = top.length
+    ? await prisma.user.findMany({
+        where: { id: { in: top.map(([id]) => id) }, ...notBot },
+        select: { id: true, name: true, avatar: true },
+      })
+    : [];
+  const byId = new Map(users.map((u) => [u.id, u]));
+  const ranking = top
+    .filter(([id]) => byId.has(id))
+    .slice(0, 5)
+    .map(([id, points]) => ({ id, name: byId.get(id)!.name, avatar: byId.get(id)!.avatar ?? undefined, score: points }));
+
+  return {
+    members,
+    admins,
+    onlineReal,
+    online: ONLINE_FLOOR + onlineReal,
+    avatars: recent.map((u) => ({ id: u.id, name: u.name, avatar: u.avatar ?? undefined })),
+    ranking,
+  };
+}
+
+/**
+ * Marca presença. Só grava quando a última marca tem mais de 5 minutos, para
+ * não virar um UPDATE por requisição.
+ */
+export async function touchPresence(userId: string) {
+  const stale = new Date(Date.now() - 5 * 60 * 1000);
+  await prisma.user.updateMany({
+    where: { id: userId, OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: stale } }] },
+    data: { lastSeenAt: new Date() },
+  });
+}

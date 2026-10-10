@@ -19,6 +19,7 @@ import {
   IconMegaphone,
   IconPanelLeft,
   IconSettings,
+  IconTikTok,
   IconTrophy,
 } from './icons';
 
@@ -32,6 +33,7 @@ type Item = {
 
 const MAIN: Item[] = [
   { href: '/catalogo', label: 'Catálogo', icon: IconGrid },
+  { href: '/bank-offers', label: 'Bank Offers', icon: IconTikTok },
   { href: '/comunidade', label: 'Comunidad', icon: IconMessage },
   { href: '/ranking', label: 'Ranking', icon: IconTrophy },
   { href: '/missoes', label: 'Misiones', icon: IconMedal },

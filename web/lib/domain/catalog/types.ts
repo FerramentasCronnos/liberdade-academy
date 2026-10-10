@@ -74,6 +74,12 @@ export interface FetchOptions {
   knownIds?: Set<string>;
   /** Instante (ms) a partir do qual o provider deve parar de buscar e devolver o que tem. */
   deadline?: number;
+  /**
+   * Máximo de produtos NOVOS (fora de knownIds) a aceitar nesta execução. Os
+   * conhecidos continuam sendo atualizados. Controla o gasto diário na API:
+   * cada produto novo custa detalhe + vídeos.
+   */
+  maxNew?: number;
 }
 
 /** Vídeo de criador que vendeu o produto — referência de conteúdo pro afiliado. */

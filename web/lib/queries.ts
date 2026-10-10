@@ -73,6 +73,44 @@ export type ProductVideoView = {
   syncedAt: string;
 };
 
+export type ReferenceVideoView = ProductVideoView & {
+  product: { id: string; name: string; image: string; category: string; currency: string };
+};
+
+/**
+ * Todos os vídeos de referência do catálogo (aba Bank Offers), do que mais
+ * vendeu pro que menos, com o produto a que pertencem.
+ */
+export async function listReferenceVideos(limit = 300): Promise<ReferenceVideoView[]> {
+  const videos = await prisma.productVideo.findMany({
+    where: {
+      product: {
+        ...(process.env.CATALOG_SHOW_DRAFTS === '1' ? {} : { active: true }),
+        image: { startsWith: 'http' },
+      },
+    },
+    orderBy: [{ revenue: 'desc' }, { views: 'desc' }],
+    take: Math.min(Math.max(1, limit), 1000),
+    include: { product: { select: { id: true, name: true, image: true, category: true, currency: true } } },
+  });
+  return videos.map((video) => ({
+    id: video.id,
+    videoId: video.videoId,
+    title: video.title,
+    url: video.url,
+    creatorHandle: video.creatorHandle,
+    thumbnail: video.thumbnail ?? undefined,
+    views: video.views,
+    revenue: video.revenue,
+    likes: video.likes,
+    comments: video.comments,
+    isAd: video.isAd,
+    publishedAt: video.publishedAt?.toISOString().slice(0, 10),
+    syncedAt: video.syncedAt.toISOString(),
+    product: video.product,
+  }));
+}
+
 /** Vídeos de referência do produto, do que mais vendeu pro que menos (máx. 5). */
 export async function listProductVideos(productId: string): Promise<ProductVideoView[]> {
   const videos = await prisma.productVideo.findMany({

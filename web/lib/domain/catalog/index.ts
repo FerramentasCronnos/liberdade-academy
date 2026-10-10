@@ -76,6 +76,8 @@ export interface SyncOptions {
   category?: string;
   /** Termos de busca específicos, no lugar do mapa padrão da categoria. */
   terms?: string[];
+  /** Máximo de produtos novos nesta execução (padrão: CATALOG_NEW_PER_RUN). */
+  maxNew?: number;
   /**
    * Grava produtos novos como inativos (fora da vitrine). Serve pra testar um
    * provider novo num preview sem mudar o catálogo de produção, que usa o
@@ -115,6 +117,8 @@ const VIDEOS_REFRESH_MS = Number(process.env.CATALOG_VIDEOS_REFRESH_DAYS || 7) *
 const FETCH_BUDGET_MS = Number(process.env.CATALOG_FETCH_BUDGET_MS || 150_000);
 const TOTAL_BUDGET_MS = Number(process.env.CATALOG_SYNC_BUDGET_MS || 250_000);
 const VIDEOS_PER_RUN = Number(process.env.CATALOG_VIDEOS_PER_RUN || 80);
+/** Produtos novos por execução (controle de gasto na Kalodata); 0 = sem limite. */
+const NEW_PER_RUN = Number(process.env.CATALOG_NEW_PER_RUN || 0);
 
 /** Ponto diário do histórico de receita gravado no produto. */
 export type TrendPoint = { d: string; r: number };
@@ -247,6 +251,7 @@ export async function syncCatalog(options: SyncOptions = {}): Promise<SyncResult
         terms: options.terms,
         knownIds,
         deadline: started + FETCH_BUDGET_MS,
+        maxNew: options.maxNew ?? (NEW_PER_RUN > 0 ? NEW_PER_RUN : undefined),
       });
       const normalized = raw
         .map((item) => {

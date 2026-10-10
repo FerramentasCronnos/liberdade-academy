@@ -371,9 +371,11 @@ export const kalodataProvider: CatalogProvider = {
     return 'KALODATA_API_KEY no está configurada (clave de la Open API de Kalodata, en Open Center).';
   },
 
-  async fetchTopProducts({ region, limit, category, knownIds, deadline }: FetchOptions): Promise<RawCatalogProduct[]> {
+  async fetchTopProducts({ region, limit, category, knownIds, deadline, maxNew }: FetchOptions): Promise<RawCatalogProduct[]> {
     apiKey();
     const known = knownIds ?? new Set<string>();
+    const newBudget = maxNew ?? Number.POSITIVE_INFINITY;
+    let accepted = 0; // novos aceitos (com imagem)
 
     // 1. ranking por grupo de categoria (+ geral); a fila serializa as chamadas
     const wanted = (
@@ -412,6 +414,7 @@ export const kalodataProvider: CatalogProvider = {
       if (deadline && Date.now() > deadline) break;
       const batch = candidates.slice(start, start + BATCH);
       const mapped = await mapConcurrent(batch, BATCH, async ({ row, internal }): Promise<RawCatalogProduct | null> => {
+        if (!known.has(row.product_id) && accepted >= newBudget) return null; // cota de novos do dia esgotada
         const base: RawCatalogProduct = {
           externalId: row.product_id,
           name: row.product_name,
@@ -439,6 +442,7 @@ export const kalodataProvider: CatalogProvider = {
 
         const minPrice = detail.min_price ?? 0;
         const unit = detail.unit_price ?? row.unit_price;
+        accepted += 1;
         const main = await persistImage(images[0], row.product_id);
         return {
           ...base,
@@ -454,6 +458,8 @@ export const kalodataProvider: CatalogProvider = {
         };
       });
       for (const item of mapped) if (item && results.length < limit) results.push(item);
+      // só restam candidatos novos e a cota acabou: não vale gastar mais chamadas
+      if (accepted >= newBudget && candidates.slice(start + BATCH).every(({ row }) => !known.has(row.product_id))) break;
     }
 
     return results;

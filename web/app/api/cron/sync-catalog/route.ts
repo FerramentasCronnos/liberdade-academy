@@ -11,6 +11,7 @@ import { isRegion, syncCatalog, type SyncOptions } from '@/lib/domain/catalog';
  *   ?terms=led+face+mask,heatless+curler&category=beleza&region=US&limit=40
  *   &marketplace=amazon|shopee (sem isso: TikTok Shop)
  *   &draft=1 grava produtos novos inativos (teste de provider num preview)
+ *   &new=5 aceita no máximo 5 produtos novos nesta execução (gasto na Kalodata)
  * Sem parâmetros, roda as três lojas com os termos padrão (o que o cron faz).
  */
 export const maxDuration = 300;
@@ -34,6 +35,8 @@ export async function GET(request: Request) {
   const marketplace = params.get('marketplace');
   if (marketplace) options.marketplace = marketplace;
   if (params.get('draft') === '1') options.draft = true;
+  const maxNew = Number(params.get('new'));
+  if (maxNew > 0) options.maxNew = maxNew;
 
   try {
     if ([...params.keys()].length === 0) {

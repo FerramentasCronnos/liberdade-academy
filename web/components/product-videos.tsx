@@ -5,10 +5,14 @@ import { IconExternal, IconHeart, IconTikTok } from '@/components/icons';
 /**
  * Vídeos de criadores que mais venderam o produto (dados da Kalodata).
  *
- * Não há thumbnail: o TikTok não expõe a capa sem login e a Kalodata não a
- * entrega. O card vive do que importa pro afiliado — quem fez, quanto vendeu,
- * quantas views — e o botão abre o vídeo no próprio TikTok.
+ * O vídeo em si vem do Player oficial do TikTok (player/v1/<id>), que toca
+ * dentro de um iframe sem login. A Kalodata não entrega capa nem URL, por isso
+ * o player é montado só com o id do vídeo; os números (vendas, views) vêm dela.
  */
+function playerUrl(videoId: string) {
+  const params = new URLSearchParams({ controls: '1', description: '1', music_info: '1', rel: '0', loop: '1' });
+  return `https://www.tiktok.com/player/v1/${videoId}?${params}`;
+}
 export function ProductVideos({ videos, currency }: { videos: ProductVideoView[]; currency: string }) {
   if (!videos.length) return null;
 
@@ -58,9 +62,20 @@ export function ProductVideos({ videos, currency }: { videos: ProductVideoView[]
               </div>
             </div>
 
-            <p className="line-clamp-2 min-h-[2.6em] text-[13px] leading-snug text-[var(--text-muted)]">
-              {video.title || 'Video sin descripción'}
-            </p>
+            <div className="relative aspect-[9/16] overflow-hidden rounded-[14px] bg-[var(--color-ink-900)]">
+              <iframe
+                src={playerUrl(video.videoId)}
+                title={video.title || `Video de @${video.creatorHandle}`}
+                className="absolute inset-0 h-full w-full border-0"
+                loading="lazy"
+                allow="fullscreen; encrypted-media; picture-in-picture"
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+
+            {video.title && (
+              <p className="line-clamp-2 text-[13px] leading-snug text-[var(--text-muted)]">{video.title}</p>
+            )}
 
             <dl className="grid grid-cols-3 gap-2 text-center">
               <Stat label="Ventas est." value={formatPrice(video.revenue, currency)} />

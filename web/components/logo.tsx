@@ -39,13 +39,6 @@ export function Logo({ compact = false, onDark = false }: { compact?: boolean; o
         priority
         className="h-auto w-[150px]"
       />
-      <span
-        className={`mt-1.5 block text-[9.5px] font-semibold uppercase tracking-[0.14em] ${
-          onDark ? 'text-white/60' : 'text-[var(--accent-text)]'
-        }`}
-      >
-        Máquina de Ventas Automáticas
-      </span>
     </span>
   );
 }

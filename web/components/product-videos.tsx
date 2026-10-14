@@ -37,7 +37,7 @@ export function ProductVideos({
           </p>
         </div>
         <p className="text-[11.5px] text-[var(--text-faint)]">
-          Fuente: Kalodata · últimos 30 días · actualizado {formatDate(syncedAt)}
+          Últimos 30 días · actualizado {formatDate(syncedAt)}
         </p>
       </div>
 

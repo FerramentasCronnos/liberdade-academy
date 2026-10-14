@@ -628,8 +628,8 @@ export async function listCreators(userId: string): Promise<CreatorListItem[]> {
   const [creators, favorites] = await Promise.all([
     prisma.creator.findMany({
       where: { active: true },
-      orderBy: [{ rank: 'asc' }, { revenue: 'desc' }],
-      take: 100,
+      orderBy: [{ rank: { sort: 'asc', nulls: 'last' } }, { revenue: 'desc' }],
+      take: 400,
       select: {
         ...creatorBase,
         products: {

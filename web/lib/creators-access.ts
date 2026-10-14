@@ -130,7 +130,7 @@ export const FREE_VIDEOS = 3;
 export const FREE_PRODUCTS = 3;
 
 export const CREATORS_BENEFITS = [
-  'Ranking de los 50 creadores que más venden en TikTok Shop US, actualizado cada 2 días',
+  'Ranking de los creadores que más venden en TikTok Shop US, con creadores nuevos en cada actualización',
   'Perfil completo: ingresos, crecimiento, seguidores, vistas, engagement y precio promedio',
   '20 videos y anuncios por creador, con las ventas de cada video',
   'Los 20 productos que vende cada creador, con la comisión',

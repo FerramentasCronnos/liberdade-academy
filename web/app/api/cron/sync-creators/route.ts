@@ -23,6 +23,9 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const options: SyncCreatorsOptions = {};
   const top = Number(params.get('top'));
+
+  const maxNew = Number(params.get('new'));
+  if (maxNew >= 0 && params.has('new')) options.maxNew = Math.min(Math.floor(maxNew), 20);
   if (top > 0) options.top = Math.min(Math.floor(top), 200);
   const profiles = Number(params.get('profiles'));
   if (profiles >= 0 && params.has('profiles')) options.maxProfiles = Math.min(Math.floor(profiles), 150);

@@ -20,7 +20,7 @@ export function ProductMetrics({ metrics, currency, salesCount, commission }: {
     <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">Datos de ventas</h3>
-        <p className="text-[11.5px] text-[var(--text-faint)]">Fuente: Kalodata · últimos 30 días</p>
+        <p className="text-[11.5px] text-[var(--text-faint)]">Últimos 30 días</p>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_200px]">

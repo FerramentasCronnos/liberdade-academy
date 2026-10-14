@@ -44,12 +44,20 @@ export interface SyncCreatorsOptions {
   maxProfiles?: number;
   /** Orçamento de tempo da execução em ms (padrão 200 000). */
   budgetMs?: number;
+  /**
+   * Criadores NOVOS por execução, além do top: vêm do ranking de 7 dias (quem
+   * está subindo) e das páginas seguintes do de 30 dias. Padrão: env
+   * CREATORS_NEW_PER_RUN ou 4. 0 desliga.
+   */
+  maxNew?: number;
 }
 
 export interface SyncCreatorsResult {
   region: Region;
   ranked: number;
   created: number;
+  /** Criadores novos descobertos fora do top nesta execução. */
+  discovered: number;
   profiles: number;
   thumbs?: { pending: number; done: number; failed: number };
   avatars?: { pending: number; done: number; notFound: number };
@@ -173,6 +181,18 @@ function errorMessage(error: unknown) {
 }
 
 /* --------------------------------------------------------------- chamadas */
+
+/** Uma página do ranking de criadores por receita, na janela pedida. */
+async function fetchRankPage(region: Region, page: number, range: 'last30Day' | 'last7Day'): Promise<RankCreator[]> {
+  const data = await kalodataCall<RankCreator[]>('creator/rank', {
+    ...kalodataBaseBody(region),
+    date_range: range,
+    sort_field: { field: 'revenue', type: 'DESC' },
+    page_number: page,
+    page_size: RANK_PAGE_SIZE,
+  });
+  return (data ?? []).filter((row) => row.creator_id);
+}
 
 async function fetchRank(region: Region, top: number): Promise<RankCreator[]> {
   const rows: RankCreator[] = [];
@@ -310,13 +330,84 @@ async function syncRank(region: Region, top: number, now: Date) {
     }
   }
 
-  // quem saiu do top perde a posição e some da lista; volta quando reentrar
+  // quem saiu do top perde a posição mas continua na lista (abaixo dos ranqueados)
   await prisma.creator.updateMany({
     where: { region, externalId: { notIn: rows.map((row) => row.creator_id) } },
-    data: { rank: null, active: false },
+    data: { rank: null },
   });
 
   return { ranked: rows.length, created };
+}
+
+/** Campos do criador a partir de uma linha do ranking (sem posição). */
+function rowData(row: RankCreator, currency: string, today: string, now: Date, currentTrend: unknown) {
+  const revenue = toNumber(row.revenue) ?? 0;
+  const followers = toInt(row.creator_followers);
+  const videoViews = toNumber(row.content_views);
+  const point: TrendPoint = {
+    d: today,
+    r: revenue,
+    ...(videoViews !== null ? { v: videoViews } : {}),
+    ...(followers !== null ? { f: followers } : {}),
+  };
+  const trend = appendTrend(currentTrend, point) as unknown as Prisma.InputJsonValue;
+  const handle = stripHandle(row.creator_handle);
+  const nickname = text(row.creator_nickname) || handle || row.creator_id;
+  return {
+    handle,
+    data: {
+      ...(handle ? { handle } : {}),
+      nickname,
+      currency,
+      revenue,
+      revenueGrowth: toNumber(row.revenue_growth_rate),
+      salesCount: toInt(row.sales_volumn) ?? 0,
+      followers,
+      videoViews,
+      videoRevenue: toNumber(row.video_revenue),
+      liveRevenue: toNumber(row.live_revenue),
+      active: true,
+      rankSyncedAt: now,
+      trend,
+    },
+  };
+}
+
+/**
+ * Criadores novos fora do top: primeiro o ranking de 7 dias (quem está
+ * explodindo agora), depois as páginas seguintes do de 30 dias. Entram com
+ * rank null e perfil pendente; o passo de perfis completa no mesmo dia.
+ */
+async function discoverNewCreators(region: Region, maxNew: number, now: Date, deadline: number) {
+  if (maxNew <= 0) return 0;
+  const today = now.toISOString().slice(0, 10);
+  const currency = kalodataBaseBody(region).currency;
+  const known = new Set(
+    (await prisma.creator.findMany({ where: { region }, select: { externalId: true } })).map((c) => c.externalId),
+  );
+  const sources: Array<{ range: 'last30Day' | 'last7Day'; page: number }> = [
+    { range: 'last7Day', page: 1 },
+    { range: 'last7Day', page: 2 },
+    { range: 'last30Day', page: 2 },
+    { range: 'last30Day', page: 3 },
+    { range: 'last30Day', page: 4 },
+  ];
+  let created = 0;
+  for (const source of sources) {
+    if (created >= maxNew || Date.now() > deadline) break;
+    const rows = await fetchRankPage(region, source.page, source.range);
+    for (const row of rows) {
+      if (created >= maxNew) break;
+      if (known.has(row.creator_id)) continue;
+      known.add(row.creator_id);
+      const { handle, data } = rowData(row, currency, today, now, undefined);
+      await prisma.creator.create({
+        data: { ...data, handle: handle || row.creator_id, region, externalId: row.creator_id, rank: null },
+      });
+      created += 1;
+    }
+  }
+  return created;
 }
 
 /* ----------------------------------------------------------------- perfil */
@@ -462,6 +553,13 @@ export async function syncCreators(options: SyncCreatorsOptions = {}): Promise<S
   const errors: string[] = [];
 
   const { ranked, created } = await syncRank(region, top, now);
+  const maxNew = options.maxNew ?? Number(process.env.CREATORS_NEW_PER_RUN ?? 4);
+  let discovered = 0;
+  try {
+    discovered = await discoverNewCreators(region, maxNew, now, deadline);
+  } catch (error) {
+    errors.push(`descubrimiento de nuevos: ${error instanceof Error ? error.message : String(error)}`);
+  }
 
   // perfis: primeiro quem nunca teve, depois os mais antigos, na ordem do ranking
   const stale = new Date(now.getTime() - profileRefreshDays * DAY_MS);
@@ -511,5 +609,5 @@ export async function syncCreators(options: SyncCreatorsOptions = {}): Promise<S
     (errors.length ? `, ${errors.length} con error` : '') +
     '.';
 
-  return { region, ranked, created, profiles, thumbs, avatars, errors, message };
+  return { region, ranked, created, discovered, profiles, thumbs, avatars, errors, message };
 }

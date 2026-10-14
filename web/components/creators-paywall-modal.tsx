@@ -85,10 +85,10 @@ export function PaywallModalHost({ publishableKey, autoOpen = false }: { publish
           <div>
             <p className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--accent-text)]">Creators</p>
             <h3 className="mt-1 font-display text-[22px] font-semibold leading-tight text-[var(--text)]">
-              Desbloquea los 50 creadores que más venden
+              Desbloquea a todos los creadores que más venden
             </h3>
             <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">
-              Hoy ves 3 creadores gratis. Con la suscripción ves todos, con sus videos, productos y contactos.
+              Hoy ves 3 creadores gratis. Con la suscripción ves a todos, con sus videos, productos y contactos.
             </p>
           </div>
           <button

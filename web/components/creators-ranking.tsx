@@ -482,7 +482,7 @@ export function CreatorsRanking({
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-[var(--brand)]/25 bg-[var(--brand-soft)] px-4 py-3">
           <p className="flex items-center gap-2 text-[13px] text-[var(--text)]">
             <LockIcon className="h-4 w-4 text-[var(--brand)]" />
-            Hoy puedes ver <strong>{freeIds.length} creadores gratis</strong>. Mañana cambian. Para ver los 50 con sus videos y productos, suscríbete.
+            Hoy puedes ver <strong>{freeIds.length} creadores gratis</strong>. Mañana cambian. Para ver todos, con sus videos y productos, suscríbete.
           </p>
           <button
             type="button"
@@ -494,7 +494,7 @@ export function CreatorsRanking({
         </div>
       )}
 
-      {/* Filtros (estilo painel da Kalodata) */}
+      {/* Filtros */}
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         {FILTERS.map((def) => (
           <FilterSelect key={def.key} def={def} value={filters[def.key]} onChange={(v) => changeFilter(def.key, v)} />
@@ -524,7 +524,7 @@ export function CreatorsRanking({
           </p>
           <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">
             {creators.length === 0
-              ? 'Los 50 creadores que más venden en TikTok Shop US aparecen aquí cada 2 días.'
+              ? 'Los creadores que más venden en TikTok Shop US aparecen aquí y la lista crece cada actualización.'
               : tab === 'favoritos' && !query
                 ? 'Toca la estrella de un creador para tenerlo a mano aquí.'
                 : 'Prueba con otro nombre, @usuario o producto.'}

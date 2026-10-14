@@ -175,7 +175,7 @@ function Metrics({ creator, currency }: { creator: CreatorDetail; currency: stri
     <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">Principales métricas</h3>
-        <p className="text-[11.5px] text-[var(--text-faint)]">Fuente: Kalodata · últimos 30 días</p>
+        <p className="text-[11.5px] text-[var(--text-faint)]">Últimos 30 días</p>
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
@@ -374,7 +374,7 @@ function ProductsTab({ products: all, currency, locked = false }: { products: Cr
     <section className="mt-4 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">Productos</h3>
       <p className="mt-1 text-[13px] text-[var(--text-muted)]">
-        Productos que este creador vendió en los últimos 30 días (Kalodata)
+        Productos que este creador vendió en los últimos 30 días
       </p>
 
       {products.length === 0 ? (
@@ -512,7 +512,7 @@ function LivesTab({ creator, currency }: { creator: CreatorDetail; currency: str
   return (
     <section className="mt-4 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">Lives</h3>
-      <p className="mt-1 text-[13px] text-[var(--text-muted)]">Transmisiones en vivo con ventas en los últimos 30 días (Kalodata)</p>
+      <p className="mt-1 text-[13px] text-[var(--text-muted)]">Transmisiones en vivo con ventas en los últimos 30 días</p>
 
       {count === 0 ? (
         <Empty>Sin lives en los últimos 30 días</Empty>

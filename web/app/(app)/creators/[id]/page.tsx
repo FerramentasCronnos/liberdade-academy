@@ -27,7 +27,7 @@ export default async function CreatorPage({ params }: { params: Params }) {
   const locked = !hasCreatorsAccess(user);
   if (locked) {
     // sem assinatura só os criadores grátis do dia abrem; os outros voltam ao ranking com o pop-up
-    const ids = await prisma.creator.findMany({ where: { active: true }, orderBy: [{ rank: 'asc' }, { revenue: 'desc' }], select: { id: true } });
+    const ids = await prisma.creator.findMany({ where: { active: true }, orderBy: [{ rank: { sort: 'asc', nulls: 'last' } }, { revenue: 'desc' }], select: { id: true } });
     if (!freeCreatorIds(ids.map((c) => c.id)).includes(id)) redirect('/creators?paywall=1');
   }
   const creator = await getCreator(id, user.id).catch(() => null);

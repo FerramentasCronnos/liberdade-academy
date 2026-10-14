@@ -28,7 +28,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader title="Creators" subtitle="Los 50 creadores que más venden en TikTok Shop US" />
+      <PageHeader title="Creators" subtitle="Los creadores que más venden en TikTok Shop US" />
       <CreatorsRanking creators={creators} locked={locked} freeIds={freeIds} />
       {locked && (
         <PaywallModalHost publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY} autoOpen={paywall === '1'} />

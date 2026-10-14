@@ -257,7 +257,7 @@ export function CatalogView({ products }: { products: Product[] }) {
         </div>
       </div>
 
-      {/* Filtros por datos de venta (Kalodata) */}
+      {/* Filtros por datos de venta */}
       {hasMetrics && (
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <RangeSelect options={REVENUE_FILTERS} value={revenue} onChange={setRevenue} />

@@ -604,7 +604,7 @@ export async function syncCreators(options: SyncCreatorsOptions = {}): Promise<S
 
   const pending = Math.max(0, candidates.length - profiles);
   const message =
-    `${ranked} creadores en el ranking de ${region} (${created} nuevos), ${profiles} perfiles actualizados` +
+    `${ranked} creadores en el ranking de ${region} (${created} nuevos en el top, ${discovered} descubiertos), ${profiles} perfiles actualizados` +
     (pending ? `, ${pending} pendientes para la próxima ejecución` : '') +
     (errors.length ? `, ${errors.length} con error` : '') +
     '.';

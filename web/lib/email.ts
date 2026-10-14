@@ -116,8 +116,8 @@ function escape(value: string) {
 function brand() {
   return `
     <div style="padding:0 0 28px 0;">
-      <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:700;letter-spacing:-0.5px;color:#17143a;line-height:1;">MVA</div>
-      <div style="font-family:Helvetica,Arial,sans-serif;font-size:10.5px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6d5ce7;margin-top:6px;">Máquina de Ventas Automáticas</div>
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:700;letter-spacing:-0.5px;color:#0e1729;line-height:1;">MVA</div>
+      <div style="font-family:Helvetica,Arial,sans-serif;font-size:10.5px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#ab7a24;margin-top:6px;">Máquina de Ventas Automáticas</div>
     </div>`;
 }
 
@@ -142,14 +142,14 @@ export function plainExcerpt(text: string, max = 110) {
 function layout(body: string, preheader?: string) {
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Máquina de Ventas Automáticas</title></head>
-<body style="margin:0;padding:0;background:#f3f1fb;">
+<body style="margin:0;padding:0;background:#eaf0fb;">
   ${preheader ? preheaderBlock(preheader) : ''}
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f1fb;padding:32px 16px;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eaf0fb;padding:32px 16px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:22px;padding:40px 36px;font-family:Helvetica,Arial,sans-serif;color:#2b2846;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:22px;padding:40px 36px;font-family:Helvetica,Arial,sans-serif;color:#16223a;">
         <tr><td>${brand()}${body}</td></tr>
       </table>
-      <p style="max-width:560px;margin:20px auto 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#8b87a6;text-align:center;line-height:1.6;">
+      <p style="max-width:560px;margin:20px auto 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#6b7d9c;text-align:center;line-height:1.6;">
         Recibiste este correo porque eres miembro de Máquina de Ventas Automáticas (MVA).<br>
         Para dejar de recibir avisos, responde a este correo con la palabra <strong>baja</strong>.<br>
         Máquina de Ventas Automáticas · Brain Experts · ${escape(APP_URL.replace(/^https?:\/\//, ''))}
@@ -163,12 +163,12 @@ function layout(body: string, preheader?: string) {
 export function announcementEmail(input: { title: string; excerpt: string; postId: string; image?: string; link?: string }) {
   const url = `${APP_URL}/comunidade/post/${input.postId}`;
   const body = `
-    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#6d5ce7;">📣 Nuevo anuncio</p>
-    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#17143a;line-height:1.25;">${escape(input.title)}</h1>
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1b3a6b;">📣 Nuevo anuncio</p>
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#0e1729;line-height:1.25;">${escape(input.title)}</h1>
     ${input.image ? `<img src="${escape(input.image)}" alt="" style="display:block;width:100%;height:auto;border-radius:14px;margin:0 0 16px;">` : ''}
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#4a4668;white-space:pre-line;">${escape(input.excerpt)}</p>
-    <a href="${url}" style="display:inline-block;background:#6d5ce7;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver el anuncio completo</a>
-    ${input.link ? `<p style="margin:16px 0 0;font-size:13.5px;color:#8b87a6;">Enlace del anuncio: <a href="${escape(input.link)}" style="color:#6d5ce7;">${escape(input.link)}</a></p>` : ''}`;
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#32425f;white-space:pre-line;">${escape(input.excerpt)}</p>
+    <a href="${url}" style="display:inline-block;background:#1b3a6b;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver el anuncio completo</a>
+    ${input.link ? `<p style="margin:16px 0 0;font-size:13.5px;color:#6b7d9c;">Enlace del anuncio: <a href="${escape(input.link)}" style="color:#1b3a6b;">${escape(input.link)}</a></p>` : ''}`;
   // preheader: o começo do conteúdo, sem emojis, sem repetir o título
   const preheader = plainExcerpt(input.excerpt) || 'Hay un anuncio nuevo en la plataforma.';
   return { subject: `Nuevo anuncio: ${plainExcerpt(input.title, 80)}`, html: layout(body, preheader) };
@@ -186,16 +186,60 @@ export function sendReplyEmail(input: {
   const url = `${APP_URL}/comunidade/post/${input.postId}`;
   const first = escape(input.authorName.split(' ')[0] || input.authorName);
   const body = `
-    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#6d5ce7;">💬 Nueva respuesta${input.spaceName ? ` en ${escape(input.spaceName)}` : ''}</p>
-    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#17143a;line-height:1.25;">${first}, ${escape(input.commenterName)} te respondió</h1>
-    <blockquote style="margin:0 0 24px;padding:14px 18px;border-left:3px solid #6d5ce7;background:#f6f4ff;border-radius:0 12px 12px 0;font-size:15px;line-height:1.6;color:#4a4668;white-space:pre-line;">${escape(input.excerpt)}</blockquote>
-    <a href="${url}" style="display:inline-block;background:#6d5ce7;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver la respuesta</a>
-    <p style="margin:16px 0 0;font-size:13.5px;color:#8b87a6;">Si el botón no funciona, copia este enlace: <a href="${url}" style="color:#6d5ce7;">${url}</a></p>`;
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1b3a6b;">💬 Nueva respuesta${input.spaceName ? ` en ${escape(input.spaceName)}` : ''}</p>
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#0e1729;line-height:1.25;">${first}, ${escape(input.commenterName)} te respondió</h1>
+    <blockquote style="margin:0 0 24px;padding:14px 18px;border-left:3px solid #1b3a6b;background:#e6edf7;border-radius:0 12px 12px 0;font-size:15px;line-height:1.6;color:#32425f;white-space:pre-line;">${escape(input.excerpt)}</blockquote>
+    <a href="${url}" style="display:inline-block;background:#1b3a6b;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Ver la respuesta</a>
+    <p style="margin:16px 0 0;font-size:13.5px;color:#6b7d9c;">Si el botón no funciona, copia este enlace: <a href="${url}" style="color:#1b3a6b;">${url}</a></p>`;
   return send(
     input.to,
     `${input.commenterName} respondió tu publicación`,
     layout(body, plainExcerpt(input.excerpt) || 'Entra a la comunidad para ver la respuesta.'),
   );
+}
+
+/**
+ * Aviso à equipe: um post ficou retido na moderação por falar de reembolso.
+ * Vai para todos os admins (sem as contas bot) e para a caixa de respostas.
+ */
+export async function sendModerationEmail(input: {
+  postId: string;
+  authorName: string;
+  title?: string;
+  excerpt: string;
+  term: string;
+}): Promise<{ sent: number; failed: string[] }> {
+  const { prisma } = await import('./db');
+  const admins = await prisma.user.findMany({
+    where: { isAdmin: true, NOT: [{ email: { endsWith: '@bot.liberdade.academy' } }, { email: { endsWith: '@demo.liberdade.academy' } }] },
+    select: { email: true },
+  });
+  const recipients = Array.from(
+    new Set([...admins.map((a) => a.email.toLowerCase()), ...(process.env.EMAIL_REPLY_TO ? [process.env.EMAIL_REPLY_TO.toLowerCase()] : [])]),
+  ).filter(isDeliverable);
+
+  const url = `${APP_URL}/admin?tab=moderacion`;
+  const body = `
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1b3a6b;">🛡️ Moderación</p>
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#0e1729;line-height:1.25;">Una publicación menciona “${escape(input.term)}”</h1>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#32425f;">
+      <strong>${escape(input.authorName)}</strong> escribió en la comunidad y la publicación quedó retenida hasta que el equipo la revise. Nadie más la ve todavía.
+    </p>
+    ${input.title ? `<p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#0e1729;">${escape(input.title)}</p>` : ''}
+    <blockquote style="margin:0 0 24px;padding:14px 18px;border-left:3px solid #1b3a6b;background:#e6edf7;border-radius:0 12px 12px 0;font-size:15px;line-height:1.6;color:#32425f;white-space:pre-line;">${escape(input.excerpt)}</blockquote>
+    <a href="${url}" style="display:inline-block;background:#1b3a6b;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Revisar en el panel</a>
+    <p style="margin:16px 0 0;font-size:13.5px;color:#6b7d9c;">Si el botón no funciona, copia este enlace: <a href="${url}" style="color:#1b3a6b;">${url}</a></p>`;
+  const subject = `Post para revisar: menciona ${plainExcerpt(input.term, 60)}`;
+  const html = layout(body, plainExcerpt(input.excerpt) || 'Hay una publicación esperando revisión.');
+
+  let sent = 0;
+  const failed: string[] = [];
+  for (const to of recipients) {
+    const result = await send(to, subject, html);
+    if (result.ok) sent += 1;
+    else failed.push(to);
+  }
+  return { sent, failed };
 }
 
 /** Boas-vindas com as credenciais. Em espanhol, como a plataforma. */
@@ -204,24 +248,24 @@ export function sendAccessEmail(input: { name: string; email: string; password: 
   const loginUrl = `${APP_URL}/login`;
 
   const body = `
-    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;color:#17143a;line-height:1.2;">¡Bienvenida, ${first}! 🎉</h1>
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#4a4668;">
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;color:#0e1729;line-height:1.2;">¡Bienvenida, ${first}! 🎉</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#32425f;">
       Tu acceso a <strong>Máquina de Ventas Automáticas</strong> ya está listo. Adentro vas a encontrar el catálogo de productos virales, las páginas de presell, la comunidad y las misiones para ganar puntos.
     </p>
 
-    <div style="background:#f6f4ff;border:1px solid #e4e0f7;border-radius:16px;padding:20px 22px;margin:0 0 24px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#6d5ce7;margin-bottom:12px;">Tus datos de acceso</div>
-      <table role="presentation" cellspacing="0" cellpadding="0" style="font-size:15px;line-height:1.8;color:#2b2846;">
-        <tr><td style="color:#8b87a6;padding-right:18px;">Correo</td><td><strong>${escape(input.email)}</strong></td></tr>
-        <tr><td style="color:#8b87a6;padding-right:18px;">Contraseña</td><td><code style="font-family:Menlo,Consolas,monospace;font-size:15px;background:#ffffff;border:1px solid #e4e0f7;border-radius:6px;padding:2px 8px;">${escape(input.password)}</code></td></tr>
+    <div style="background:#e6edf7;border:1px solid #cbd6ea;border-radius:16px;padding:20px 22px;margin:0 0 24px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1b3a6b;margin-bottom:12px;">Tus datos de acceso</div>
+      <table role="presentation" cellspacing="0" cellpadding="0" style="font-size:15px;line-height:1.8;color:#16223a;">
+        <tr><td style="color:#6b7d9c;padding-right:18px;">Correo</td><td><strong>${escape(input.email)}</strong></td></tr>
+        <tr><td style="color:#6b7d9c;padding-right:18px;">Contraseña</td><td><code style="font-family:Menlo,Consolas,monospace;font-size:15px;background:#ffffff;border:1px solid #cbd6ea;border-radius:6px;padding:2px 8px;">${escape(input.password)}</code></td></tr>
       </table>
     </div>
 
-    <a href="${loginUrl}" style="display:inline-block;background:#6d5ce7;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Entrar a la plataforma</a>
+    <a href="${loginUrl}" style="display:inline-block;background:#1b3a6b;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Entrar a la plataforma</a>
 
-    <p style="margin:24px 0 0;font-size:13.5px;line-height:1.6;color:#8b87a6;">
+    <p style="margin:24px 0 0;font-size:13.5px;line-height:1.6;color:#6b7d9c;">
       Guarda este correo. Puedes cambiar tu contraseña cuando quieras desde tu perfil.<br>
-      Si el botón no funciona, copia este enlace: <a href="${loginUrl}" style="color:#6d5ce7;">${loginUrl}</a>
+      Si el botón no funciona, copia este enlace: <a href="${loginUrl}" style="color:#1b3a6b;">${loginUrl}</a>
     </p>`;
 
   return send(

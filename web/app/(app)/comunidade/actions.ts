@@ -2,24 +2,27 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/db';
 import { togglePostLike } from '@/lib/mutations';
 import {
   addComment,
   createSpacePost,
   createTicket,
   deletePost,
-  notifyAnnouncement,
   replyTicket,
+  runPostPublishSideEffects,
   setPinned,
   setResolved,
   setTicketStatus,
   CommunityError,
 } from '@/lib/community-data';
 import { normalizeTag, SPACE_CATEGORY, TICKET_CATEGORIES } from '@/lib/community';
+import { needsReview } from '@/lib/moderation';
 import { getUserId, isAdmin } from '@/lib/session';
-import { scheduleReplyToComment, scheduleReplyToPost } from '@/lib/assistant-community';
+import { scheduleReplyToComment } from '@/lib/assistant-community';
 
-export type ComposerState = { error?: string; ok?: boolean };
+/** `review`: foi para a fila da equipe em vez de publicar; `message` explica isso ao membro. */
+export type ComposerState = { error?: string; ok?: boolean; review?: boolean; message?: string };
 export type FormState = { error?: string; ok?: boolean };
 
 /** Só aceita o que veio do nosso Blob: evita gravar link arbitrário. */
@@ -69,28 +72,48 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
   if (content.length < (image || attachments.length ? 0 : 3)) return { error: 'Escribe un poco más.' };
   if (content.length > 4000) return { error: 'Texto demasiado largo (máx. 4000).' };
 
+  // menção a reembolso: entra na fila da equipe em vez de ir ao feed (admins publicam direto)
+  const review = (await isAdmin(userId)) ? { flagged: false as const } : needsReview(`${title}\n${content}`);
+
   let created: Awaited<ReturnType<typeof createSpacePost>>;
   try {
-    created = await createSpacePost({ userId, spaceSlug, title, content, category, image: image || undefined, tags, attachments, link, pinned, scheduledAt, notifyEmail: notify });
+    created = await createSpacePost({
+      userId, spaceSlug, title, content, category, image: image || undefined, tags, attachments, link, pinned, scheduledAt, notifyEmail: notify,
+      review: review.flagged ? { term: review.term! } : undefined,
+    });
   } catch (e) {
     return { error: message(e, 'No pude publicar ahora.') };
   }
 
-  // dúvida na comunidade: a IA de suporte responde depois (se for dúvida)
-  scheduleReplyToPost(created.post.id);
-
-  // anúncio novo com aviso marcado: e-mail para todos antes de responder.
-  // É um lote só (até 100 por chamada), então não vale esconder a falha.
-  // agendado: o cron (ou a próxima visita) avisa na hora marcada
-  if (created.spaceKind === 'announcements' && notify && !scheduledAt) {
-    const result = await notifyAnnouncement(created.post.id);
-    revalidatePath('/comunidade', 'layout');
-    if (result.error) {
-      return { error: `Anuncio publicado, pero el correo falló (${result.error}).` };
+  if (created.pending) {
+    // o aviso à equipe não pode derrubar a criação: o post já está na fila
+    try {
+      const [{ sendModerationEmail }, author] = await Promise.all([
+        import('@/lib/email'),
+        prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
+      ]);
+      await sendModerationEmail({
+        postId: created.post.id,
+        authorName: author?.name ?? 'Un miembro',
+        title: title || undefined,
+        excerpt: content.slice(0, 600),
+        term: review.term!,
+      });
+    } catch (e) {
+      console.error('[moderacion] e-mail à equipe falhou', e);
     }
+    revalidatePath('/comunidade', 'layout');
+    return { ok: true, review: true, message: 'Tu publicación fue enviada a revisión del equipo. Te avisamos cuando esté publicada.' };
   }
 
+  // IA de suporte (se for dúvida) e, num anúncio com aviso marcado e não
+  // agendado, o e-mail para todos. É um lote só, então não vale esconder a
+  // falha; agendado: o cron (ou a próxima visita) avisa na hora marcada.
+  const { emailError } = await runPostPublishSideEffects(created.post.id);
   revalidatePath('/comunidade', 'layout');
+  if (emailError) {
+    return { error: `Anuncio publicado, pero el correo falló (${emailError}).` };
+  }
   return { ok: true };
 }
 

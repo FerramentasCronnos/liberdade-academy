@@ -109,7 +109,7 @@ export async function backfillVideoThumbnails(limit = 40, deadline = Date.now() 
 }
 
 /**
- * Mesmo processo para os vídeos dos criadores (Bank Offers). O Blob guarda por
+ * Mesmo processo para os vídeos dos criadores (Creators). O Blob guarda por
  * id do vídeo, então um vídeo que aparece nos dois lugares reaproveita a capa.
  */
 export async function backfillCreatorVideoThumbnails(limit = 40, deadline = Date.now() + 60_000) {

@@ -13,7 +13,7 @@ import {
 import { CatalogConfigError, type Region } from '@/lib/domain/catalog/types';
 
 /**
- * Bank Offers — ranking dos criadores que mais vendem no TikTok Shop, com o
+ * Creators — ranking dos criadores que mais vendem no TikTok Shop, com o
  * perfil de cada um (contatos, GPM, vídeos e produtos) vindo da Kalodata.
  *
  * Custo: cada chamada gasta 0,1 crédito. O ranking são 1–2 chamadas; o perfil

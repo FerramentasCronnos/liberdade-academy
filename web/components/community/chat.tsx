@@ -229,6 +229,12 @@ export function ChatSpace({
                         {m.author.isAdmin && <TeamBadge />}
                         <span className="text-[12px] font-normal text-[var(--text-faint)]">{time(m.createdAt)}</span>
                         {m.pinned && <span aria-hidden>📌</span>}
+                        {m.reviewStatus === 'pending' && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">En revisión</span>
+                        )}
+                        {m.reviewStatus === 'rejected' && (
+                          <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-400/15 dark:text-red-300" title={m.reviewNote}>No publicado</span>
+                        )}
                         <span className="ml-auto hidden items-center gap-1 group-hover:inline-flex">
                           {viewerIsAdmin && (
                             <button type="button" onClick={() => pinPost(m.id, !m.pinned)} className="rounded-full px-2 py-0.5 text-[11.5px] font-medium text-[var(--text-faint)] hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]">

@@ -55,6 +55,8 @@ export function PostComposer({
   const [uploading, setUploading] = useState(false);
   const [pending, setPending] = useState<File | null>(null); // imagem escolhida, aguardando recorte
   const [error, setError] = useState<string | null>(null);
+  // aviso informativo depois de enviar (ex.: post retido para revisão); sobrevive ao recolher
+  const [notice, setNotice] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState('');
   const [notify, setNotify] = useState(true);
@@ -110,7 +112,7 @@ export function PostComposer({
   };
 
   const formAction = async (formData: FormData) => {
-    let result: { ok?: boolean; error?: string };
+    let result: { ok?: boolean; error?: string; review?: boolean; message?: string };
     try {
       result = await createPost({}, formData);
     } catch {
@@ -124,6 +126,8 @@ export function PostComposer({
     }
     setPreview(null);
     setError(null);
+    // foi para a fila da equipe: aviso informativo, não erro
+    setNotice(result.review ? result.message ?? 'Tu publicación fue enviada a revisión del equipo.' : null);
     formRef.current?.reset();
     setImage(null);
     setTags([]);
@@ -166,20 +170,33 @@ export function PostComposer({
     <Avatar name={user.name} src={user.avatar} size={36} color={avatarColor(user.name)} fallback={initials(user.name)} />
   );
 
+  const noticeBanner = notice && (
+    <div role="status" className="flex items-start gap-3 rounded-2xl bg-amber-50 px-4 py-3 text-[13.5px] text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
+      <span aria-hidden>🛡️</span>
+      <p className="flex-1 leading-relaxed">{notice}</p>
+      <button type="button" onClick={() => setNotice(null)} aria-label="Cerrar aviso" className="grid h-6 w-6 shrink-0 place-items-center rounded-full hover:bg-amber-100 dark:hover:bg-amber-400/15">
+        <IconX className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+
   if (!open) {
     return (
-      <button
-        type="button"
-        id="composer"
-        onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 rounded-[22px] bg-[var(--bg-elevated)] px-5 py-4 text-left shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
-      >
-        {avatar}
-        <span className="flex-1 text-[15px] text-[var(--text-faint)]">
-          {isIntro ? 'Preséntate y conecta con la comunidad…' : 'Escribe una publicación…'}
-        </span>
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-sunken)] text-[20px] leading-none text-[var(--text-muted)]" aria-hidden>+</span>
-      </button>
+      <div className="flex flex-col gap-3">
+        {noticeBanner}
+        <button
+          type="button"
+          id="composer"
+          onClick={() => setOpen(true)}
+          className="flex w-full items-center gap-3 rounded-[22px] bg-[var(--bg-elevated)] px-5 py-4 text-left shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
+        >
+          {avatar}
+          <span className="flex-1 text-[15px] text-[var(--text-faint)]">
+            {isIntro ? 'Preséntate y conecta con la comunidad…' : 'Escribe una publicación…'}
+          </span>
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-sunken)] text-[20px] leading-none text-[var(--text-muted)]" aria-hidden>+</span>
+        </button>
+      </div>
     );
   }
 
@@ -344,6 +361,7 @@ export function PostComposer({
       </div>
 
       {error && <p role="alert" className="mt-2 text-[12.5px] font-medium text-red-600 dark:text-red-400">{error}</p>}
+      {noticeBanner && <div className="mt-3">{noticeBanner}</div>}
 
       {preview && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6">

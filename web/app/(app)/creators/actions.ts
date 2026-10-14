@@ -18,7 +18,7 @@ export async function toggleCreatorFavorite(creatorId: string): Promise<{ favori
     if (!creator) return { error: 'Creador no encontrado.' };
     await prisma.creatorFavorite.create({ data: { userId, creatorId } });
   }
-  revalidatePath('/bank-offers');
-  revalidatePath(`/bank-offers/${creatorId}`);
+  revalidatePath('/creators');
+  revalidatePath(`/creators/${creatorId}`);
   return { favorite: !existing };
 }

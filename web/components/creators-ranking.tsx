@@ -21,7 +21,7 @@ const SORTS: Array<{ id: SortId; label: string }> = [
 ];
 
 /* Cores da marca para o avatar de iniciais; o hash do handle escolhe uma fixa por criador. */
-const AVATAR_COLORS = ['#4b3fb0', '#d09a33', '#059669', '#47597a', '#3d3392', '#ab7a24'];
+const AVATAR_COLORS = ['#1b3a6b', '#d09a33', '#059669', '#47597a', '#2f5a9e', '#ab7a24'];
 
 function avatarColor(handle: string) {
   let h = 0;
@@ -533,7 +533,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
                       <div className="min-w-0">
                         {/* O link do nome se estende pela linha inteira (after:inset-0); o resto sobe com z-10. */}
                         <Link
-                          href={`/bank-offers/${c.id}`}
+                          href={`/creators/${c.id}`}
                           className="block truncate text-[14px] font-semibold text-[var(--text)] after:absolute after:inset-0 after:rounded-[20px] after:content-[''] hover:text-[var(--brand)]"
                         >
                           {c.nickname}
@@ -585,7 +585,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
                         <div className="flex items-center gap-2">
                           <RankNumber rank={rank} />
                           <Link
-                            href={`/bank-offers/${c.id}`}
+                            href={`/creators/${c.id}`}
                             className="truncate text-[15px] font-semibold text-[var(--text)] after:absolute after:inset-0 after:rounded-[20px] after:content-['']"
                           >
                             {c.nickname}

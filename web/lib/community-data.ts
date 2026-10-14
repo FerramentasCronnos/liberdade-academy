@@ -1,5 +1,6 @@
 import type { Post, PostLike, Space as SpaceRow, Ticket, TicketMessage as TicketMessageRow, User } from '@prisma/client';
 import { prisma } from './db';
+import { scheduleTicketReply } from './assistant-tickets';
 import { AUTO_MISSIONS, tryCompleteAutoMission } from './domain/missions';
 import type {
   CommunityComment,
@@ -18,12 +19,37 @@ import type {
 
 class CommunityError extends Error {}
 
+/* -------------------------------------------------------------- moderação */
+
+/**
+ * Publicado para todo mundo: sem moderação ou aprovado.
+ * `notIn` deixaria os NULL de fora no SQL, por isso o OR explícito.
+ */
+const publicReview = { OR: [{ reviewStatus: null }, { reviewStatus: 'approved' }] };
+
+/**
+ * O que cada pessoa pode ver além do público: o autor acompanha os próprios
+ * posts em revisão ou recusados; a equipe vê a fila de pendentes no feed.
+ */
+function reviewVisibleTo(viewerId: string, viewerIsAdmin: boolean) {
+  return {
+    OR: [
+      ...publicReview.OR,
+      ...(viewerId ? [{ authorId: viewerId }] : []),
+      ...(viewerIsAdmin ? [{ reviewStatus: 'pending' }] : []),
+    ],
+  };
+}
+
 /* ---------------------------------------------------------------- espaços */
+
+/** Contador do espaço só com o que está publicado: pendentes não contam. */
+const spaceInclude = { _count: { select: { posts: { where: publicReview } } } } as const;
 
 export async function listSpaces(): Promise<Space[]> {
   const rows = await prisma.space.findMany({
     orderBy: { order: 'asc' },
-    include: { _count: { select: { posts: true } } },
+    include: spaceInclude,
   });
   return rows.map(serializeSpace);
 }
@@ -31,7 +57,7 @@ export async function listSpaces(): Promise<Space[]> {
 export async function getSpace(slug: string) {
   const row = await prisma.space.findUnique({
     where: { slug },
-    include: { _count: { select: { posts: true } } },
+    include: spaceInclude,
   });
   return row ? serializeSpace(row) : null;
 }
@@ -137,6 +163,9 @@ function serializePost(post: PostRow, viewerId: string): CommunityPost {
     resolvedAt: post.resolvedAt?.toISOString(),
     link: post.link ?? undefined,
     scheduledAt: post.scheduledAt && post.scheduledAt > new Date() ? post.scheduledAt.toISOString() : undefined,
+    // só o que a tela usa: aprovado se comporta como um post normal
+    reviewStatus: post.reviewStatus === 'pending' || post.reviewStatus === 'rejected' ? post.reviewStatus : undefined,
+    reviewNote: post.reviewStatus === 'rejected' ? post.reviewNote ?? undefined : undefined,
     space: post.space
       ? { slug: post.space.slug, ...spaceLabel(post.space), kind: post.space.kind }
       : undefined,
@@ -152,7 +181,8 @@ export async function listFeed(viewerId: string, spaceSlug?: string, tag?: strin
     where: {
       ...(spaceSlug ? { space: { slug: spaceSlug } } : {}),
       ...(tag ? { tags: { has: tag } } : {}),
-      ...(viewerIsAdmin ? {} : published),
+      // dois OR no mesmo nível se sobrescreveriam: cada filtro vai no AND
+      AND: [reviewVisibleTo(viewerId, viewerIsAdmin), ...(viewerIsAdmin ? [] : [published])],
     },
     orderBy: spaceSlug ? [{ pinned: 'desc' }, { createdAt: 'desc' }] : { createdAt: 'desc' },
     take: 60,
@@ -166,9 +196,9 @@ export interface ChatMessage extends CommunityPost {
 }
 
 /** Espaço em modo chat: as últimas 100 mensagens, da mais antiga à mais nova. */
-export async function listChat(viewerId: string, spaceSlug: string): Promise<ChatMessage[]> {
+export async function listChat(viewerId: string, spaceSlug: string, viewerIsAdmin = false): Promise<ChatMessage[]> {
   const rows = await prisma.post.findMany({
-    where: { space: { slug: spaceSlug } },
+    where: { space: { slug: spaceSlug }, ...reviewVisibleTo(viewerId, viewerIsAdmin) },
     orderBy: { createdAt: 'desc' },
     take: 100,
     include: { ...postInclude, comments: { orderBy: { createdAt: 'asc' }, include: { author: true } } },
@@ -192,6 +222,8 @@ export async function getPost(id: string, viewerId: string, viewerIsAdmin = fals
   const post = await prisma.post.findUnique({ where: { id }, include: postInclude });
   if (!post) return null;
   if (!viewerIsAdmin && post.scheduledAt && post.scheduledAt > new Date()) return null;
+  // em revisão ou recusado: só autor e equipe abrem a página
+  if ((post.reviewStatus === 'pending' || post.reviewStatus === 'rejected') && !viewerIsAdmin && post.authorId !== viewerId) return null;
 
   const comments = await prisma.comment.findMany({
     where: { postId: id },
@@ -235,10 +267,12 @@ export async function createSpacePost(input: {
   pinned?: boolean;
   scheduledAt?: Date;
   notifyEmail?: boolean;
+  /** Termo que mandou o post para revisão: entra como pendente, sem pontos nem avisos. */
+  review?: { term: string };
 }) {
   const [space, user] = await Promise.all([
     prisma.space.findUnique({ where: { slug: input.spaceSlug } }),
-    prisma.user.findUnique({ where: { id: input.userId }, select: { isAdmin: true, introducedAt: true } }),
+    prisma.user.findUnique({ where: { id: input.userId }, select: { isAdmin: true } }),
   ]);
   if (!space || !user) throw new CommunityError('Espacio no encontrado.');
   if (space.kind === 'announcements' && !user.isAdmin) {
@@ -259,20 +293,145 @@ export async function createSpacePost(input: {
       notifyEmail: Boolean(input.notifyEmail),
       authorId: input.userId,
       spaceId: space.id,
+      // o termo fica em reviewNote até a equipe decidir: a fila mostra o motivo
+      ...(input.review ? { reviewStatus: 'pending', reviewNote: input.review.term } : {}),
     },
   });
 
+  if (!input.review) await awardPostCreation(input.userId, space.kind);
+  return { post, spaceKind: space.kind, pending: Boolean(input.review) };
+}
+
+/**
+ * Pontos, contador e missão por publicar. Separado da criação porque um post
+ * em revisão só ganha isso quando a equipe aprova.
+ */
+async function awardPostCreation(userId: string, spaceKind: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { introducedAt: true } });
+  if (!user) return;
   await prisma.user.update({
-    where: { id: input.userId },
+    where: { id: userId },
     data: {
       communityPosts: { increment: 1 },
       xp: { increment: 20 },
-      ...(space.kind === 'intro' && !user.introducedAt ? { introducedAt: new Date() } : {}),
+      ...(spaceKind === 'intro' && !user.introducedAt ? { introducedAt: new Date() } : {}),
+    },
+  });
+  await tryCompleteAutoMission(userId, AUTO_MISSIONS.postCommunity);
+}
+
+/**
+ * O que acontece depois que um post entra no ar: a IA de suporte avalia se
+ * é dúvida e, num anúncio com aviso marcado e não agendado, o e-mail sai para
+ * todos. Usado pela ação de publicar e pela aprovação na fila de moderação.
+ * Import dinâmico: assistant-community importa este módulo (addComment).
+ */
+export async function runPostPublishSideEffects(postId: string): Promise<{ emailError?: string }> {
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { notifyEmail: true, scheduledAt: true, notifiedAt: true, space: { select: { kind: true } } },
+  });
+  if (!post) return {};
+
+  const { scheduleReplyToPost } = await import('./assistant-community');
+  scheduleReplyToPost(postId);
+
+  const isDue = !post.scheduledAt || post.scheduledAt <= new Date();
+  if (post.space?.kind === 'announcements' && post.notifyEmail && isDue && !post.notifiedAt) {
+    const result = await notifyAnnouncement(postId);
+    return { emailError: result.error };
+  }
+  return {};
+}
+
+/* ---------------------------------------------------- fila de moderação */
+
+const pendingInclude = {
+  author: { select: { id: true, name: true, avatar: true, email: true } },
+  space: true,
+} as const;
+
+function serializePending(post: Post & { author: { id: string; name: string; avatar: string | null; email: string }; space: SpaceRow | null }) {
+  return {
+    id: post.id,
+    title: post.title ?? undefined,
+    content: post.content,
+    image: post.image ?? undefined,
+    attachments: post.attachments,
+    createdAt: post.createdAt.toISOString(),
+    status: (post.reviewStatus ?? 'pending') as 'pending' | 'approved' | 'rejected',
+    /** Pendente: termo que disparou a revisão. Recusado: nota da equipe (se houver). */
+    note: post.reviewNote ?? undefined,
+    reviewedAt: post.reviewedAt?.toISOString(),
+    author: { id: post.author.id, name: post.author.name, avatar: post.author.avatar ?? undefined, email: post.author.email },
+    space: post.space ? { slug: post.space.slug, ...spaceLabel(post.space), kind: post.space.kind } : undefined,
+  };
+}
+
+export type PendingPost = ReturnType<typeof serializePending>;
+
+/** Fila da equipe: pendentes (mais antigos primeiro) e os 20 últimos já revisados. */
+export async function listPendingPosts(): Promise<PendingPost[]> {
+  const [pending, reviewed] = await Promise.all([
+    prisma.post.findMany({ where: { reviewStatus: 'pending' }, orderBy: { createdAt: 'asc' }, include: pendingInclude }),
+    prisma.post.findMany({
+      where: { reviewStatus: { in: ['approved', 'rejected'] } },
+      orderBy: { reviewedAt: 'desc' },
+      take: 20,
+      include: pendingInclude,
+    }),
+  ]);
+  return [...pending, ...reviewed].map(serializePending);
+}
+
+/**
+ * Aprova: vira publicado agora (createdAt = agora, para aparecer como novo),
+ * recebe os pontos que ficaram retidos e dispara os efeitos de publicação.
+ */
+export async function approvePendingPost(postId: string) {
+  const post = await prisma.post.findUnique({ where: { id: postId }, include: { space: { select: { kind: true } } } });
+  if (!post) throw new CommunityError('Publicación no encontrada.');
+  if (post.reviewStatus !== 'pending') throw new CommunityError('Esta publicación ya fue revisada.');
+
+  const now = new Date();
+  await prisma.post.update({
+    where: { id: postId },
+    data: { reviewStatus: 'approved', reviewedAt: now, createdAt: now },
+  });
+  await awardPostCreation(post.authorId, post.space?.kind ?? 'posts');
+
+  await prisma.notification.create({
+    data: {
+      userId: post.authorId,
+      title: 'Tu publicación ya está en la comunidad',
+      body: (post.title || post.content).slice(0, 80),
+      route: `/comunidade/post/${post.id}`,
     },
   });
 
-  await tryCompleteAutoMission(input.userId, AUTO_MISSIONS.postCommunity);
-  return { post, spaceKind: space.kind };
+  return runPostPublishSideEffects(postId);
+}
+
+/** Recusa: o post fica visível só para o autor, com a nota da equipe. */
+export async function rejectPendingPost(postId: string, note?: string) {
+  const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true, title: true, content: true, reviewStatus: true } });
+  if (!post) throw new CommunityError('Publicación no encontrada.');
+  if (post.reviewStatus !== 'pending') throw new CommunityError('Esta publicación ya fue revisada.');
+
+  const trimmed = note?.trim().slice(0, 500) || null;
+  await prisma.post.update({
+    where: { id: postId },
+    data: { reviewStatus: 'rejected', reviewedAt: new Date(), reviewNote: trimmed },
+  });
+
+  await prisma.notification.create({
+    data: {
+      userId: post.authorId,
+      title: 'Tu publicación no fue publicada',
+      body: trimmed ?? 'El equipo revisó tu publicación y decidió no publicarla.',
+      route: `/comunidade/post/${postId}`,
+    },
+  });
 }
 
 /**
@@ -313,6 +472,8 @@ export async function publishDueAnnouncements() {
       notifyEmail: true,
       notifiedAt: null,
       space: { kind: 'announcements' },
+      // em revisão não avisa ninguém; a aprovação dispara o e-mail
+      AND: [publicReview],
     },
     select: { id: true },
     take: 10,
@@ -596,6 +757,7 @@ export async function createTicket(userId: string, subject: string, content: str
     });
   }
 
+  scheduleTicketReply(ticket.id); // IA responde depois da resposta HTTP; cala se a equipe assumir
   return ticket;
 }
 
@@ -633,6 +795,7 @@ export async function replyTicket(ticketId: string, userId: string, content: str
       },
     });
   }
+  if (!fromSupport) scheduleTicketReply(ticketId); // só mensagens do membro pedem resposta
 }
 
 export async function setTicketStatus(ticketId: string, status: string) {
@@ -679,10 +842,11 @@ export async function getCommunitySidebar(): Promise<CommunitySidebarData> {
       take: 8,
       select: { id: true, name: true, avatar: true },
     }),
-    prisma.post.groupBy({ by: ['authorId'], where: { createdAt: { gte: since } }, _count: { _all: true } }),
-    prisma.comment.groupBy({ by: ['authorId'], where: { createdAt: { gte: since } }, _count: { _all: true } }),
+    // só o que está publicado pontua: pendente ou recusado não entra no ranking
+    prisma.post.groupBy({ by: ['authorId'], where: { createdAt: { gte: since }, ...publicReview }, _count: { _all: true } }),
+    prisma.comment.groupBy({ by: ['authorId'], where: { createdAt: { gte: since }, post: publicReview }, _count: { _all: true } }),
     prisma.postLike.findMany({
-      where: { createdAt: { gte: since } },
+      where: { createdAt: { gte: since }, post: publicReview },
       select: { post: { select: { authorId: true } } },
     }),
   ]);

@@ -133,6 +133,19 @@ export function PostCard({
         </Link>
       )}
       <div className="p-6">
+      {post.reviewStatus === 'pending' && (
+        // só autor e equipe recebem posts pendentes do servidor
+        <p className="mb-3 flex flex-wrap items-center gap-2 text-[12.5px] text-[var(--text-muted)]">
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">En revisión</span>
+          {viewerIsAdmin ? 'Pendiente de aprobación del equipo.' : 'El equipo la está revisando. Solo tú la ves por ahora.'}
+        </p>
+      )}
+      {post.reviewStatus === 'rejected' && (
+        <div className="mb-3 rounded-xl bg-[var(--bg-sunken)] px-3 py-2 text-[12.5px] text-[var(--text-muted)]">
+          <span className="mr-2 rounded-full bg-red-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-400/15 dark:text-red-300">No publicado</span>
+          {post.reviewNote ? <span>Nota del equipo: {post.reviewNote}</span> : <span>El equipo decidió no publicarla. Solo tú la ves.</span>}
+        </div>
+      )}
       {isAnnouncement && (
         <p className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
           📣 Anuncio

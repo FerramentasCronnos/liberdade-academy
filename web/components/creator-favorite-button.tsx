@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, type MouseEvent } from 'react';
-import { toggleCreatorFavorite } from '@/app/(app)/bank-offers/actions';
+import { toggleCreatorFavorite } from '@/app/(app)/creators/actions';
 import { IconStar } from './icons';
 
 /**

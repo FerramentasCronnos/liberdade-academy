@@ -7,7 +7,7 @@
  */
 
 const GRADIENTS: Record<string, [string, string]> = {
-  outras: ['#6f5fe0', '#4b3fb0'],
+  outras: ['#2f5a9e', '#1b3a6b'],
   vendas: ['#e3b352', '#c07f1f'],
   marketplaces: ['#3aa8a0', '#1f7d78'],
   curso: ['#5b8def', '#3b5fd0'],

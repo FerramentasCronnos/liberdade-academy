@@ -8,7 +8,7 @@
  */
 
 const TIERS: Array<[number, [string, string]]> = [
-  [5000, ['#7b6ce8', '#4b3fb0']],
+  [5000, ['#5d8ee8', '#1b3a6b']],
   [10000, ['#3aa8a0', '#1f7d78']],
   [30000, ['#e3b352', '#c07f1f']],
   [Infinity, ['#e2749b', '#8e2f56']],

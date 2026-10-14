@@ -4,7 +4,7 @@ import { CatalogConfigError } from '@/lib/domain/catalog/types';
 import { syncCreators, type SyncCreatorsOptions } from '@/lib/domain/creators/sync';
 
 /**
- * Ranking dos top criadores (Bank Offers). Chamado pelo Vercel Cron a cada 2
+ * Ranking dos top criadores (Creators). Chamado pelo Vercel Cron a cada 2
  * dias (ver vercel.json); o header Authorization com CRON_SECRET impede que
  * alguém de fora dispare gasto de créditos na Kalodata.
  *

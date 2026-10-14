@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { getUserId } from '@/lib/session';
+import { getCurrentUser, getUserId } from '@/lib/session';
+import { hasCreatorsAccess } from '@/lib/creators-access';
 import { getCreator } from '@/lib/queries';
 import { PageHeader } from '@/components/page-header';
 import { CreatorProfile } from '@/components/creator-profile';
@@ -13,25 +14,27 @@ export async function generateMetadata({ params }: { params: Params }) {
   const userId = await getUserId();
   const { id } = await params;
   const creator = userId ? await getCreator(id, userId).catch(() => null) : null;
-  return { title: creator ? `${creator.nickname || `@${creator.handle}`} · Bank Offers · MVA` : 'Creador · MVA' };
+  return { title: creator ? `${creator.nickname || `@${creator.handle}`} · Creators · MVA` : 'Creador · MVA' };
 }
 
-/** Perfil de um criador do ranking Bank Offers (dados da Kalodata). */
+/** Perfil de um criador do ranking Creators (dados da Kalodata). */
 export default async function CreatorPage({ params }: { params: Params }) {
-  const userId = await getUserId();
-  if (!userId) redirect('/login');
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+  // sem a assinatura, o ranking é quem mostra o paywall
+  if (!hasCreatorsAccess(user)) redirect('/creators');
 
   const { id } = await params;
-  const creator = await getCreator(id, userId).catch(() => null);
+  const creator = await getCreator(id, user.id).catch(() => null);
   if (!creator) notFound();
 
   return (
     <>
-      <PageHeader title="Creador" subtitle="Bank Offers · TikTok Shop" />
+      <PageHeader title="Creador" subtitle="Creators · TikTok Shop" />
 
       <div className="px-5 pb-12 sm:px-8">
         <Link
-          href="/bank-offers"
+          href="/creators"
           className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[var(--text-muted)] transition hover:text-[var(--text)]"
         >
           <IconArrowLeft className="h-4 w-4" />

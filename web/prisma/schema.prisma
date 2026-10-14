@@ -63,6 +63,11 @@ model User {
   adCreatives         AdCreative[]
   /// Última requisição autenticada (no máximo a cada 5 min): base do "online agora".
   lastSeenAt          DateTime?
+  /// Assinatura "Creators" (Stripe, US$ 20/mês): libera a aba Bank Offers.
+  creatorsAccess      Boolean             @default(false)
+  /// Fim do período pago (null = sem data, ex.: liberado manualmente).
+  creatorsAccessUntil DateTime?
+  stripeCustomerId    String?
   creatorFavorites    CreatorFavorite[]
 
   @@index([lastSeenAt])
@@ -471,39 +476,44 @@ model CreatorFavorite {
 }
 
 model Post {
-  id          String     @id @default(cuid())
-  title       String?
-  content     String
-  category    String
-  image       String?
-  pinned      Boolean    @default(false)
+  id           String     @id @default(cuid())
+  title        String?
+  content      String
+  category     String
+  image        String?
+  pinned       Boolean    @default(false)
   /// Etiquetas livres para dar contexto (tiktok, meta ads, primera venta…).
-  tags        String[]   @default([])
+  tags         String[]   @default([])
   /// Fotos, áudios e arquivos (espaços em modo chat).
-  attachments String[]   @default([])
+  attachments  String[]   @default([])
   /// Em espaços de chat: atendimento finalizado (pela equipe ou pelo autor).
-  resolvedAt  DateTime?
+  resolvedAt   DateTime?
   /// Anúncios: botão de ação opcional.
-  link        String?
+  link         String?
   /// Anúncios agendados: só aparecem (e avisam) a partir desta hora.
-  scheduledAt DateTime?
+  scheduledAt  DateTime?
   /// Enviar e-mail aos membros ao publicar.
-  notifyEmail Boolean    @default(false)
+  notifyEmail  Boolean    @default(false)
   /// Quando o e-mail foi enviado (evita reenvio pelo cron).
-  notifiedAt  DateTime?
+  notifiedAt   DateTime?
   /// Reenvio do e-mail agendado para uma hora, sem esconder o post.
-  notifyAt    DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  authorId    String
-  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  spaceId     String?
-  space       Space?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
-  likes       PostLike[]
-  comments    Comment[]
+  notifyAt     DateTime?
+  /// Moderação: null = publicado normalmente; pending = aguardando admin; approved | rejected.
+  reviewStatus String?
+  reviewNote   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  authorId     String
+  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  spaceId      String?
+  space        Space?     @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  likes        PostLike[]
+  comments     Comment[]
 
   @@index([spaceId, pinned, createdAt])
   @@index([scheduledAt, notifiedAt])
+  @@index([reviewStatus, createdAt])
 }
 
 /// Espaço da comunidade (como no Circle): cada um tem seu feed.

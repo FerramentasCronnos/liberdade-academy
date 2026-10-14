@@ -19,6 +19,7 @@ import {
   IconMegaphone,
   IconPanelLeft,
   IconSettings,
+  IconStore,
   IconTikTok,
   IconUser,
   IconTrophy,
@@ -34,7 +35,8 @@ type Item = {
 
 const MAIN: Item[] = [
   { href: '/catalogo', label: 'Catálogo', icon: IconGrid },
-  { href: '/bank-offers', label: 'Bank Offers', icon: IconUser },
+  { href: '/creators', label: 'Creators', icon: IconUser },
+  { href: '/bank-offers', label: 'Bank Offers', icon: IconStore, soon: true },
   { href: '/anuncios', label: 'Baúl de Anuncios', icon: IconTikTok },
   { href: '/comunidade', label: 'Comunidad', icon: IconMessage },
   { href: '/ranking', label: 'Ranking', icon: IconTrophy },
@@ -135,7 +137,7 @@ export function Sidebar({ user, assistant = false }: { user: SessionUser | null;
       <div
         className={`flex items-center pb-8 ${collapsed ? 'justify-center' : 'justify-between px-2'}`}
       >
-        {!collapsed && <Logo onDark />}
+        {collapsed ? <Logo compact onDark /> : <Logo onDark />}
         <button
           type="button"
           onClick={toggle}

@@ -273,7 +273,7 @@ export function BioEditor({ page }: { page: LandingPage }) {
             onClick={() =>
               setConfig((prev) => ({
                 ...prev,
-                links: [...prev.links, { label: '', url: '', bg: '#4b3fb0', fg: '#ffffff' }],
+                links: [...prev.links, { label: '', url: '', bg: '#1b3a6b', fg: '#ffffff' }],
               }))
             }
             className="mt-3 w-full rounded-xl border border-dashed border-[var(--border-strong)] py-2.5 text-[13px] font-semibold text-[var(--text-muted)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"

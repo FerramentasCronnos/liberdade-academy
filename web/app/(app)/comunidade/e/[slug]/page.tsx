@@ -28,7 +28,7 @@ export default async function SpacePage({ params, searchParams }: { params: Para
   const viewer = { name: user.name, avatar: user.avatar, isAdmin: user.isAdmin };
 
   if (space.kind === 'chat') {
-    const messages = await listChat(user.id, slug);
+    const messages = await listChat(user.id, slug, user.isAdmin);
     return <ChatSpace space={space} messages={messages} members={members} viewerId={user.id} viewerIsAdmin={user.isAdmin} />;
   }
 

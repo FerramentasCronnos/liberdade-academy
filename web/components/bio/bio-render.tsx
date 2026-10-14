@@ -31,7 +31,7 @@ export function BioRender({ data, scale = 1 }: { data: BioData; scale?: number }
         <div
           className="h-[110px] w-full"
           style={{
-            background: 'linear-gradient(120deg, #4b3fb0 0%, #c04a77 55%, #e3b352 100%)',
+            background: 'linear-gradient(120deg, #1b3a6b 0%, #2f5a9e 55%, #e3b352 100%)',
           }}
         />
       )}

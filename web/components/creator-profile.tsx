@@ -17,7 +17,7 @@ import {
 } from '@/components/icons';
 
 /**
- * Perfil do criador (Bank Offers), modelado na página de criador da Kalodata:
+ * Perfil do criador (Creators), modelado na página de criador da Kalodata:
  * cabeçalho com contato, grade de métricas dos últimos 30 dias, tendências e
  * abas de vídeos/produtos/lojas/lives. Tudo vem do banco (sync a cada 2 dias);
  * só as abas são client-side, pelo componente Tabs já existente.

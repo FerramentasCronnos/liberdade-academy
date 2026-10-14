@@ -29,7 +29,7 @@ export function isBotEmail(email: string) {
 }
 
 /** Conta da equipe que assina as respostas. Admin para ter o selo e falar no chat. */
-async function botUser(assistant: AssistantId) {
+export async function botUser(assistant: AssistantId) {
   const email = `${assistant}@${BOT_DOMAIN}`;
   const name = `${ASSISTANTS[assistant].agent} · Equipo MVA`;
   return prisma.user.upsert({
@@ -46,7 +46,7 @@ async function botUser(assistant: AssistantId) {
   });
 }
 
-async function chat(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>, maxTokens: number) {
+export async function chat(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>, maxTokens: number) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new Error('OPENROUTER_API_KEY não configurada.');
   const model = process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-5.5';

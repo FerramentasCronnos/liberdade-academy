@@ -88,7 +88,7 @@ export type ReferenceVideoView = ProductVideoView & {
 };
 
 /**
- * Todos os vídeos de referência do catálogo (aba Bank Offers), do que mais
+ * Todos os vídeos de referência do catálogo (aba Creators), do que mais
  * vendeu pro que menos, com o produto a que pertencem.
  */
 export async function listReferenceVideos(limit = 300): Promise<ReferenceVideoView[]> {
@@ -163,6 +163,8 @@ export async function getMemberProfile(id: string, currentUserId: string) {
     where: { id },
     include: {
       posts: {
+        // em revisão ou recusado: só a própria pessoa vê no perfil
+        where: currentUserId === id ? {} : { OR: [{ reviewStatus: null }, { reviewStatus: 'approved' }] },
         orderBy: { createdAt: 'desc' },
         take: 20,
         include: { author: true, likes: true, comments: true },

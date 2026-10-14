@@ -10,7 +10,10 @@ import { useState } from 'react';
  */
 export function Tabs({
   tabs,
+  initial,
 }: {
+  /** Aba aberta de início (ex.: vinda de ?tab= num link de e-mail). */
+  initial?: string;
   tabs: Array<{
     id: string;
     label: string;
@@ -18,7 +21,7 @@ export function Tabs({
     content: React.ReactNode;
   }>;
 }) {
-  const [active, setActive] = useState(tabs[0]?.id);
+  const [active, setActive] = useState(tabs.find((t) => t.id === initial)?.id ?? tabs[0]?.id);
 
   return (
     <>

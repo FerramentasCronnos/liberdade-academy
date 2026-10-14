@@ -45,13 +45,17 @@ export interface CommunityPost {
   link?: string;
   /** Anúncio agendado ainda não publicado (só admin vê). */
   scheduledAt?: string;
+  /** Moderação: 'pending' aguarda a equipe; 'rejected' não foi publicado. Ausente = normal. */
+  reviewStatus?: 'pending' | 'approved' | 'rejected' | string;
+  /** Motivo da recusa, quando a equipe escreveu um. */
+  reviewNote?: string;
   space?: { slug: string; name: string; emoji: string; kind: string };
 }
 
 /** Cor de cada espaço na barra lateral e na capa. Por slug, sem coluna no banco. */
 export const SPACE_COLOR: Record<string, { dot: string; cover: string; ink: string }> = {
   presentaciones:    { dot: '#7cc7a1', cover: 'linear-gradient(135deg,#c9e9d6 0%,#a9dcc0 100%)', ink: '#1f3d2e' },
-  anuncios:          { dot: '#8b7cf0', cover: 'linear-gradient(135deg,#ded8fb 0%,#c3b8f7 100%)', ink: '#2c2260' },
+  anuncios:          { dot: '#1b3a6b', cover: 'linear-gradient(135deg,#dde5f2 0%,#b9c7df 100%)', ink: '#0c1d3a' },
   'soporte-general': { dot: '#f0a35c', cover: 'linear-gradient(135deg,#fde7cf 0%,#f8cfa3 100%)', ink: '#5a3410' },
   trafico:           { dot: '#5ea8f0', cover: 'linear-gradient(135deg,#d6e8fb 0%,#b4d3f5 100%)', ink: '#163b63' },
   resultados:        { dot: '#3fc48a', cover: 'linear-gradient(135deg,#d3f3e3 0%,#a8e8c8 100%)', ink: '#134a31' },
@@ -177,7 +181,7 @@ export function relativeTime(iso: string) {
 
 /** Cor estável do avatar a partir do nome — mesma pessoa, mesma cor. */
 export function avatarColor(name: string) {
-  const palette = ['#4b3fb0', '#0e7490', '#b45309', '#be185d', '#15803d', '#6d28d9'];
+  const palette = ['#1b3a6b', '#0e7490', '#b45309', '#be185d', '#15803d', '#2f5a9e'];
   let hash = 0;
   for (let i = 0; i < name.length; i += 1) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return palette[Math.abs(hash) % palette.length];

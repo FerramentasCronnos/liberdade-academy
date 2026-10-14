@@ -1,25 +1,22 @@
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/page-header';
-import { CreatorsRanking } from '@/components/creators-ranking';
 import { getUserId } from '@/lib/session';
-import { listCreators, type CreatorListItem } from '@/lib/queries';
+import { ComingSoon } from '@/components/coming-soon';
 
 export const metadata = { title: 'Bank Offers · MVA' };
 
-/**
- * Bank Offers: ranking dos 50 criadores que mais vendem no TikTok Shop US,
- * atualizado a cada 2 dias pela Kalodata. Cada linha abre o perfil do criador.
- */
-export default async function BankOffersPage() {
-  const userId = await getUserId();
-  if (!userId) redirect('/login');
-
-  const creators = await listCreators(userId).catch(() => [] as CreatorListItem[]);
+/** Bank Offers: produtos e fornecedores próprios da MVA. Em preparação (2026-10-14). */
+export default async function Page() {
+  if (!(await getUserId())) redirect('/login');
 
   return (
-    <>
-      <PageHeader title="Bank Offers" subtitle="Los 50 creadores que más venden en TikTok Shop US" />
-      <CreatorsRanking creators={creators} />
-    </>
+    <ComingSoon
+      title="Bank Offers"
+      subtitle="Nuestros productos y proveedores, con condiciones exclusivas para la comunidad"
+      needs={[
+        'Catálogo de productos propios de MVA',
+        'Proveedores verificados y sus condiciones',
+        'Enlaces y materiales para promocionar',
+      ]}
+    />
   );
 }

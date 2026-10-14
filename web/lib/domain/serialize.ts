@@ -18,6 +18,9 @@ export function serializeUser(user: UserWithStats) {
     tier: tierFor(user.points),
     plan: planInfo(user.plan, user.planExpiresAt),
     isAdmin: user.isAdmin,
+    /** Assinatura à parte da aba Creators (Stripe). A regra fica em lib/creators-access. */
+    creatorsAccess: user.creatorsAccess,
+    creatorsAccessUntil: user.creatorsAccessUntil?.toISOString() ?? undefined,
     level: user.level,
     xp: user.xp,
     rank: user.rank,

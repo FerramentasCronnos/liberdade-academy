@@ -21,7 +21,23 @@ export async function GET(request: Request) {
     take: 60,
     select: { id: true, name: true, category: true, active: true, commission: true, _count: { select: { videos: true } } },
   });
+  // quando cada fonte rodou pela última vez: confere se os crons estão vivos
+  const [lastProduct, lastCreatorRank, lastCreatorProfile, creatorsTotal, trendSample] = await Promise.all([
+    prisma.product.aggregate({ where: { provider }, _max: { syncedAt: true } }),
+    prisma.creator.aggregate({ _max: { rankSyncedAt: true } }),
+    prisma.creator.aggregate({ _max: { profileSyncedAt: true } }),
+    prisma.creator.count({ where: { active: true } }),
+    prisma.creator.findFirst({ where: { active: true }, orderBy: { rank: 'asc' }, select: { handle: true, trend: true } }),
+  ]);
+  const syncs = {
+    lastProductSync: lastProduct._max.syncedAt,
+    lastCreatorRank: lastCreatorRank._max.rankSyncedAt,
+    lastCreatorProfile: lastCreatorProfile._max.profileSyncedAt,
+    creatorsActive: creatorsTotal,
+    trendPointsTop1: Array.isArray(trendSample?.trend) ? (trendSample!.trend as unknown[]).length : 0,
+  };
   return NextResponse.json({
+    syncs,
     rows: rows.map((r) => ({ marketplace: r.marketplace, region: r.region, active: r.active, count: r._count._all })),
     visibleTotal: withImage,
     provider,

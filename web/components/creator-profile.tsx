@@ -5,6 +5,8 @@ import type { CreatorDetail, CreatorProductView, CreatorVideoView } from '@/lib/
 import { Tabs } from '@/components/tabs';
 import { Sparkline } from '@/components/sparkline';
 import { CreatorFavoriteButton } from '@/components/creator-favorite-button';
+import { LockedOverlay, openPaywall } from './creators-paywall-modal';
+import { FREE_PRODUCTS, FREE_VIDEOS } from '@/lib/creators-access';
 import { VideoPlayer } from '@/components/video-player';
 import {
   IconExternal,
@@ -22,7 +24,7 @@ import {
  * abas de vídeos/produtos/lojas/lives. Tudo vem do banco (sync a cada 2 dias);
  * só as abas são client-side, pelo componente Tabs já existente.
  */
-export function CreatorProfile({ creator }: { creator: CreatorDetail }) {
+export function CreatorProfile({ creator, locked = false }: { creator: CreatorDetail; locked?: boolean }) {
   const currency = creator.currency || 'USD';
   const ads = creator.videos.filter((v) => v.isAd).length;
 
@@ -37,13 +39,13 @@ export function CreatorProfile({ creator }: { creator: CreatorDetail }) {
             id: 'videos',
             label: 'Videos y Ads',
             count: creator.videos.length,
-            content: <VideosTab videos={creator.videos} handle={creator.handle} currency={currency} ads={ads} />,
+            content: <VideosTab videos={creator.videos} handle={creator.handle} currency={currency} ads={ads} locked={locked} />,
           },
           {
             id: 'products',
             label: 'Productos',
             count: creator.products.length,
-            content: <ProductsTab products={creator.products} currency={currency} />,
+            content: <ProductsTab products={creator.products} currency={currency} locked={locked} />,
           },
           { id: 'shops', label: 'Tiendas', content: <ShopsTab creator={creator} /> },
           { id: 'lives', label: 'Lives', content: <LivesTab creator={creator} currency={currency} /> },
@@ -266,11 +268,14 @@ function VideosTab({
   handle,
   currency,
   ads,
+  locked = false,
 }: {
   videos: CreatorVideoView[];
   handle: string;
   currency: string;
   ads: number;
+  /** Sem assinatura: só os FREE_VIDEOS primeiros abrem; os outros ficam com cadeado. */
+  locked?: boolean;
 }) {
   return (
     <section className="mt-4 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
@@ -290,8 +295,16 @@ function VideosTab({
         <Empty>Los videos llegan con la próxima actualización del perfil.</Empty>
       ) : (
         <ol className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {videos.map((video) => (
-            <li key={video.id} className="flex flex-col gap-3 rounded-[18px] border border-[var(--border)] bg-[var(--bg)] p-4">
+          {videos.map((video, index) => {
+            const isLocked = locked && index >= FREE_VIDEOS;
+            return (
+            <li
+              key={video.id}
+              className={`relative flex flex-col gap-3 overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--bg)] p-4 ${isLocked ? 'select-none' : ''}`}
+              aria-hidden={isLocked || undefined}
+            >
+              {isLocked && <LockedOverlay label="Suscríbete para ver este video" />}
+              <div className={isLocked ? 'pointer-events-none blur-[5px]' : 'contents'}>
               <VideoPlayer
                 videoId={video.videoId}
                 title={video.title || `Video de @${handle}`}
@@ -329,8 +342,10 @@ function VideosTab({
                 Ver en TikTok
                 <IconExternal className="h-3.5 w-3.5" />
               </a>
+              </div>
             </li>
-          ))}
+            );
+          })}
         </ol>
       )}
     </section>
@@ -351,7 +366,10 @@ function MiniStat({ label, value, icon }: { label: string; value: string; icon?:
 
 /* -------------------------------------------------------- aba: produtos */
 
-function ProductsTab({ products, currency }: { products: CreatorProductView[]; currency: string }) {
+function ProductsTab({ products: all, currency, locked = false }: { products: CreatorProductView[]; currency: string; locked?: boolean }) {
+  // sem assinatura mostra só os primeiros; o resto vira um bloco com cadeado
+  const products = locked ? all.slice(0, FREE_PRODUCTS) : all;
+  const hidden = all.length - products.length;
   return (
     <section className="mt-4 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">Productos</h3>
@@ -416,6 +434,24 @@ function ProductsTab({ products, currency }: { products: CreatorProductView[]; c
             ))}
           </ul>
         </>
+      )}
+      {locked && hidden > 0 && (
+        <button
+          type="button"
+          onClick={openPaywall}
+          className="relative mt-4 flex w-full items-center justify-between gap-3 overflow-hidden rounded-[18px] border border-dashed border-[var(--brand)]/40 bg-[var(--brand-soft)] px-4 py-4 text-left"
+        >
+          <span>
+            <span className="block text-[14px] font-semibold text-[var(--text)]">+{hidden} productos más de este creador</span>
+            <span className="block text-[12.5px] text-[var(--text-muted)]">Con ingresos, crecimiento y comisión. Suscríbete para verlos.</span>
+          </span>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--brand)] text-white">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="4" y="11" width="16" height="10" rx="2.5" />
+              <path d="M8 11V7.5a4 4 0 1 1 8 0V11" />
+            </svg>
+          </span>
+        </button>
       )}
     </section>
   );

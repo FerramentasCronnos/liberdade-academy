@@ -120,3 +120,33 @@ export async function listCreatorsAccessMembers(): Promise<CreatorsAccessMember[
     stripeCustomerId: u.stripeCustomerId ?? undefined,
   }));
 }
+
+/* ------------------------------------------------------- amostra grátis */
+
+/** Quantos criadores por dia quem não assinou vê por inteiro; os demais ficam com cadeado. */
+export const FREE_CREATORS_PER_DAY = 3;
+/** Dentro de um criador grátis: vídeos e produtos visíveis sem assinatura. */
+export const FREE_VIDEOS = 3;
+export const FREE_PRODUCTS = 3;
+
+export const CREATORS_BENEFITS = [
+  'Ranking de los 50 creadores que más venden en TikTok Shop US, actualizado cada 2 días',
+  'Perfil completo: ingresos, crecimiento, seguidores, vistas, engagement y precio promedio',
+  '20 videos y anuncios por creador, con las ventas de cada video',
+  'Los 20 productos que vende cada creador, con la comisión',
+  'Favoritos para armar tu lista de creadores a contactar',
+  'Datos de contacto cuando están disponibles',
+];
+
+/**
+ * Ids dos criadores liberados hoje para quem não assinou: 3 por dia, girando
+ * pela lista (ordenada por ranking) conforme o dia — todo dia uma amostra
+ * diferente, igual para todo mundo, sem guardar nada no banco.
+ */
+export function freeCreatorIds(idsByRank: string[], date = new Date()): string[] {
+  const n = idsByRank.length;
+  if (!n) return [];
+  const day = Math.floor(date.getTime() / 86_400_000);
+  const start = (day * FREE_CREATORS_PER_DAY) % n;
+  return Array.from({ length: Math.min(FREE_CREATORS_PER_DAY, n) }, (_, i) => idsByRank[(start + i) % n]);
+}

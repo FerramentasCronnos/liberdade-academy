@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser, getUserId } from '@/lib/session';
-import { hasCreatorsAccess } from '@/lib/creators-access';
+import { freeCreatorIds, hasCreatorsAccess } from '@/lib/creators-access';
+import { prisma } from '@/lib/db';
+import { PaywallModalHost } from '@/components/creators-paywall-modal';
 import { getCreator } from '@/lib/queries';
 import { PageHeader } from '@/components/page-header';
 import { CreatorProfile } from '@/components/creator-profile';
@@ -21,10 +23,13 @@ export async function generateMetadata({ params }: { params: Params }) {
 export default async function CreatorPage({ params }: { params: Params }) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  // sem a assinatura, o ranking é quem mostra o paywall
-  if (!hasCreatorsAccess(user)) redirect('/creators');
-
   const { id } = await params;
+  const locked = !hasCreatorsAccess(user);
+  if (locked) {
+    // sem assinatura só os criadores grátis do dia abrem; os outros voltam ao ranking com o pop-up
+    const ids = await prisma.creator.findMany({ where: { active: true }, orderBy: [{ rank: 'asc' }, { revenue: 'desc' }], select: { id: true } });
+    if (!freeCreatorIds(ids.map((c) => c.id)).includes(id)) redirect('/creators?paywall=1');
+  }
   const creator = await getCreator(id, user.id).catch(() => null);
   if (!creator) notFound();
 
@@ -41,7 +46,8 @@ export default async function CreatorPage({ params }: { params: Params }) {
           Volver al ranking
         </Link>
 
-        <CreatorProfile creator={creator} />
+        <CreatorProfile creator={creator} locked={locked} />
+        {locked && <PaywallModalHost publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY} />}
       </div>
     </>
   );

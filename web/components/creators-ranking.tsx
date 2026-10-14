@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { LockedOverlay, LockIcon, openPaywall } from './creators-paywall-modal';
 import { useMemo, useState } from 'react';
 import { formatCompact, formatPrice } from '@/lib/api';
 import type { CreatorListItem } from '@/lib/queries';
@@ -312,7 +313,17 @@ function FilterSelect({ def, value, onChange }: { def: FilterDef; value: string;
   );
 }
 
-export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
+export function CreatorsRanking({
+  creators,
+  locked = false,
+  freeIds = [],
+}: {
+  creators: CreatorListItem[];
+  /** Sem assinatura: só os `freeIds` aparecem por inteiro; o resto fica com cadeado. */
+  locked?: boolean;
+  freeIds?: string[];
+}) {
+  const freeSet = new Set(freeIds);
   const [tab, setTab] = useState<Tab>('todos');
   const [sort, setSort] = useState<SortId>('ingresos');
   const [query, setQuery] = useState('');
@@ -461,6 +472,22 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
         </div>
       </div>
 
+      {locked && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-[var(--brand)]/25 bg-[var(--brand-soft)] px-4 py-3">
+          <p className="flex items-center gap-2 text-[13px] text-[var(--text)]">
+            <LockIcon className="h-4 w-4 text-[var(--brand)]" />
+            Hoy puedes ver <strong>{freeIds.length} creadores gratis</strong>. Mañana cambian. Para ver los 50 con sus videos y productos, suscríbete.
+          </p>
+          <button
+            type="button"
+            onClick={openPaywall}
+            className="rounded-full bg-[var(--brand)] px-4 py-2 text-[12.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
+          >
+            Ver la suscripción · US$ 20/mes
+          </button>
+        </div>
+      )}
+
       {/* Filtros (estilo painel da Kalodata) */}
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         {FILTERS.map((def) => (
@@ -519,13 +546,17 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
           <ol className="mt-1 flex flex-col gap-2 xl:mt-0">
             {visible.map((c) => {
               const rank = rankOf.get(c.id) ?? 0;
+              const isLocked = locked && !freeSet.has(c.id);
+              const veil = isLocked ? 'pointer-events-none select-none blur-[5px]' : '';
               return (
                 <li
                   key={c.id}
-                  className="relative rounded-[20px] bg-[var(--bg-elevated)] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
+                  className="relative overflow-hidden rounded-[20px] bg-[var(--bg-elevated)] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
+                  aria-hidden={isLocked || undefined}
                 >
+                  {isLocked && <LockedOverlay label="Suscríbete para ver este creador" />}
                   {/* Linha de tabela (md+) */}
-                  <div className={`hidden grid-cols-1 items-center gap-x-3 px-4 py-3 xl:grid ${COLS}`}>
+                  <div className={`hidden grid-cols-1 items-center gap-x-3 px-4 py-3 xl:grid ${COLS} ${veil}`}>
                     <RankNumber rank={rank} />
 
                     <div className="flex min-w-0 items-center gap-3">
@@ -578,7 +609,7 @@ export function CreatorsRanking({ creators }: { creators: CreatorListItem[] }) {
                   </div>
 
                   {/* Cartão (mobile) */}
-                  <div className="p-4 xl:hidden">
+                  <div className={`p-4 xl:hidden ${veil}`}>
                     <div className="flex items-start gap-3">
                       <Avatar creator={c} size={44} />
                       <div className="min-w-0 flex-1">

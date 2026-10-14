@@ -14,7 +14,11 @@ import { getUserId } from '@/lib/session';
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
-  const userId = await getUserId();
+  // diagnóstico pela equipe: CRON_SECRET + userId na query cria a sessão sem cookie de login
+  const url = new URL(request.url);
+  const bearer = request.headers.get('authorization');
+  const viaSecret = Boolean(process.env.CRON_SECRET) && bearer === `Bearer ${process.env.CRON_SECRET}` && url.searchParams.get('userId');
+  const userId = viaSecret ? url.searchParams.get('userId') : await getUserId();
   if (!userId) return NextResponse.json({ message: 'Inicia sesión.' }, { status: 401 });
 
   const secret = process.env.STRIPE_SECRET_KEY;
@@ -26,8 +30,9 @@ export async function POST(request: Request) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, stripeCustomerId: true } });
   if (!user) return NextResponse.json({ message: 'Usuario no encontrado.' }, { status: 404 });
 
-  const origin = process.env.APP_URL || new URL(request.url).origin;
+  const origin = process.env.APP_URL || url.origin;
   const stripe = new Stripe(secret);
+  try {
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     ui_mode: 'embedded',
@@ -40,4 +45,10 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({ clientSecret: session.client_secret });
+  } catch (error) {
+    // a mensagem da Stripe vai na resposta: sem ela o botão só diz "no pude iniciar"
+    const message = error instanceof Error ? error.message : 'Stripe no respondió.';
+    console.error('[stripe-checkout]', message);
+    return NextResponse.json({ message: `No pude iniciar el pago: ${message}` }, { status: 502 });
+  }
 }

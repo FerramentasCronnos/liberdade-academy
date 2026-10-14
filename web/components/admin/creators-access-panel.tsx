@@ -161,7 +161,7 @@ export function CreatorsAccessPanel({ members }: { members: CreatorsAccessMember
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
         <p className="text-[13.5px] text-[var(--text-muted)]">
           <strong className="font-semibold text-[var(--text)]">{activeCount}</strong>{' '}
-          {activeCount === 1 ? 'miembro con' : 'miembros con'} acceso Creators (US$ 20/mes). Stripe lo
+          {activeCount === 1 ? 'miembro con' : 'miembros con'} acceso Creators (US$ 19/mes). Stripe lo
           activa y lo quita solo; aquí puedes liberar o cortar el acceso a mano.
         </p>
       </div>

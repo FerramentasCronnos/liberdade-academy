@@ -59,7 +59,7 @@ export function CreatorsPaywall({ locked, children }: { locked: boolean; childre
 
           <p className="mt-5 flex items-baseline gap-1.5">
             <span className="font-display text-[34px] font-semibold tracking-tight text-[var(--text)]">
-              US$ 20
+              US$ 19
             </span>
             <span className="text-[14px] text-[var(--text-muted)]">/ mes</span>
           </p>
@@ -86,7 +86,7 @@ export function CreatorsPaywall({ locked, children }: { locked: boolean; childre
               rel="noopener noreferrer"
               className="mt-6 flex w-full items-center justify-center rounded-xl bg-[var(--brand)] px-5 py-3 text-[14.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
             >
-              Suscribirme por US$ 20/mes
+              Suscribirme por US$ 19/mes
             </a>
           ) : (
             <button

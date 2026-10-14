@@ -8,7 +8,7 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe
  * Checkout da Stripe dentro da página (assinatura Creators). Só carrega o
  * script da Stripe quando a pessoa clica em assinar; até lá é um botão.
  */
-export function CreatorsCheckout({ publishableKey, price = 'US$ 20 / mes' }: { publishableKey?: string; price?: string }) {
+export function CreatorsCheckout({ publishableKey, price = 'US$ 19 / mes' }: { publishableKey?: string; price?: string }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

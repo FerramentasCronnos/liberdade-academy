@@ -323,7 +323,7 @@ export function CreatorsRanking({
   locked?: boolean;
   freeIds?: string[];
 }) {
-  const freeSet = new Set(freeIds);
+  const freeSet = useMemo(() => new Set(freeIds), [freeIds]);
   const [tab, setTab] = useState<Tab>('todos');
   const [sort, setSort] = useState<SortId>('ingresos');
   const [query, setQuery] = useState('');
@@ -359,6 +359,7 @@ export function CreatorsRanking({
 
     const sorted = [...list];
     // Sem dado vai pro fim, não pro topo.
+    // sem assinatura, os grátis do dia sobem para o topo depois da ordenação (ver abaixo)
     const by = (pick: (c: CreatorListItem) => number | undefined) => (a: CreatorListItem, b: CreatorListItem) =>
       (pick(b) ?? -Infinity) - (pick(a) ?? -Infinity);
     switch (sort) {
@@ -380,8 +381,13 @@ export function CreatorsRanking({
       default:
         sorted.sort(by((c) => c.revenue));
     }
+    if (locked && freeSet.size) {
+      const free = sorted.filter((c) => freeSet.has(c.id));
+      const rest = sorted.filter((c) => !freeSet.has(c.id));
+      return [...free, ...rest];
+    }
     return sorted;
-  }, [creators, tab, sort, query, overrides, filters]);
+  }, [creators, tab, sort, query, overrides, filters, locked, freeIds]);
 
   const pageCount = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
   const current = Math.min(page, pageCount);
@@ -483,7 +489,7 @@ export function CreatorsRanking({
             onClick={openPaywall}
             className="rounded-full bg-[var(--brand)] px-4 py-2 text-[12.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
           >
-            Ver la suscripción · US$ 20/mes
+            Ver la suscripción · US$ 19/mes
           </button>
         </div>
       )}

@@ -113,7 +113,7 @@ export function PaywallModalHost({ publishableKey, autoOpen = false }: { publish
         </ul>
 
         <div className="mt-5 flex items-baseline gap-2">
-          <span className="font-display text-[30px] font-bold leading-none text-[var(--text)]">US$ 20</span>
+          <span className="font-display text-[30px] font-bold leading-none text-[var(--text)]">US$ 19</span>
           <span className="text-[13.5px] text-[var(--text-muted)]">/ mes · cancela cuando quieras</span>
         </div>
 

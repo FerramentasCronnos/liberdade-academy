@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getUserId } from '@/lib/session';
+import { getUserId, isAdmin } from '@/lib/session';
 import { CatalogView } from '@/components/catalog-view';
 import { PageHeader } from '@/components/page-header';
 import { CATALOG_REGION, toProduct } from '@/lib/api';
@@ -11,13 +11,16 @@ export const metadata = {
 };
 
 export default async function CatalogPage() {
-  if (!(await getUserId())) redirect('/login');
+  const userId = await getUserId();
+  if (!userId) redirect('/login');
+  // Bank Offers: só admins enquanto a dona não liberar (BANK_OFFERS_PUBLIC=1)
+  const includeBankOffers = process.env.BANK_OFFERS_PUBLIC === '1' || (await isAdmin(userId));
 
   let products: Product[] = [];
   let error: string | null = null;
 
   try {
-    products = (await listProducts({ region: CATALOG_REGION })).map(toProduct);
+    products = (await listProducts({ region: CATALOG_REGION, includeBankOffers })).map(toProduct);
   } catch (e) {
     // API fora do ar não derruba a página; mostramos o aviso e a tela vazia,
     // nunca produto fictício.

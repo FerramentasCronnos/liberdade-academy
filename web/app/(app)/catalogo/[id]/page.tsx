@@ -185,7 +185,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                     rel="noreferrer noopener"
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand)] px-4 py-3 text-[14px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
                   >
-                    Abrir no {marketplace.label}
+                    {product.marketplace === 'bank_offers' ? 'Ir a la oferta' : `Abrir en ${marketplace.label}`}
                     <IconExternal className="h-4 w-4" />
                   </a>
                   <CopyLinkButton url={product.productUrl} />

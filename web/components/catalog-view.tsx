@@ -124,8 +124,12 @@ export function CatalogView({ products }: { products: Product[] }) {
       default:
         sorted.sort((a, b) => b.salesCount - a.salesCount);
     }
-    return sorted;
+    // Bank Offers (ofertas próprias) sempre no topo, em qualquer ordenação
+    const own = sorted.filter((p) => p.marketplace === 'bank_offers');
+    const rest = sorted.filter((p) => p.marketplace !== 'bank_offers');
+    return [...own, ...rest];
   }, [products, category, marketplace, sort, query, revenue, growth, sold, commission, price]);
+  const hasBankOffers = useMemo(() => products.some((p) => p.marketplace === 'bank_offers'), [products]);
 
   const sortLabel = SORTS.find((s) => s.id === sort)?.label ?? 'Ordenar';
 
@@ -216,7 +220,9 @@ export function CatalogView({ products }: { products: Product[] }) {
           Todos
         </button>
 
-        {MARKETPLACES.map((mp) => {
+        {MARKETPLACES.map((raw) => {
+          // sem ofertas próprias liberadas o chip fica como "pronto"
+          const mp = raw.id === 'bank_offers' ? { ...raw, available: hasBankOffers } : raw;
           const active = marketplace === mp.id;
           return (
             <button

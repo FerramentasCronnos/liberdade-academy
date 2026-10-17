@@ -100,7 +100,7 @@ export interface RawReferenceVideo {
   publishedAt?: Date;
 }
 
-export type Marketplace = 'tiktok_shop' | 'amazon' | 'shopee' | 'mercado_livre';
+export type Marketplace = 'tiktok_shop' | 'amazon' | 'shopee' | 'mercado_livre' | 'bank_offers';
 
 export interface CatalogProvider {
   /** Valor aceito em CATALOG_PROVIDER. */

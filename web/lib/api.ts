@@ -14,7 +14,7 @@ export const CATALOG_REGION = process.env.NEXT_PUBLIC_CATALOG_REGION || 'US';
  * (`Product.marketplace`) e esta função some.
  */
 function resolveMarketplace(product: ApiProduct): Marketplace {
-  const known: Marketplace[] = ['tiktok_shop', 'amazon', 'shopee', 'mercado_livre'];
+  const known: Marketplace[] = ['tiktok_shop', 'amazon', 'shopee', 'mercado_livre', 'bank_offers'];
   return known.includes(product.marketplace as Marketplace) ? (product.marketplace as Marketplace) : 'tiktok_shop';
 }
 

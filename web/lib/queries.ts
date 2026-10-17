@@ -26,6 +26,8 @@ export async function listProducts(params: {
   q?: string;
   viral?: boolean;
   limit?: number;
+  /** Bank Offers (ofertas próprias) só aparecem para admins até serem liberadas (BANK_OFFERS_PUBLIC=1). */
+  includeBankOffers?: boolean;
 }) {
   // três lojas no mesmo catálogo: 200 cortava o TikTok inteiro depois de Amazon e Shopee
   const take = Math.min(Math.max(1, params.limit ?? 2000), 3000);
@@ -40,6 +42,7 @@ export async function listProducts(params: {
       ...(hiddenProviders().length ? { provider: { notIn: hiddenProviders() } } : {}),
       // produto sem foto não vai pra vitrine — card vazio parece bug
       image: { startsWith: 'http' },
+      ...(params.includeBankOffers ? {} : { marketplace: { not: 'bank_offers' } }),
       ...(params.region
         ? { OR: [{ marketplace: 'tiktok_shop', region: params.region }, { marketplace: { not: 'tiktok_shop' } }] }
         : {}),

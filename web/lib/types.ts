@@ -1,4 +1,4 @@
-export type Marketplace = 'tiktok_shop' | 'shopee' | 'mercado_livre' | 'amazon';
+export type Marketplace = 'tiktok_shop' | 'shopee' | 'mercado_livre' | 'amazon' | 'bank_offers';
 
 export interface MarketplaceInfo {
   id: Marketplace;
@@ -10,6 +10,8 @@ export interface MarketplaceInfo {
 }
 
 export const MARKETPLACES: MarketplaceInfo[] = [
+  /** Ofertas próprias da MVA (produtos e fornecedores); fixas no topo do catálogo. */
+  { id: 'bank_offers', label: 'Bank Offers', color: '#1b3a6b', available: true },
   { id: 'tiktok_shop', label: 'TikTok Shop', color: '#111827', available: true },
   { id: 'amazon', label: 'Amazon', color: '#ff9900', available: true },
   { id: 'shopee', label: 'Shopee', color: '#ee4d2d', available: true },

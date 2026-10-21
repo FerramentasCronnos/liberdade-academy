@@ -1,5 +1,7 @@
 'use client';
 
+import { RichText } from '@/components/rich-text';
+
 import Link from 'next/link';
 import { useActionState, useRef, useState, useTransition } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -221,7 +223,7 @@ export function TicketThread({ ticket, viewerId, forSupport }: { ticket: TicketD
                     {m.fromSupport && <TeamBadge />}
                     <span className="font-normal text-[var(--text-faint)]">{relativeTime(m.createdAt)}</span>
                   </p>
-                  {m.content && <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]">{m.content}</p>}
+                  {m.content && <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]"><RichText text={m.content} /></p>}
                   <AttachmentList urls={m.attachments} />
                 </div>
               </li>

@@ -7,6 +7,7 @@ import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react
 import { pinPost, removePost, toggleLike } from '@/app/(app)/comunidade/actions';
 import { avatarColor, initials, relativeTime, type CommunityPost } from '@/lib/community';
 import { Avatar } from './avatar';
+import { RichText } from './rich-text';
 import { AttachmentList } from './community/attachments';
 import { IconHeart, IconMessage, IconStar } from './icons';
 
@@ -195,7 +196,7 @@ export function PostCard({
 
       {text && (
         <p className="mt-4 whitespace-pre-wrap text-[15.5px] leading-[1.65] text-[var(--text)]">
-          {text}
+          <RichText text={text} />
           {long && (
             <>
               {' '}

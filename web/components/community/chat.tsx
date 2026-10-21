@@ -1,5 +1,7 @@
 'use client';
 
+import { RichText } from '@/components/rich-text';
+
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -99,7 +101,7 @@ function Reply({ c }: { c: CommunityComment }) {
           {c.author.isAdmin && <TeamBadge />}
           <span className="text-[12px] font-normal text-[var(--text-faint)]">{time(c.createdAt)}</span>
         </p>
-        {c.content && <p className="mt-0.5 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]">{c.content}</p>}
+        {c.content && <p className="mt-0.5 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]"><RichText text={c.content} /></p>}
         <AttachmentList urls={c.attachments} />
       </div>
     </li>
@@ -248,7 +250,7 @@ export function ChatSpace({
                           )}
                         </span>
                       </p>
-                      {m.content && <p className="mt-0.5 whitespace-pre-wrap text-[14.5px] leading-relaxed text-[var(--text)]">{m.content}</p>}
+                      {m.content && <p className="mt-0.5 whitespace-pre-wrap text-[14.5px] leading-relaxed text-[var(--text)]"><RichText text={m.content} /></p>}
                       <AttachmentList urls={m.attachments} />
                       {(m.replies.length > 0 || viewerIsAdmin) && (
                         <span className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -311,7 +313,7 @@ export function ChatSpace({
                   {thread.author.isAdmin && <TeamBadge />}
                   <span className="text-[12px] font-normal text-[var(--text-faint)]">{time(thread.createdAt)}</span>
                 </p>
-                {thread.content && <p className="mt-0.5 whitespace-pre-wrap text-[14.5px] leading-relaxed text-[var(--text)]">{thread.content}</p>}
+                {thread.content && <p className="mt-0.5 whitespace-pre-wrap text-[14.5px] leading-relaxed text-[var(--text)]"><RichText text={thread.content} /></p>}
                 <AttachmentList urls={thread.attachments} />
               </div>
             </div>

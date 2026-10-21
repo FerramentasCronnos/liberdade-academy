@@ -1,5 +1,7 @@
 'use client';
 
+import { RichText } from '@/components/rich-text';
+
 import Link from 'next/link';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -87,7 +89,7 @@ function CommentItem({ c, postId, depth = 0 }: { c: CommunityComment; postId: st
               {c.author.isAdmin && <TeamBadge />}
               <span className="text-[12px] font-normal text-[var(--text-faint)]">{relativeTime(c.createdAt)}</span>
             </p>
-            {c.content && <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]">{c.content}</p>}
+            {c.content && <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]"><RichText text={c.content} /></p>}
             <AttachmentList urls={c.attachments} />
           </div>
           {!replying ? (

@@ -1,5 +1,7 @@
 'use client';
 
+import { RichText } from '@/components/rich-text';
+
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useRef, useState } from 'react';
@@ -195,7 +197,7 @@ export function AssistantWidget() {
                             <img src={u} alt="Captura enviada" className="max-h-[180px] w-full object-cover" />
                           </a>
                         ))}
-                        {m.content}
+                        <RichText text={m.content} />
                         {m.whatsapp && (
                           <a href={m.whatsapp} target="_blank" rel="noreferrer" className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-2 text-[13px] font-semibold text-white">
                             💬 Hablar con el equipo por WhatsApp

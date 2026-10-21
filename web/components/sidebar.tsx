@@ -21,6 +21,7 @@ import {
   IconSettings,
   IconStore,
   IconTikTok,
+  IconExternal,
   IconUser,
   IconTrophy,
 } from './icons';
@@ -31,7 +32,12 @@ type Item = {
   icon: typeof IconGrid;
   /** Ainda sem backend — esmaecido, sem prometer o que não existe. */
   soon?: boolean;
+  /** Link para fora da plataforma: abre em outra aba. */
+  external?: boolean;
 };
+
+/** Painel pessoal na BRAIN (IA do curso), fora da plataforma. */
+const SPACE_ITEM: Item = { href: 'https://s4.brainexperts.com.br/dashboard', label: 'Tu espacio', icon: IconExternal, external: true };
 
 const MAIN: Item[] = [
   { href: '/catalogo', label: 'Catálogo', icon: IconGrid },
@@ -68,6 +74,22 @@ function NavLink({
   collapsed: boolean;
 }) {
   const Icon = item.icon;
+  const className = `relative flex items-center gap-3 rounded-2xl py-3 text-[14px] font-medium transition ${
+    collapsed ? 'justify-center px-0' : 'px-4'
+  } ${
+    active
+      ? 'bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] shadow-[0_6px_18px_-8px_rgba(0,0,0,0.45)]'
+      : 'text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]'
+  }`;
+
+  if (item.external) {
+    return (
+      <a href={item.href} target="_blank" rel="noopener noreferrer" title={collapsed ? item.label : undefined} className={className}>
+        <Icon className="h-[19px] w-[19px] shrink-0" />
+        {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+      </a>
+    );
+  }
 
   return (
     <Link
@@ -201,6 +223,10 @@ export function Sidebar({ user, assistant = false }: { user: SessionUser | null;
           </button>
         </nav>
         )}
+
+        <nav className="mt-4 border-t border-white/12 pt-4">
+          <NavLink item={SPACE_ITEM} active={false} collapsed={collapsed} />
+        </nav>
 
         {user?.isAdmin && (
           <nav className="mt-4 border-t border-white/12 pt-4">

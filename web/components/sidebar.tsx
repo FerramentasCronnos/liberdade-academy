@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -36,8 +37,13 @@ type Item = {
   external?: boolean;
 };
 
+/** Logo da Brain (ícone oficial do site) no lugar de um ícone de linha. */
+function BrainIcon({ className }: { className?: string }) {
+  return <Image src="/brand/brain-icon.png" alt="" width={19} height={19} unoptimized className={`${className ?? ''} object-contain`} />;
+}
+
 /** Painel pessoal na BRAIN (IA do curso), fora da plataforma. */
-const SPACE_ITEM: Item = { href: 'https://s4.brainexperts.com.br/dashboard', label: 'Tu espacio', icon: IconExternal, external: true };
+const SPACE_ITEM: Item = { href: 'https://s4.brainexperts.com.br/dashboard', label: 'Accede a Brain IA', icon: BrainIcon, external: true };
 
 const MAIN: Item[] = [
   { href: '/catalogo', label: 'Catálogo', icon: IconGrid },

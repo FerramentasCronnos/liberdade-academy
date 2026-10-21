@@ -5,8 +5,9 @@ import { Logo } from '@/components/logo';
 
 export const metadata = { title: 'Entrar · MVA' };
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ reset?: string }> }) {
   if (await getUserId()) redirect('/catalogo');
+  const { reset } = await searchParams;
 
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
@@ -51,7 +52,7 @@ export default async function LoginPage() {
             Usa el correo registrado en el curso.
           </p>
 
-          <LoginForm />
+          <LoginForm notice={reset === '1' ? 'Contraseña actualizada. Entra con la nueva.' : undefined} />
         </div>
       </section>
     </main>

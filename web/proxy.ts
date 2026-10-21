@@ -40,5 +40,5 @@ export const config = {
    * - p/, bio/   → presell e link-na-bio dos membros; são feitas para a audiência
    * - _next, favicon e arquivos com extensão → estáticos
    */
-  matcher: ['/((?!api|login|p/|bio/|_next/static|_next/image|favicon\\.ico|.*\\..*).*)'],
+  matcher: ['/((?!api|login|recuperar|p/|bio/|_next/static|_next/image|favicon\\.ico|.*\\..*).*)'],
 };

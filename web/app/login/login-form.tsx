@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { login, type LoginState } from './actions';
@@ -20,11 +21,16 @@ function Submit() {
 const field =
   'w-full rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3.5 text-[15px] text-[var(--text)] outline-none transition placeholder:text-[var(--text-faint)] focus:border-[var(--brand)]';
 
-export function LoginForm() {
+export function LoginForm({ notice }: { notice?: string }) {
   const [state, formAction] = useActionState<LoginState, FormData>(login, {});
 
   return (
     <form action={formAction} className="mt-7">
+      {notice && (
+        <p role="status" className="mb-4 rounded-xl bg-[var(--money-soft)] px-3.5 py-2.5 text-[13px] font-medium text-[var(--money)]">
+          {notice}
+        </p>
+      )}
       <label className="block">
         <span className="mb-1.5 block text-[13px] font-medium text-[var(--text-muted)]">
           Correo
@@ -52,6 +58,12 @@ export function LoginForm() {
           className={field}
         />
       </label>
+
+      <div className="mt-2 text-right">
+        <Link href="/recuperar" className="text-[13px] font-medium text-[var(--brand)] hover:underline">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
 
       {state.error && (
         <p

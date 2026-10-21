@@ -274,3 +274,19 @@ export function sendAccessEmail(input: { name: string; email: string; password: 
     layout(body, 'Tus datos de acceso están adentro. Entra y empieza por el catálogo de productos virales.'),
   );
 }
+
+/** Link para criar uma senha nova (vale 1 hora). */
+export function sendPasswordResetEmail(input: { name: string; email: string; url: string }) {
+  const first = escape(input.name.split(' ')[0] || input.name);
+  const body = `
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;color:#0e1729;line-height:1.2;">Hola, ${first}</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#32425f;">
+      Recibimos un pedido para cambiar la contraseña de tu cuenta en <strong>Máquina de Ventas Automáticas</strong>. Toca el botón y elige una nueva. El enlace vale por 1 hora.
+    </p>
+    <a href="${input.url}" style="display:inline-block;background:#1b3a6b;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Crear nueva contraseña</a>
+    <p style="margin:24px 0 0;font-size:13.5px;line-height:1.6;color:#6b7d9c;">
+      Si no fuiste tú, ignora este correo: tu contraseña sigue igual.<br>
+      Si el botón no funciona, copia este enlace: <a href="${input.url}" style="color:#1b3a6b;">${input.url}</a>
+    </p>`;
+  return send(input.email, 'Cambia tu contraseña de MVA', layout(body, 'Enlace para crear una nueva contraseña. Vale por 1 hora.'));
+}

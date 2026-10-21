@@ -39,7 +39,7 @@ type Item = {
 
 /** Logo da Brain (ícone oficial do site) no lugar de um ícone de linha. */
 function BrainIcon({ className }: { className?: string }) {
-  return <Image src="/brand/brain-icon.png" alt="" width={19} height={19} unoptimized className={`${className ?? ''} object-contain`} />;
+  return <Image src="/brand/brain-icon-white.png" alt="" width={19} height={19} unoptimized className={`${className ?? ''} object-contain`} />;
 }
 
 /** Painel pessoal na BRAIN (IA do curso), fora da plataforma. */

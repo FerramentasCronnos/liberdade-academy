@@ -37,6 +37,7 @@ type Item = {
   external?: boolean;
 };
 
+
 /** Logo da Brain (ícone oficial do site) no lugar de um ícone de linha. */
 function BrainIcon({ className }: { className?: string }) {
   return <Image src="/brand/brain-icon-white.png" alt="" width={19} height={19} unoptimized className={`${className ?? ''} object-contain`} />;
@@ -51,6 +52,7 @@ const MAIN: Item[] = [
   { href: '/bank-offers', label: 'Bank Offers', icon: IconStore, soon: true },
   { href: '/anuncios', label: 'Baúl de Anuncios', icon: IconTikTok },
   { href: '/comunidade', label: 'Comunidad', icon: IconMessage },
+  SPACE_ITEM,
   { href: '/ranking', label: 'Ranking', icon: IconTrophy },
   { href: '/missoes', label: 'Misiones', icon: IconMedal },
   { href: '/recompensas', label: 'Recompensas', icon: IconArchive },
@@ -229,10 +231,6 @@ export function Sidebar({ user, assistant = false }: { user: SessionUser | null;
           </button>
         </nav>
         )}
-
-        <nav className="mt-4 border-t border-white/12 pt-4">
-          <NavLink item={SPACE_ITEM} active={false} collapsed={collapsed} />
-        </nav>
 
         {user?.isAdmin && (
           <nav className="mt-4 border-t border-white/12 pt-4">

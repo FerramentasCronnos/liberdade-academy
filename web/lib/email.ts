@@ -182,8 +182,10 @@ export function sendReplyEmail(input: {
   excerpt: string;
   postId: string;
   spaceName?: string;
+  /** Link alternativo (ex.: ticket) no lugar da página do post. */
+  url?: string;
 }) {
-  const url = `${APP_URL}/comunidade/post/${input.postId}`;
+  const url = input.url ?? `${APP_URL}/comunidade/post/${input.postId}`;
   const first = escape(input.authorName.split(' ')[0] || input.authorName);
   const body = `
     <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1b3a6b;">💬 Nueva respuesta${input.spaceName ? ` en ${escape(input.spaceName)}` : ''}</p>

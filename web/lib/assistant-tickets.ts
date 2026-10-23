@@ -2,6 +2,7 @@ import { waitUntil } from '@vercel/functions';
 import { prisma } from '@/lib/db';
 import { ASSISTANTS, PLATFORM_FACTS, retrieve, whatsappLink, type AssistantId } from '@/lib/assistant';
 import { botUser, chat, isBotEmail } from '@/lib/assistant-community';
+import { emailTicketReply } from '@/lib/community-data';
 
 /**
  * A IA de suporte nos tickets.
@@ -105,6 +106,7 @@ export async function processTicket(ticketId: string): Promise<TicketOutcome> {
       },
     }),
   ]);
+  await emailTicketReply(ticketId, bot.name, text);
 
   return escalate ? 'escalated' : 'replied';
 }

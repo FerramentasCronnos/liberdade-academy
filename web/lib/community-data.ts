@@ -590,7 +590,9 @@ export async function addComment(input: {
         route: `/comunidade/post/${post.id}`,
       },
     });
-    await emailAuthorAboutReply(post.id, post.authorId, comment.author.name, comment.content).catch((e) =>
+    // equipe (admin) e IA de suporte avisam sempre; entre membros vale o limite de 30 min
+    const fromTeam = comment.author.isAdmin || comment.author.email.endsWith('@bot.liberdade.academy');
+    await emailAuthorAboutReply(post.id, post.authorId, comment.author.name, comment.content, fromTeam).catch((e) =>
       console.error('[comentarios] e-mail de resposta falhou', e),
     );
   }
@@ -609,10 +611,11 @@ function excerptAtSentence(text: string, max: number) {
 
 /**
  * Avisa o autor por e-mail que responderam a publicação dele, com o link.
- * No máximo um e-mail a cada 30 minutos por publicação: numa thread
- * movimentada, o primeiro aviso já traz a pessoa de volta.
+ * Entre membros, no máximo um e-mail a cada 30 minutos por publicação: numa
+ * thread movimentada, o primeiro aviso já traz a pessoa de volta. Resposta da
+ * equipe ou da IA de suporte avisa sempre (`fromTeam`): é o que a pessoa espera.
  */
-async function emailAuthorAboutReply(postId: string, authorId: string, commenterName: string, content: string) {
+async function emailAuthorAboutReply(postId: string, authorId: string, commenterName: string, content: string, fromTeam = false) {
   const [author, post, recent] = await Promise.all([
     prisma.user.findUnique({ where: { id: authorId }, select: { email: true, name: true, planSource: true } }),
     prisma.post.findUnique({ where: { id: postId }, select: { space: { select: { name: true } } } }),
@@ -626,8 +629,10 @@ async function emailAuthorAboutReply(postId: string, authorId: string, commenter
   if (author.email.endsWith('@demo.liberdade.academy') || author.email.endsWith('@bot.liberdade.academy')) return;
 
   // `recent` é a resposta mais antiga dos últimos 30 min; se não é esta, já avisamos
-  const latest = await prisma.comment.findFirst({ where: { postId, authorId: { not: authorId } }, orderBy: { createdAt: 'desc' }, select: { id: true } });
-  if (recent && latest && recent.id !== latest.id) return;
+  if (!fromTeam) {
+    const latest = await prisma.comment.findFirst({ where: { postId, authorId: { not: authorId } }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+    if (recent && latest && recent.id !== latest.id) return;
+  }
 
   const { sendReplyEmail, isDeliverable } = await import('./email');
   if (!isDeliverable(author.email)) return;
@@ -639,6 +644,35 @@ async function emailAuthorAboutReply(postId: string, authorId: string, commenter
     postId,
     spaceName: post?.space?.name,
   });
+}
+
+/**
+ * Avisa o dono do ticket por e-mail que o suporte (equipe ou IA) respondeu.
+ * Usado por replyTicket e pela IA de tickets; nunca falha a resposta em si.
+ */
+export async function emailTicketReply(ticketId: string, replierName: string, content: string) {
+  try {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: { subject: true, user: { select: { email: true, name: true, planSource: true } } },
+    });
+    const owner = ticket?.user;
+    if (!ticket || !owner || owner.planSource === 'kiwify_refunded') return;
+    if (owner.email.endsWith('@demo.liberdade.academy') || owner.email.endsWith('@bot.liberdade.academy')) return;
+    const { sendReplyEmail, isDeliverable } = await import('./email');
+    if (!isDeliverable(owner.email)) return;
+    await sendReplyEmail({
+      to: owner.email,
+      authorName: owner.name,
+      commenterName: replierName,
+      excerpt: excerptAtSentence(content, 400),
+      postId: ticketId,
+      spaceName: `tu ticket "${ticket.subject.slice(0, 60)}"`,
+      url: `${process.env.APP_URL || 'https://catalogo.s4accelerator.com'}/comunidade/soporte/${ticketId}`,
+    });
+  } catch (error) {
+    console.error('[tickets] e-mail de resposta falhou', error);
+  }
 }
 
 /* ----------------------------------------------------------------- membros */
@@ -794,6 +828,7 @@ export async function replyTicket(ticketId: string, userId: string, content: str
         route: `/comunidade/soporte/${ticket.id}`,
       },
     });
+    await emailTicketReply(ticketId, user.name, content);
   }
   if (!fromSupport) scheduleTicketReply(ticketId); // só mensagens do membro pedem resposta
 }

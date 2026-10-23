@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { grantAccess, revokeAccess } from '@/lib/access';
-import { sendAccessEmail } from '@/lib/email';
+import { deliverMvaAccess } from '@/lib/brain-access';
 import { hottoks } from '@/lib/hotmart';
 
 /**
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   const result = await grantAccess({ name: payload.data?.buyer?.name, email, source: 'hotmart' });
   if (!result.created) return NextResponse.json({ ok: true, created: false, email });
 
-  const mail = await sendAccessEmail(result);
+  const mail = await deliverMvaAccess(result);
   if (!mail.ok) console.error(`[hotmart] acesso criado para ${email}, mas o e-mail falhou: ${mail.error}`);
   return NextResponse.json({ ok: true, created: true, email, emailSent: mail.ok });
 }

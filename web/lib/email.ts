@@ -275,6 +275,88 @@ export function sendAccessEmail(input: { name: string; email: string; password: 
   );
 }
 
+const MEMBERS_URL = 'https://class.s4accelerator.com/pt-br/club/caique-mva';
+
+function platformCard(input: { kicker: string; title: string; text: string; url: string; button: string; note?: string }) {
+  return `
+    <div style="border:1px solid #cbd6ea;border-radius:16px;padding:20px 22px;margin:0 0 14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#ab7a24;margin-bottom:6px;">${input.kicker}</div>
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:600;color:#0e1729;margin-bottom:6px;">${input.title}</div>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#32425f;">${input.text}</p>
+      ${input.note ? `<p style="margin:0 0 14px;font-size:13.5px;line-height:1.6;color:#1b3a6b;background:#e6edf7;border-radius:10px;padding:10px 12px;">${input.note}</p>` : ''}
+      <a href="${input.url}" style="display:inline-block;background:#1b3a6b;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;">${input.button}</a>
+    </div>`;
+}
+
+/**
+ * E-mail único de acesso do MVA (compra na Kiwify ou na Hotmart): catálogo e BRAIN com o mesmo correio e a
+ * mesma senha, mais o caminho das aulas na Hotmart. `brain` diz o que aconteceu do lado da BRAIN.
+ */
+export function sendMvaAccessEmail(input: {
+  name: string;
+  email: string;
+  password: string;
+  brain: 'created' | 'password_set' | 'existing' | 'unavailable';
+}) {
+  const first = escape(input.name.split(' ')[0] || input.name);
+  const brainUrl = (process.env.BRAIN_URL || 'https://s4.brainexperts.com.br').replace(/\/$/, '');
+  const sameForBoth = input.brain === 'created' || input.brain === 'password_set';
+  const brainNote =
+    input.brain === 'existing'
+      ? 'Ya tenías cuenta en la BRAIN: entra con tu contraseña de siempre. Si no la recuerdas, usa "¿Olvidaste tu contraseña?" en la pantalla de entrada.'
+      : input.brain === 'unavailable'
+        ? 'El acceso a la BRAIN te llega en un correo aparte en unos minutos (remitente "Brain IA").'
+        : undefined;
+
+  const body = `
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;color:#0e1729;line-height:1.2;">¡Hola, ${first}! Tu acceso está listo 🎉</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#32425f;">
+      Ya eres parte de <strong>Máquina de Ventas Automáticas (MVA)</strong>. ${sameForBoth ? 'Entras al catálogo y a la BRAIN con <strong>el mismo correo y la misma contraseña</strong>:' : 'Estos son tus datos de acceso al catálogo:'}
+    </p>
+
+    <div style="background:#e6edf7;border:1px solid #cbd6ea;border-radius:16px;padding:20px 22px;margin:0 0 24px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1b3a6b;margin-bottom:12px;">Tus datos de acceso</div>
+      <table role="presentation" cellspacing="0" cellpadding="0" style="font-size:15px;line-height:1.8;color:#16223a;">
+        <tr><td style="color:#6b7d9c;padding-right:18px;">Correo</td><td><strong>${escape(input.email)}</strong></td></tr>
+        <tr><td style="color:#6b7d9c;padding-right:18px;">Contraseña</td><td><code style="font-family:Menlo,Consolas,monospace;font-size:15px;background:#ffffff;border:1px solid #cbd6ea;border-radius:6px;padding:2px 8px;">${escape(input.password)}</code></td></tr>
+      </table>
+    </div>
+
+    ${platformCard({
+      kicker: '1 · Catálogo y comunidad',
+      title: 'Plataforma MVA',
+      text: 'El catálogo de productos virales, las herramientas (enlaces, presell, página para bio), la comunidad y las misiones.',
+      url: `${APP_URL}/login`,
+      button: 'Entrar al catálogo',
+    })}
+    ${platformCard({
+      kicker: '2 · Inteligencia artificial',
+      title: 'BRAIN',
+      text: 'Los agentes de IA del curso: ofertas, anuncios, imágenes, videos, cortes y el Chat Brain. Tus créditos ya están en la cuenta.',
+      url: `${brainUrl}/login`,
+      button: 'Entrar a la BRAIN',
+      note: brainNote,
+    })}
+    ${platformCard({
+      kicker: '3 · Clases del curso',
+      title: 'Área de miembros (Hotmart)',
+      text: 'Las clases están en Hotmart. El acceso llega en un correo de Hotmart (busca "MVA" en tu bandeja, también en spam y promociones), con el botón para crear tu contraseña de Hotmart.',
+      url: MEMBERS_URL,
+      button: 'Ir a las clases',
+    })}
+
+    <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:#6b7d9c;">
+      Guarda este correo. Puedes cambiar tu contraseña cuando quieras desde el perfil de cada plataforma.<br>
+      ¿Dudas? Responde a este correo o usa el chat de soporte dentro de la plataforma.
+    </p>`;
+
+  return send(
+    input.email,
+    'Tu acceso a MVA está listo: catálogo, BRAIN y clases',
+    layout(body, 'Un solo acceso para el catálogo y la BRAIN. Tus datos están adentro.'),
+  );
+}
+
 /** Link para criar uma senha nova (vale 1 hora). */
 export function sendPasswordResetEmail(input: { name: string; email: string; url: string }) {
   const first = escape(input.name.split(' ')[0] || input.name);

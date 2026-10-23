@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { grantAccess, revokeAccess } from '@/lib/access';
-import { sendAccessEmail } from '@/lib/email';
+import { deliverMvaAccess } from '@/lib/brain-access';
 
 /**
  * Webhook da Kiwify: compra aprovada vira acesso na hora.
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, created: false, email });
   }
 
-  const mail = await sendAccessEmail(result);
+  const mail = await deliverMvaAccess(result);
   if (!mail.ok) {
     // a conta existe; o e-mail pode ser reenviado pela administração
     console.error(`[kiwify] acesso criado para ${email}, mas o e-mail falhou: ${mail.error}`);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { grantAccess, revokeAccess } from '@/lib/access';
-import { sendAccessEmail } from '@/lib/email';
+import { deliverMvaAccess } from '@/lib/brain-access';
 import { listSales } from '@/lib/hotmart';
 
 /**
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         continue;
       }
       report.created.push(sale.buyerEmail);
-      const mail = await sendAccessEmail(result);
+      const mail = await deliverMvaAccess(result);
       if (!mail.ok) report.emailErrors.push(`${sale.buyerEmail}: ${mail.error}`);
     }
 

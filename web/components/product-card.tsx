@@ -90,7 +90,12 @@ export function ProductCard({ product }: { product: Product }) {
             {formatPrice(product.price, product.currency)}
           </p>
 
-          {product.commissionValue != null && rate != null ? (
+          {product.commissionAmount != null ? (
+            <p className="mt-1 text-[13px] font-semibold text-[var(--money)]">
+              Comisión estimada: {formatPrice(product.commissionAmount, product.currency)}
+              <span className="ml-1 font-medium text-[var(--text-faint)]">por venta</span>
+            </p>
+          ) : product.commissionValue != null && rate != null ? (
             <p className="mt-1 text-[13px] font-semibold text-[var(--money)]">
               Comisión: {formatPrice(product.commissionValue, product.currency)}{' '}
               <span className="font-medium opacity-75">({rate}%)</span>

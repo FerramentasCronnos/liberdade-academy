@@ -21,7 +21,9 @@ function resolveMarketplace(product: ApiProduct): Marketplace {
 export function toProduct(raw: ApiProduct): Product {
   // taxa real da fonte tem prioridade; a configurada entra como estimativa
   const rate = raw.commission ?? raw.commissionEstimated ?? null;
-  const commissionValue = rate == null ? null : Number((raw.price * rate) / 100);
+  // comissão fixa (Bank Offers) tem prioridade sobre o percentual
+  const commissionValue =
+    raw.commissionAmount != null ? raw.commissionAmount : rate == null ? null : Number((raw.price * rate) / 100);
 
   return {
     ...raw,

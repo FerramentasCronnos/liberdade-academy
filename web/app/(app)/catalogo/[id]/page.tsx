@@ -151,7 +151,14 @@ export default async function ProductPage({ params }: { params: Params }) {
                 Tu comisión
               </p>
 
-              {product.commissionValue != null && rate != null ? (
+              {product.commissionAmount != null ? (
+                <>
+                  <p className="mt-1 font-display text-[32px] font-bold leading-tight">
+                    {formatPrice(product.commissionAmount, product.currency)}
+                  </p>
+                  <p className="text-[13.5px] text-white/70">Comisión estimada por venta</p>
+                </>
+              ) : product.commissionValue != null && rate != null ? (
                 <>
                   <p className="mt-1 font-display text-[32px] font-bold leading-tight">
                     {formatPrice(product.commissionValue, product.currency)}

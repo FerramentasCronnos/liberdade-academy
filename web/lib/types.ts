@@ -78,6 +78,8 @@ export interface ApiProduct {
   commission?: number;
   /** Taxa configurada por categoria no backend. Exibir como estimativa. */
   commissionEstimated?: number;
+  /** Comissão fixa por venda, na moeda do produto (Bank Offers). */
+  commissionAmount?: number;
   description: string;
   supplierShips: boolean;
   region?: string;

@@ -283,50 +283,52 @@ model PointsEntry {
 }
 
 model Product {
-  id             String           @id @default(cuid())
-  externalId     String?
-  provider       String           @default("seed")
+  id               String           @id @default(cuid())
+  externalId       String?
+  provider         String           @default("seed")
   /// tiktok_shop | amazon | shopee | mercado_livre
-  marketplace    String           @default("tiktok_shop")
-  region         String           @default("BR")
-  currency       String           @default("BRL")
-  productUrl     String?
-  name           String
-  image          String
-  price          Float
-  category       String
-  supplier       String
-  rating         Float            @default(4.5)
-  salesCount     Int              @default(0)
-  tiktokViews    Int?
-  isViral        Boolean          @default(false)
-  commission     Int?
-  description    String
-  supplierShips  Boolean          @default(true)
-  active         Boolean          @default(true)
-  syncedAt       DateTime?
+  marketplace      String           @default("tiktok_shop")
+  region           String           @default("BR")
+  currency         String           @default("BRL")
+  productUrl       String?
+  name             String
+  image            String
+  price            Float
+  category         String
+  supplier         String
+  rating           Float            @default(4.5)
+  salesCount       Int              @default(0)
+  tiktokViews      Int?
+  isViral          Boolean          @default(false)
+  commission       Int?
+  /// Comissão fixa por venda, na moeda do produto (Bank Offers). Tem prioridade sobre o percentual.
+  commissionAmount Float?
+  description      String
+  supplierShips    Boolean          @default(true)
+  active           Boolean          @default(true)
+  syncedAt         DateTime?
   /// Última vez que os vídeos de referência foram renovados (null = nunca).
-  videosSyncedAt DateTime?
+  videosSyncedAt   DateTime?
   /// Galeria (inclui a principal). Vazia = fonte não entregou mais fotos.
-  images         String[]         @default([])
+  images           String[]         @default([])
   /// Métricas de venda da fonte (Kalodata), últimos 30 dias.
-  revenue        Float?
+  revenue          Float?
   /// Crescimento da receita em % contra o período anterior.
-  revenueGrowth  Float?
+  revenueGrowth    Float?
   /// Preço médio por unidade vendida.
-  unitPrice      Float?
-  videoRevenue   Float?
-  liveRevenue    Float?
-  reviewCount    Int?
-  creatorCount   Int?
-  videoCount     Int?
-  launchDate     DateTime?
+  unitPrice        Float?
+  videoRevenue     Float?
+  liveRevenue      Float?
+  reviewCount      Int?
+  creatorCount     Int?
+  videoCount       Int?
+  launchDate       DateTime?
   /// Histórico diário [{d:'2026-10-10', r: 1234}] acumulado pelo sync (até 60 dias).
-  revenueTrend   Json?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  selling        SellingProduct[]
-  videos         ProductVideo[]
+  revenueTrend     Json?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  selling          SellingProduct[]
+  videos           ProductVideo[]
 
   @@unique([provider, region, externalId])
   @@index([region, category, active])

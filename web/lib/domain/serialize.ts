@@ -57,6 +57,8 @@ export function serializeProduct(product: Product) {
     isViral: product.isViral,
     /** Taxa vinda da fonte. Ausente = a fonte não informou. */
     commission: product.commission ?? undefined,
+    /** Comissão fixa por venda (Bank Offers); quando existe, vale no lugar do percentual. */
+    commissionAmount: product.commissionAmount ?? undefined,
     /** Taxa configurada por categoria. A UI precisa rotular como estimativa. */
     commissionEstimated:
       product.commission == null

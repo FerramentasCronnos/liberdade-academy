@@ -23,6 +23,8 @@ type OfferInput = {
   description?: string;
   price?: number;
   commission?: number | null;
+  /** Comissão fixa por venda em dólares (ex.: 170). */
+  commissionAmount?: number | null;
   supplier?: string;
   active?: boolean;
 };
@@ -76,6 +78,7 @@ export async function POST(request: Request) {
         salesCount: 0,
         isViral: false,
         commission: offer.commission == null ? null : Math.round(Number(offer.commission)),
+        ...(offer.commissionAmount !== undefined ? { commissionAmount: offer.commissionAmount == null ? null : Number(offer.commissionAmount) } : {}),
         description: (offer.description || offer.name).slice(0, 2000),
         supplierShips: true,
         active: offer.active ?? true,

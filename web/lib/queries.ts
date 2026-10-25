@@ -35,8 +35,14 @@ export async function listProducts(params: {
   const products = await prisma.product.findMany({
     where: {
       // CATALOG_SHOW_DRAFTS=1 (só em preview) mostra também os produtos gravados
-      // como rascunho por um provider em teste; produção segue só os ativos
-      ...(process.env.CATALOG_SHOW_DRAFTS === '1' ? {} : { active: true }),
+      // como rascunho por um provider em teste; produção segue só os ativos.
+      // Bank Offers (ofertas próprias) ignoram o `active`: quem pode vê-las
+      // (admin, ou todos com BANK_OFFERS_PUBLIC=1) vê também as em rascunho.
+      ...(process.env.CATALOG_SHOW_DRAFTS === '1'
+        ? {}
+        : params.includeBankOffers
+          ? { AND: [{ OR: [{ active: true }, { marketplace: 'bank_offers' }] }] }
+          : { active: true }),
       // CATALOG_HIDDEN_PROVIDERS=apify esconde uma fonte sem desativar nada no
       // banco (o preview usa o mesmo Postgres da produção)
       ...(hiddenProviders().length ? { provider: { notIn: hiddenProviders() } } : {}),

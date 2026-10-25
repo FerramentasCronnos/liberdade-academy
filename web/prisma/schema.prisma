@@ -294,6 +294,8 @@ model Product {
   name             String
   image            String
   price            Float
+  /// Teto da faixa de preço (ex.: packs); `price` é o piso. Null = preço único.
+  priceMax         Float?
   category         String
   supplier         String
   rating           Float            @default(4.5)

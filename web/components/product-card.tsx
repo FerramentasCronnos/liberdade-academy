@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { formatCompact, formatPrice } from '@/lib/api';
+import { formatCompact, formatPrice, formatPriceRange } from '@/lib/api';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID, type Product } from '@/lib/types';
 import { IconFlame, IconStar } from './icons';
 
@@ -87,7 +87,7 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="mt-auto pt-1">
           <p className="text-[12px] text-[var(--text-faint)]">Precio</p>
           <p className="text-[17px] font-bold leading-tight tracking-tight text-[var(--text)]">
-            {formatPrice(product.price, product.currency)}
+            {formatPriceRange(product.price, product.priceMax, product.currency)}
           </p>
 
           {product.commissionAmount != null ? (

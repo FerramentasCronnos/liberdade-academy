@@ -22,6 +22,8 @@ type OfferInput = {
   category?: string;
   description?: string;
   price?: number;
+  /** Teto da faixa (ex.: 289 com price 80). */
+  priceMax?: number | null;
   commission?: number | null;
   /** Comissão fixa por venda em dólares (ex.: 170). */
   commissionAmount?: number | null;
@@ -72,6 +74,7 @@ export async function POST(request: Request) {
         images: [image],
         productUrl: offer.url,
         price: Math.max(0, Number(offer.price ?? 0)),
+        ...(offer.priceMax !== undefined ? { priceMax: offer.priceMax == null ? null : Number(offer.priceMax) } : {}),
         category: offer.category || 'saude',
         supplier: offer.supplier || 'Bank Offers · MVA',
         rating: 0,

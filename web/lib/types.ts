@@ -68,6 +68,8 @@ export interface ApiProduct {
   name: string;
   image: string;
   price: number;
+  /** Teto da faixa de preço (packs); ausente = preço único. */
+  priceMax?: number;
   category: string;
   supplier: string;
   rating: number;

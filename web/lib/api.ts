@@ -39,6 +39,12 @@ export function formatPrice(value: number, currency = 'BRL') {
   });
 }
 
+/** "US$ 80 – US$ 289" quando há faixa; senão o preço único. */
+export function formatPriceRange(price: number, priceMax?: number, currency = 'BRL') {
+  if (priceMax != null && priceMax > price) return `${formatPrice(price, currency)} – ${formatPrice(priceMax, currency)}`;
+  return formatPrice(price, currency);
+}
+
 export function formatCompact(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace('.', ',')}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace('.', ',')}K`;

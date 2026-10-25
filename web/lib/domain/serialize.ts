@@ -49,6 +49,8 @@ export function serializeProduct(product: Product) {
     name: product.name,
     image: product.image,
     price: product.price,
+    /** Teto da faixa de preço; ausente = preço único. */
+    priceMax: product.priceMax ?? undefined,
     category: product.category,
     supplier: product.supplier,
     rating: product.rating,

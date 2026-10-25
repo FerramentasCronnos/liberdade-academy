@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getUserId } from '@/lib/session';
-import { formatCompact, formatPrice, toProduct } from '@/lib/api';
+import { formatCompact, formatPrice, formatPriceRange, toProduct } from '@/lib/api';
 import { getProduct, listProductVideos } from '@/lib/queries';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -95,7 +95,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 <div className="mt-auto">
                   <p className="text-[12.5px] text-[var(--text-faint)]">Precio en el marketplace</p>
                   <p className="font-display text-[30px] font-bold leading-tight tracking-tight text-[var(--text)]">
-                    {formatPrice(product.price, product.currency)}
+                    {formatPriceRange(product.price, product.priceMax, product.currency)}
                   </p>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getUserId } from '@/lib/session';
-import { formatCompact, formatPrice, formatPriceRange, toProduct } from '@/lib/api';
+import { formatCommissionRange, formatCompact, formatPrice, formatPriceRange, toProduct } from '@/lib/api';
 import { getProduct, listProductVideos } from '@/lib/queries';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -161,10 +161,10 @@ export default async function ProductPage({ params }: { params: Params }) {
               ) : product.commissionValue != null && rate != null ? (
                 <>
                   <p className="mt-1 font-display text-[32px] font-bold leading-tight">
-                    {formatPrice(product.commissionValue, product.currency)}
+                    {formatCommissionRange(product.price, product.priceMax, rate, product.currency)}
                   </p>
                   <p className="text-[13.5px] text-white/70">
-                    {rate}% sobre {formatPrice(product.price, product.currency)}
+                    {rate}% sobre {formatPriceRange(product.price, product.priceMax, product.currency)}
                   </p>
                   {isEstimate && (
                     <p className="mt-3 rounded-xl bg-white/12 px-3 py-2 text-[11.5px] leading-relaxed text-white/80">

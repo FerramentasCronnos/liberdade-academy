@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { formatCompact, formatPrice, formatPriceRange } from '@/lib/api';
+import { formatCommissionRange, formatCompact, formatPrice, formatPriceRange } from '@/lib/api';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID, type Product } from '@/lib/types';
 import { IconFlame, IconStar } from './icons';
 
@@ -97,7 +97,7 @@ export function ProductCard({ product }: { product: Product }) {
             </p>
           ) : product.commissionValue != null && rate != null ? (
             <p className="mt-1 text-[13px] font-semibold text-[var(--money)]">
-              Comisión: {formatPrice(product.commissionValue, product.currency)}{' '}
+              Comisión: {formatCommissionRange(product.price, product.priceMax, rate, product.currency)}{' '}
               <span className="font-medium opacity-75">({rate}%)</span>
               {isEstimate && (
                 <span

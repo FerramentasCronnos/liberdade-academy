@@ -45,6 +45,13 @@ export function formatPriceRange(price: number, priceMax?: number, currency = 'B
   return formatPrice(price, currency);
 }
 
+/** Comissão percentual aplicada à faixa de preço: "US$ 29.60 – US$ 77.60". */
+export function formatCommissionRange(price: number, priceMax: number | undefined, rate: number, currency = 'BRL') {
+  const low = (price * rate) / 100;
+  if (priceMax != null && priceMax > price) return `${formatPrice(low, currency)} – ${formatPrice((priceMax * rate) / 100, currency)}`;
+  return formatPrice(low, currency);
+}
+
 export function formatCompact(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace('.', ',')}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace('.', ',')}K`;

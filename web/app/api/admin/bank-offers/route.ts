@@ -17,7 +17,8 @@ const PROVIDER = 'bank_offers';
 type OfferInput = {
   slug: string;
   name: string;
-  url: string;
+  /** Link de afiliado; pode faltar enquanto a oferta está em preparação. */
+  url?: string;
   image?: string;
   category?: string;
   description?: string;
@@ -56,8 +57,8 @@ export async function POST(request: Request) {
 
   for (const offer of body.offers ?? []) {
     const slug = String(offer.slug || '').trim().toLowerCase();
-    if (!slug || !offer.name || !offer.url) {
-      results.push({ slug, error: 'slug, name e url são obrigatórios' });
+    if (!slug || !offer.name) {
+      results.push({ slug, error: 'slug e name são obrigatórios' });
       continue;
     }
     try {
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
         name: offer.name.slice(0, 300),
         image,
         images: [image],
-        productUrl: offer.url,
+        productUrl: offer.url || null,
         price: Math.max(0, Number(offer.price ?? 0)),
         ...(offer.priceMax !== undefined ? { priceMax: offer.priceMax == null ? null : Number(offer.priceMax) } : {}),
         category: offer.category || 'saude',

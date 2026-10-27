@@ -52,8 +52,10 @@ export type GrantResult =
 export async function grantAccess(input: {
   name?: string;
   email: string;
-  /** De onde veio: kiwify | manual ... */
+  /** De onde veio: kiwify | hotmart | stripe | manual ... */
   source: string;
+  password?: string;
+  resetPassword?: boolean;
 }): Promise<GrantResult> {
   const email = input.email.trim().toLowerCase();
   const name = input.name?.trim() || email.split('@')[0];
@@ -61,16 +63,16 @@ export async function grantAccess(input: {
 
   const existing = await prisma.user.findUnique({ where: { email } });
 
-  if (existing && existing.planSource !== REVOKED) {
+  if (existing && existing.planSource !== REVOKED && !input.resetPassword && !input.password) {
     await prisma.user.update({ where: { id: existing.id }, data: stamp });
     return { created: false, userId: existing.id, name: existing.name, email };
   }
 
-  const password = generatePassword();
+  const password = input.password || generatePassword();
   const passwordHash = await bcrypt.hash(password, 10);
 
   if (existing) {
-    // voltou depois de um reembolso: reativa com senha nova
+    // voltou depois de um reembolso ou solicitou redefinição de senha: grava e avisa webhook
     await prisma.user.update({ where: { id: existing.id }, data: { passwordHash, ...stamp } });
     await notifyAccessWebhook({ email, password, name: existing.name });
     return { created: true, userId: existing.id, name: existing.name, email, password };

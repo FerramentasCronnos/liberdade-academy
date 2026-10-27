@@ -278,6 +278,7 @@ export function sendAccessEmail(input: { name: string; email: string; password: 
 }
 
 const MEMBERS_URL = 'https://class.s4accelerator.com/pt-br/club/caique-mva';
+const ACADEMY_URL = (process.env.ACADEMY_URL || 'https://academy.s4accelerator.com').replace(/\/$/, '');
 
 function platformCard(input: { kicker: string; title: string; text: string; url: string; button: string; note?: string }) {
   return `
@@ -291,15 +292,18 @@ function platformCard(input: { kicker: string; title: string; text: string; url:
 }
 
 /**
- * E-mail único de acesso do MVA (compra na Kiwify ou na Hotmart): catálogo e BRAIN com o mesmo correio e a
- * mesma senha, mais o caminho das aulas na Hotmart. `brain` diz o que aconteceu do lado da BRAIN.
+ * E-mail único de acesso do MVA (compra na Kiwify, Hotmart ou Stripe): catálogo e BRAIN com o mesmo correio e a
+ * mesma senha, mais o caminho das aulas (na Hotmart para Hotmart/Kiwify, ou na academia MVA para Stripe).
+ * `brain` diz o que aconteceu do lado da BRAIN.
  */
 export function sendMvaAccessEmail(input: {
   name: string;
   email: string;
   password: string;
   brain: 'created' | 'password_set' | 'existing' | 'unavailable';
+  source?: string;
 }) {
+  const isStripe = input.source?.trim().toLowerCase() === 'stripe';
   const first = escape(input.name.split(' ')[0] || input.name);
   const brainUrl = (process.env.BRAIN_URL || 'https://s4.brainexperts.com.br').replace(/\/$/, '');
   const sameForBoth = input.brain === 'created' || input.brain === 'password_set';
@@ -339,13 +343,21 @@ export function sendMvaAccessEmail(input: {
       button: 'Entrar a la BRAIN',
       note: brainNote,
     })}
-    ${platformCard({
-      kicker: '3 · Clases del curso',
-      title: 'Área de miembros (Hotmart)',
-      text: 'Las clases están en Hotmart. El acceso llega en un correo de Hotmart (busca "MVA" en tu bandeja, también en spam y promociones), con el botón para crear tu contraseña de Hotmart.',
-      url: MEMBERS_URL,
-      button: 'Ir a las clases',
-    })}
+    ${isStripe
+      ? platformCard({
+          kicker: '3 · Clases del curso',
+          title: 'Área de miembros',
+          text: 'Las clases están en el área de miembros de MVA. Puedes acceder directamente con tu cuenta para ver todos los módulos y lecciones.',
+          url: ACADEMY_URL,
+          button: 'Ir a las clases',
+        })
+      : platformCard({
+          kicker: '3 · Clases del curso',
+          title: 'Área de miembros (Hotmart)',
+          text: 'Las clases están en Hotmart. El acceso llega en un correo de Hotmart (busca "MVA" en tu bandeja, también en spam y promociones), con el botón para crear tu contraseña de Hotmart.',
+          url: MEMBERS_URL,
+          button: 'Ir a las clases',
+        })}
 
     <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:#6b7d9c;">
       Guarda este correo. Puedes cambiar tu contraseña cuando quieras desde el perfil de cada plataforma.<br>

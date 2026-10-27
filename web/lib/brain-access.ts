@@ -34,7 +34,12 @@ export async function syncBrainAccess(input: { email: string; name: string; pass
 }
 
 /** Entrega o acesso de uma compra: senha igual na BRAIN e um e-mail só do MVA. */
-export async function deliverMvaAccess(input: { name: string; email: string; password: string }) {
+export async function deliverMvaAccess(input: {
+  name: string;
+  email: string;
+  password: string;
+  source?: string;
+}) {
   const brain = await syncBrainAccess(input);
-  return sendMvaAccessEmail({ ...input, brain });
+  return sendMvaAccessEmail({ ...input, brain, source: input.source });
 }

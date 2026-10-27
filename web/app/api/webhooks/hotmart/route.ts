@@ -12,6 +12,9 @@ import { hottoks } from '@/lib/hotmart';
  */
 interface HotmartEvent {
   event?: string;
+  source?: string;
+  password?: string;
+  resetPassword?: boolean;
   data?: {
     buyer?: { email?: string; name?: string };
     purchase?: { status?: string; transaction?: string };
@@ -31,20 +34,27 @@ export async function POST(request: Request) {
 
   const payload = (await request.json().catch(() => ({}))) as HotmartEvent;
   const event = payload.event ?? '';
+  const source = (payload.source || request.headers.get('x-source') || 'hotmart').trim().toLowerCase();
   const email = payload.data?.buyer?.email?.trim().toLowerCase();
   if (!email) return NextResponse.json({ ok: true, ignored: event || 'sem evento' });
 
   if (REVOKE.includes(event)) {
-    const result = await revokeAccess(email, 'hotmart');
+    const result = await revokeAccess(email, source);
     return NextResponse.json({ ok: true, revoked: result.revoked, email });
   }
 
   if (!GRANT.includes(event)) return NextResponse.json({ ok: true, ignored: event });
 
-  const result = await grantAccess({ name: payload.data?.buyer?.name, email, source: 'hotmart' });
+  const result = await grantAccess({
+    name: payload.data?.buyer?.name,
+    email,
+    source,
+    password: payload.password,
+    resetPassword: payload.resetPassword,
+  });
   if (!result.created) return NextResponse.json({ ok: true, created: false, email });
 
-  const mail = await deliverMvaAccess(result);
-  if (!mail.ok) console.error(`[hotmart] acesso criado para ${email}, mas o e-mail falhou: ${mail.error}`);
+  const mail = await deliverMvaAccess({ ...result, source });
+  if (!mail.ok) console.error(`[${source}] acesso criado para ${email}, mas o e-mail falhou: ${mail.error}`);
   return NextResponse.json({ ok: true, created: true, email, emailSent: mail.ok });
 }

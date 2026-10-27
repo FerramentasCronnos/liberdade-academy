@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         continue;
       }
       report.created.push(sale.buyerEmail);
-      const mail = await deliverMvaAccess(result);
+      const mail = await deliverMvaAccess({ ...result, source: 'hotmart' });
       if (!mail.ok) report.emailErrors.push(`${sale.buyerEmail}: ${mail.error}`);
     }
 

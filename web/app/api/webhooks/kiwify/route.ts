@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, created: false, email });
   }
 
-  const mail = await deliverMvaAccess(result);
+  const mail = await deliverMvaAccess({ ...result, source: 'kiwify' });
   if (!mail.ok) {
     // a conta existe; o e-mail pode ser reenviado pela administração
     console.error(`[kiwify] acesso criado para ${email}, mas o e-mail falhou: ${mail.error}`);

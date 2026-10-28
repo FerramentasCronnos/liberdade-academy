@@ -303,7 +303,8 @@ export function sendMvaAccessEmail(input: {
   brain: 'created' | 'password_set' | 'existing' | 'unavailable';
   source?: string;
 }) {
-  const isStripe = input.source?.trim().toLowerCase() === 'stripe';
+  // Stripe e Brain Academy: o e-mail não fala da Hotmart.
+  const isStripe = ['stripe', 'brain_academy'].includes(input.source?.trim().toLowerCase() ?? '');
   const first = escape(input.name.split(' ')[0] || input.name);
   const brainUrl = (process.env.BRAIN_URL || 'https://s4.brainexperts.com.br').replace(/\/$/, '');
   const sameForBoth = input.brain === 'created' || input.brain === 'password_set';

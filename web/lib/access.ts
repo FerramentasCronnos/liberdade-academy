@@ -64,7 +64,12 @@ export async function grantAccess(input: {
   const existing = await prisma.user.findUnique({ where: { email } });
 
   if (existing && existing.planSource !== REVOKED && !input.resetPassword && !input.password) {
-    await prisma.user.update({ where: { id: existing.id }, data: stamp });
+    // Já tem acesso ativo: mantém a origem que liberou primeiro, para o reembolso de outra loja
+    // (ex.: Brain Academy) não derrubar quem pagou pela Hotmart.
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: { ...stamp, planSource: existing.planSource || input.source },
+    });
     return { created: false, userId: existing.id, name: existing.name, email };
   }
 

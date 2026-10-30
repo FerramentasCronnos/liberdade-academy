@@ -84,6 +84,8 @@ export interface ApiProduct {
   commissionEstimated?: number;
   /** Comissão fixa por venda, na moeda do produto (Bank Offers). */
   commissionAmount?: number;
+  /** Teto da comissão fixa quando é uma faixa. */
+  commissionAmountMax?: number;
   /** Recursos do afiliado (Bank Offers): criativos, presell, links. */
   resources?: Array<{ kind: string; label: string; url: string }>;
   description: string;

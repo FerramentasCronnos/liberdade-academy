@@ -27,8 +27,10 @@ type OfferInput = {
   /** Teto da faixa (ex.: 289 com price 80). */
   priceMax?: number | null;
   commission?: number | null;
-  /** Comissão fixa por venda em dólares (ex.: 170). */
+  /** Comissão fixa por venda em dólares (ex.: 170), ou piso da faixa. */
   commissionAmount?: number | null;
+  /** Teto da faixa de comissão fixa. */
+  commissionAmountMax?: number | null;
   supplier?: string;
   active?: boolean;
   /** Recursos do afiliado: [{kind:'creatives'|'presell'|'link', label, url}]. */
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
         isViral: false,
         commission: offer.commission == null ? null : Math.round(Number(offer.commission)),
         ...(offer.commissionAmount !== undefined ? { commissionAmount: offer.commissionAmount == null ? null : Number(offer.commissionAmount) } : {}),
+        ...(offer.commissionAmountMax !== undefined ? { commissionAmountMax: offer.commissionAmountMax == null ? null : Number(offer.commissionAmountMax) } : {}),
         ...(offer.resources !== undefined ? { resources: offer.resources === null ? Prisma.DbNull : offer.resources } : {}),
         description: (offer.description || offer.name).slice(0, 2000),
         supplierShips: true,

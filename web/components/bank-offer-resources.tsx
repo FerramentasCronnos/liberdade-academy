@@ -3,29 +3,15 @@ import { DriveCreatives } from './drive-creatives';
 import { listDriveFolder } from '@/lib/drive-folder';
 
 /**
- * Recursos do afiliado nas Bank Offers: criativos (pasta do Drive embutida,
- * para ver e baixar sem sair do catálogo) e a presell de cada produto. Os
- * links de afiliação ficam ao lado da comissão, por nível de compra.
+ * Recursos do afiliado nas Bank Offers: criativos (pasta do Drive, para ver e
+ * baixar sem sair do catálogo). Presell e links de afiliação ficam no card ao
+ * lado da comissão, por nível de compra.
  */
 const KIND_LABEL: Record<string, { title: string; hint: string; emoji: string }> = {
   creatives: { title: 'Creativos', hint: 'Carpeta con videos, imágenes y anuncios listos para usar.', emoji: '🎬' },
   presell: { title: 'Página de presell', hint: 'Rescata tu página lista para recibir el tráfico y enviarlo a la oferta.', emoji: '📄' },
   link: { title: 'Enlace', hint: '', emoji: '🔗' },
 };
-
-/**
- * Links de resgate da presell (Wix) são praticamente senhas: ficam na env
- * BANK_OFFERS_PRESELL_LINKS como JSON {slug: url}, nunca no código nem no banco.
- */
-function presellLink(slug?: string): string | undefined {
-  if (!slug) return undefined;
-  try {
-    const map = JSON.parse(process.env.BANK_OFFERS_PRESELL_LINKS || '{}') as Record<string, string>;
-    return map[slug];
-  } catch {
-    return undefined;
-  }
-}
 
 /** Id da pasta de criativos no Drive, quando o recurso é um link de pasta. */
 function driveFolderId(resources: Array<{ kind: string; url: string }>): string | undefined {
@@ -36,13 +22,10 @@ function driveFolderId(resources: Array<{ kind: string; url: string }>): string 
 
 export async function BankOfferResources({
   resources = [],
-  slug,
 }: {
   resources?: Array<{ kind: string; label: string; url: string }>;
-  slug?: string;
 }) {
-  const presell = presellLink(slug);
-  const items = presell ? [...resources, { kind: 'presell', label: 'Rescata tu página de presell', url: presell }] : resources;
+  const items = resources;
   const folderId = driveFolderId(resources);
   const files = folderId ? await listDriveFolder(folderId) : [];
   const folderUrl = resources.find((x) => x.kind === 'creatives')?.url ?? '';
@@ -50,7 +33,7 @@ export async function BankOfferResources({
     <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">Recursos para afiliados</h3>
       <p className="mt-1 text-[13px] text-[var(--text-muted)]">
-        Todo lo que necesitas para promocionar esta oferta: creativos para descargar y tu página de presell.
+        Creativos listos para descargar. Tu página de presell y tus enlaces están al lado, junto a la comisión.
       </p>
 
       {folderId && files.length > 0 && <DriveCreatives files={files} folderUrl={folderUrl} />}

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser, getUserId } from '@/lib/session';
-import { formatCommissionRange, formatCompact, formatPrice, formatPriceRange, toProduct } from '@/lib/api';
+import { formatCommissionRange, formatCompact, formatPriceRange, toProduct } from '@/lib/api';
 import { getProduct, listProductVideos } from '@/lib/queries';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
@@ -9,6 +9,7 @@ import { CopyLinkButton } from '@/components/copy-link-button';
 import { ProductVideos } from '@/components/product-videos';
 import { BankOfferResources } from '@/components/bank-offer-resources';
 import { AffiliateLinksCard } from '@/components/affiliate-links-card';
+import { presellLink } from '@/lib/presell-link';
 import { ProductGallery } from '@/components/product-gallery';
 import { ProductMetrics } from '@/components/product-metrics';
 import {
@@ -104,7 +105,7 @@ export default async function ProductPage({ params }: { params: Params }) {
               </div>
             </div>
 
-            {product.marketplace === 'bank_offers' && <BankOfferResources resources={product.resources} slug={product.externalId} />}
+            {product.marketplace === 'bank_offers' && <BankOfferResources resources={product.resources} />}
 
             {product.metrics && (
               <ProductMetrics
@@ -188,7 +189,7 @@ export default async function ProductPage({ params }: { params: Params }) {
               )}
             </div>
 
-            {product.marketplace === 'bank_offers' && <AffiliateLinksCard tier={viewer?.purchaseTier ?? 'main'} />}
+            {product.marketplace === 'bank_offers' && <AffiliateLinksCard tier={viewer?.purchaseTier ?? 'main'} presellUrl={presellLink(product.externalId)} />}
 
             <div className="flex flex-col gap-2.5 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
               {product.productUrl ? (

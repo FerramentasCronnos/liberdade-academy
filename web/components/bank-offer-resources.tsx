@@ -1,4 +1,6 @@
 import { IconExternal } from './icons';
+import { DriveCreatives } from './drive-creatives';
+import { listDriveFolder } from '@/lib/drive-folder';
 
 /**
  * Recursos do afiliado nas Bank Offers: criativos (pasta do Drive embutida,
@@ -32,7 +34,7 @@ function driveFolderId(resources: Array<{ kind: string; url: string }>): string 
   return m?.[1];
 }
 
-export function BankOfferResources({
+export async function BankOfferResources({
   resources = [],
   slug,
 }: {
@@ -41,6 +43,9 @@ export function BankOfferResources({
 }) {
   const presell = presellLink(slug);
   const items = presell ? [...resources, { kind: 'presell', label: 'Rescata tu página de presell', url: presell }] : resources;
+  const folderId = driveFolderId(resources);
+  const files = folderId ? await listDriveFolder(folderId) : [];
+  const folderUrl = resources.find((x) => x.kind === 'creatives')?.url ?? '';
   return (
     <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">Recursos para afiliados</h3>
@@ -48,14 +53,17 @@ export function BankOfferResources({
         Todo lo que necesitas para promocionar esta oferta: creativos para descargar y tu página de presell.
       </p>
 
-      {driveFolderId(resources) && (
+      {folderId && files.length > 0 && <DriveCreatives files={files} folderUrl={folderUrl} />}
+
+      {folderId && files.length === 0 && (
+        // Se a listagem falhar, cai no visualizador do próprio Drive.
         <div className="mt-4 overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--bg)]">
           <div className="flex items-center justify-between gap-2 px-4 py-2.5">
             <p className="text-[13px] font-semibold text-[var(--text)]">🎬 Creativos de esta oferta</p>
             <p className="text-[11.5px] text-[var(--text-faint)]">Haz clic en un archivo para verlo o descargarlo</p>
           </div>
           <iframe
-            src={`https://drive.google.com/embeddedfolderview?id=${driveFolderId(resources)}#grid`}
+            src={`https://drive.google.com/embeddedfolderview?id=${folderId}#grid`}
             title="Creativos"
             className="h-[460px] w-full border-0 bg-white"
             loading="lazy"

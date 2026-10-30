@@ -267,3 +267,9 @@ export const IconIdCard = (p: P) => (
     <path d="M5.5 16.2a3.4 3.4 0 0 1 6 0M14 10h4M14 13.5h4" />
   </svg>
 );
+
+export const IconDownload = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M4 17v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1" />
+  </svg>
+);

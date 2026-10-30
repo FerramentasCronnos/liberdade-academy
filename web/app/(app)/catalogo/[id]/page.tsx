@@ -210,7 +210,12 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </p>
               )}
 
-              {product.marketplace !== 'bank_offers' && (
+              {product.marketplace === 'bank_offers' ? (
+                <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--text-faint)]">
+                  Página solo demostrativa: este enlace no lleva tu ID de afiliado. Vende únicamente
+                  con el enlace que recibirás por Telegram al solicitar tus enlaces de afiliación.
+                </p>
+              ) : (
                 <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--text-faint)]">
                   El enlace de afiliado con tu código saldrá cuando la integración de credenciales
                   esté lista. Por ahora el botón lleva al producto original.

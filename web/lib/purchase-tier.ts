@@ -28,14 +28,14 @@ export const AFFILIATE_REQUEST_URL: Record<PurchaseTier, string> = {
 export function upgradeFor(tier: PurchaseTier): { label: string; hint: string; url?: string } {
   if (tier === 'main') {
     return {
-      label: '¿Quieres aumentar tu comisión? Conoce la Franquicia',
+      label: 'Aumenta tu comisión con la Franquicia',
       hint: 'Con la Franquicia desbloqueas comisiones mayores en todas las Bank Offers.',
       url: process.env.BANK_OFFERS_VSL_UP1 || undefined,
     };
   }
   if (tier === 'up1') {
     return {
-      label: '¿Quieres aumentar aún más tu comisión? Golden Ticket',
+      label: 'Aumenta aún más tu comisión con el Golden Ticket',
       hint: 'El Golden Ticket es el nivel máximo de comisión de la red.',
       url: process.env.BANK_OFFERS_VSL_UP2 || undefined,
     };

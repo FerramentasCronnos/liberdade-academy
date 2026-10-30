@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { recordPurchaseByEmail } from '@/lib/access';
 import { grantCreatorsAccess, revokeCreatorsAccess } from '@/lib/creators-access';
 
 /**
@@ -106,14 +107,31 @@ async function handleEvent(stripe: Stripe, event: Stripe.Event) {
       const custId = customerId(session.customer);
       const userId = session.client_reference_id ?? undefined; // vem do checkout embutido
       if (!email && !userId) return { handled: true, note: 'checkout sem e-mail nem referência' };
-      // libera já; o evento da assinatura chega logo depois com o vencimento
-      return grantCreatorsAccess({ userId, email, until: null, stripeCustomerId: custId });
+      // a mesma conta Stripe vende Creators e os upsells (Franquia, Golden Ticket):
+      // só o price da Creators libera a aba; os outros ficam registrados como compra
+      const items = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10, expand: ['data.price.product'] });
+      const creatorsPrice = process.env.CREATORS_PRICE_ID;
+      const isCreators = items.data.some((li) => li.price?.id && li.price.id === creatorsPrice);
+      if (isCreators) {
+        // libera já; o evento da assinatura chega logo depois com o vencimento
+        return grantCreatorsAccess({ userId, email, until: null, stripeCustomerId: custId });
+      }
+      const names = items.data
+        .map((li) => (typeof li.price?.product === 'object' && li.price.product && 'name' in li.price.product ? li.price.product.name : li.description))
+        .filter((n): n is string => Boolean(n));
+      if (email) for (const name of names) await recordPurchaseByEmail(email, name);
+      return { handled: true, note: `compra registrada: ${names.join(', ') || 'sem nome'}` };
     }
 
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const subscription = event.data.object;
       const custId = customerId(subscription.customer);
+      // assinatura de outro produto (não Creators) não mexe no acesso à aba
+      const creatorsPrice = process.env.CREATORS_PRICE_ID;
+      if (creatorsPrice && !subscription.items.data.some((it) => it.price?.id === creatorsPrice)) {
+        return { handled: true, note: 'assinatura de outro produto' };
+      }
       if (ACTIVE.has(subscription.status)) {
         return applyAccess(stripe, { custId, until: subscriptionPeriodEnd(subscription) });
       }

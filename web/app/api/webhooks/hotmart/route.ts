@@ -16,6 +16,7 @@ interface HotmartEvent {
   password?: string;
   resetPassword?: boolean;
   data?: {
+    product?: { name?: string };
     buyer?: { email?: string; name?: string };
     purchase?: { status?: string; transaction?: string };
   };
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
     source,
     password: payload.password,
     resetPassword: payload.resetPassword,
+    product: payload.data?.product?.name,
   });
   if (!result.created) return NextResponse.json({ ok: true, created: false, email });
 

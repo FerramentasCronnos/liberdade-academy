@@ -42,6 +42,8 @@ model User {
   /// De onde veio o plano: manual | hotmart | kiwify | eduzz ...
   planSource          String?
   planUpdatedAt       DateTime?
+  /// Nomes dos produtos comprados (Hotmart/Kiwify/Stripe): define o nível (principal, Franquia, Golden Ticket).
+  purchases           String[]            @default([])
   posts               Post[]
   likes               PostLike[]
   comments            Comment[]

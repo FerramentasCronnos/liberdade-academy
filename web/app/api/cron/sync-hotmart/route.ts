@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       if (seen.has(sale.buyerEmail)) continue;
       seen.add(sale.buyerEmail);
 
-      const result = await grantAccess({ name: sale.buyerName, email: sale.buyerEmail, source: 'hotmart' });
+      const result = await grantAccess({ name: sale.buyerName, email: sale.buyerEmail, source: 'hotmart', product: sale.productName });
       if (!result.created) {
         report.existing += 1;
         continue;

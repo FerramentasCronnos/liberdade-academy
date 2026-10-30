@@ -1,16 +1,10 @@
 import { IconExternal } from './icons';
 
 /**
- * Recursos do afiliado nas Bank Offers: criativos e presell de cada produto
- * (gravados no produto) e os links de venda da rede, iguais para todas as
- * ofertas próprias.
+ * Recursos do afiliado nas Bank Offers: criativos (pasta do Drive embutida,
+ * para ver e baixar sem sair do catálogo) e a presell de cada produto. Os
+ * links de afiliação ficam ao lado da comissão, por nível de compra.
  */
-export const BANK_OFFERS_SALES_LINKS = [
-  { label: 'Producto principal', url: 'https://lp.theaffiliatecentral.com/Network_MVA' },
-  { label: 'Upsell 1 · Franquicia', url: 'https://lp.theaffiliatecentral.com/Network_MVA_Franquia' },
-  { label: 'Upsell 2 · Golden', url: 'https://lp.theaffiliatecentral.com/Network_MVA_Golden' },
-];
-
 const KIND_LABEL: Record<string, { title: string; hint: string; emoji: string }> = {
   creatives: { title: 'Creativos', hint: 'Carpeta con videos, imágenes y anuncios listos para usar.', emoji: '🎬' },
   presell: { title: 'Página de presell', hint: 'Rescata tu página lista para recibir el tráfico y enviarlo a la oferta.', emoji: '📄' },
@@ -31,6 +25,13 @@ function presellLink(slug?: string): string | undefined {
   }
 }
 
+/** Id da pasta de criativos no Drive, quando o recurso é um link de pasta. */
+function driveFolderId(resources: Array<{ kind: string; url: string }>): string | undefined {
+  const r = resources.find((x) => x.kind === 'creatives');
+  const m = r?.url.match(/folders\/([A-Za-z0-9_-]+)/);
+  return m?.[1];
+}
+
 export function BankOfferResources({
   resources = [],
   slug,
@@ -44,8 +45,23 @@ export function BankOfferResources({
     <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
       <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">Recursos para afiliados</h3>
       <p className="mt-1 text-[13px] text-[var(--text-muted)]">
-        Todo lo que necesitas para promocionar esta oferta: creativos, tu página de presell y tus enlaces de venta.
+        Todo lo que necesitas para promocionar esta oferta: creativos para descargar y tu página de presell.
       </p>
+
+      {driveFolderId(resources) && (
+        <div className="mt-4 overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--bg)]">
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5">
+            <p className="text-[13px] font-semibold text-[var(--text)]">🎬 Creativos de esta oferta</p>
+            <p className="text-[11.5px] text-[var(--text-faint)]">Haz clic en un archivo para verlo o descargarlo</p>
+          </div>
+          <iframe
+            src={`https://drive.google.com/embeddedfolderview?id=${driveFolderId(resources)}#grid`}
+            title="Creativos"
+            className="h-[460px] w-full border-0 bg-white"
+            loading="lazy"
+          />
+        </div>
+      )}
 
       {items.length > 0 && (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -73,26 +89,6 @@ export function BankOfferResources({
         </div>
       )}
 
-      <div className="mt-4 rounded-[18px] bg-[var(--bg-sunken)] p-4">
-        <p className="text-[13.5px] font-semibold text-[var(--text)]">Tus enlaces de venta</p>
-        <p className="mt-0.5 text-[12.5px] text-[var(--text-muted)]">
-          Genera aquí tu enlace de afiliado para el producto principal y los upsells.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {BANK_OFFERS_SALES_LINKS.map((l) => (
-            <a
-              key={l.url}
-              href={l.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand)] px-3.5 py-2 text-[12.5px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
-            >
-              {l.label}
-              <IconExternal className="h-3.5 w-3.5" />
-            </a>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }

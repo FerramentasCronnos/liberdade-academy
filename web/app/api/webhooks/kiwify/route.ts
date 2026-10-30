@@ -70,6 +70,7 @@ export async function POST(request: Request) {
     name: payload.Customer?.full_name || payload.Customer?.first_name,
     email,
     source: 'kiwify',
+    product: payload.Product?.product_name,
   });
 
   if (!result.created) {

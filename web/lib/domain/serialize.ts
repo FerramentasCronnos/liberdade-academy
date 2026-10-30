@@ -2,6 +2,7 @@ import type { Product, User, Post, PostLike, Comment } from '@prisma/client';
 import { estimatedCommission } from './commission';
 import { tierFor } from './tiers';
 import { planInfo } from './plans';
+import { purchaseTier } from '../purchase-tier';
 
 type UserWithStats = User;
 
@@ -19,6 +20,8 @@ export function serializeUser(user: UserWithStats) {
     plan: planInfo(user.plan, user.planExpiresAt),
     isAdmin: user.isAdmin,
     /** Assinatura à parte da aba Creators (Stripe). A regra fica em lib/creators-access. */
+    purchases: user.purchases,
+    purchaseTier: purchaseTier(user.purchases),
     creatorsAccess: user.creatorsAccess,
     creatorsAccessUntil: user.creatorsAccessUntil?.toISOString() ?? undefined,
     level: user.level,

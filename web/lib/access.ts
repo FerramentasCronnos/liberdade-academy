@@ -38,6 +38,21 @@ export async function notifyAccessWebhook(input: { email: string; password: stri
   }
 }
 
+/** Guarda o nome do produto comprado sem repetir. */
+export async function recordPurchase(userId: string, product: string) {
+  const name = product.trim();
+  if (!name) return;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { purchases: true } });
+  if (!user || user.purchases.some((p) => p.toLowerCase() === name.toLowerCase())) return;
+  await prisma.user.update({ where: { id: userId }, data: { purchases: { push: name } } });
+}
+
+/** Mesmo que recordPurchase, localizando pelo e-mail (webhooks). */
+export async function recordPurchaseByEmail(email: string, product: string) {
+  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() }, select: { id: true } });
+  if (user) await recordPurchase(user.id, product);
+}
+
 /** Senha legível, sem caracteres que se confundem (0/O, 1/l/I). */
 export function generatePassword(length = 10) {
   const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -56,12 +71,16 @@ export async function grantAccess(input: {
   source: string;
   password?: string;
   resetPassword?: boolean;
+  /** Nome do produto comprado (define o nível: principal, Franquia, Golden Ticket). */
+  product?: string;
 }): Promise<GrantResult> {
   const email = input.email.trim().toLowerCase();
   const name = input.name?.trim() || email.split('@')[0];
   const stamp = { planSource: input.source, planUpdatedAt: new Date(), planExpiresAt: null };
 
   const existing = await prisma.user.findUnique({ where: { email } });
+  // compra nova de quem já tem conta (upsell): só registra o produto
+  if (existing && input.product) await recordPurchase(existing.id, input.product);
 
   if (existing && existing.planSource !== REVOKED && !input.resetPassword && !input.password) {
     // Já tem acesso ativo: mantém a origem que liberou primeiro, para o reembolso de outra loja
@@ -84,7 +103,7 @@ export async function grantAccess(input: {
   }
 
   const user = await prisma.user.create({
-    data: { name, email, passwordHash, onboardingCompleted: true, ...stamp },
+    data: { name, email, passwordHash, onboardingCompleted: true, ...stamp, purchases: input.product ? [input.product.trim()] : [] },
   });
   await notifyAccessWebhook({ email, password, name });
   return { created: true, userId: user.id, name, email, password };

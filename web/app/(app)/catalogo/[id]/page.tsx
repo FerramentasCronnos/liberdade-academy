@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { getUserId } from '@/lib/session';
+import { getCurrentUser, getUserId } from '@/lib/session';
 import { formatCommissionRange, formatCompact, formatPrice, formatPriceRange, toProduct } from '@/lib/api';
 import { getProduct, listProductVideos } from '@/lib/queries';
 import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/page-header';
 import { CopyLinkButton } from '@/components/copy-link-button';
 import { ProductVideos } from '@/components/product-videos';
 import { BankOfferResources } from '@/components/bank-offer-resources';
+import { AffiliateLinksCard } from '@/components/affiliate-links-card';
 import { ProductGallery } from '@/components/product-gallery';
 import { ProductMetrics } from '@/components/product-metrics';
 import {
@@ -29,6 +30,7 @@ export async function generateMetadata({ params }: { params: Params }) {
 
 export default async function ProductPage({ params }: { params: Params }) {
   if (!(await getUserId())) redirect('/login');
+  const viewer = await getCurrentUser();
 
   const { id } = await params;
   const raw = await getProduct(id).catch(() => null);
@@ -186,6 +188,8 @@ export default async function ProductPage({ params }: { params: Params }) {
               )}
             </div>
 
+            {product.marketplace === 'bank_offers' && <AffiliateLinksCard tier={viewer?.purchaseTier ?? 'main'} />}
+
             <div className="flex flex-col gap-2.5 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
               {product.productUrl ? (
                 <>
@@ -206,10 +210,12 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </p>
               )}
 
-              <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--text-faint)]">
-                El enlace de afiliado con tu código saldrá cuando la integración de credenciales
-                esté lista. Por ahora el botón lleva al producto original.
-              </p>
+              {product.marketplace !== 'bank_offers' && (
+                <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--text-faint)]">
+                  El enlace de afiliado con tu código saldrá cuando la integración de credenciales
+                  esté lista. Por ahora el botón lleva al producto original.
+                </p>
+              )}
             </div>
           </aside>
         </div>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { grantAccess, revokeAccess } from '@/lib/access';
+import { dropUpsellPurchaseByEmail, grantAccess, revokeAccess } from '@/lib/access';
 import { deliverMvaAccess } from '@/lib/brain-access';
 import { hottoks } from '@/lib/hotmart';
 
@@ -40,6 +40,10 @@ export async function POST(request: Request) {
   if (!email) return NextResponse.json({ ok: true, ignored: event || 'sem evento' });
 
   if (REVOKE.includes(event)) {
+    // reembolso só do upsell (Franquia/Golden): perde o nível, mantém o acesso
+    if (await dropUpsellPurchaseByEmail(email, payload.data?.product?.name)) {
+      return NextResponse.json({ ok: true, revoked: false, upsellDropped: true, email });
+    }
     const result = await revokeAccess(email, source);
     return NextResponse.json({ ok: true, revoked: result.revoked, email });
   }

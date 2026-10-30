@@ -10,10 +10,26 @@
  */
 export type PurchaseTier = 'main' | 'up1' | 'up2';
 
-export function purchaseTier(purchases: string[] | null | undefined): PurchaseTier {
-  const names = (purchases ?? []).map((n) => n.toLowerCase());
-  if (names.some((n) => /golden/.test(n))) return 'up2';
-  if (names.some((n) => /franqui/.test(n))) return 'up1';
+export const PURCHASE_TIERS: PurchaseTier[] = ['main', 'up1', 'up2'];
+
+export function isPurchaseTier(value: unknown): value is PurchaseTier {
+  return typeof value === 'string' && (PURCHASE_TIERS as string[]).includes(value);
+}
+
+/** Nível que um nome de produto comprado libera (null = produto principal ou outro). */
+export function tierOfProduct(product: string): Exclude<PurchaseTier, 'main'> | null {
+  const name = product.toLowerCase();
+  if (/golden/.test(name)) return 'up2';
+  if (/franqui|franchise/.test(name)) return 'up1';
+  return null;
+}
+
+/** Nível pelas compras; o admin pode fixar um nível à mão (override). */
+export function purchaseTier(purchases: string[] | null | undefined, override?: string | null): PurchaseTier {
+  if (isPurchaseTier(override)) return override;
+  const tiers = (purchases ?? []).map(tierOfProduct);
+  if (tiers.includes('up2')) return 'up2';
+  if (tiers.includes('up1')) return 'up1';
   return 'main';
 }
 

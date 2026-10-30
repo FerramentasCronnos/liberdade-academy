@@ -36,6 +36,8 @@ export default async function ProductPage({ params }: { params: Params }) {
   const { id } = await params;
   const raw = await getProduct(id).catch(() => null);
   if (!raw) notFound();
+  // Bank Offer em rascunho: só o admin abre (a lista já esconde dos demais)
+  if (raw.marketplace === 'bank_offers' && !raw.active && !viewer?.isAdmin) notFound();
   const product = toProduct(raw);
   const videos = await listProductVideos(product.id);
 

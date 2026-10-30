@@ -26,8 +26,8 @@ export async function listProducts(params: {
   q?: string;
   viral?: boolean;
   limit?: number;
-  /** Bank Offers (ofertas próprias) só aparecem para admins até serem liberadas (BANK_OFFERS_PUBLIC=1). */
-  includeBankOffers?: boolean;
+  /** Bank Offers (ofertas próprias) ativas entram para todos; true inclui também as em rascunho (admin). */
+  includeDraftBankOffers?: boolean;
 }) {
   // três lojas no mesmo catálogo: 200 cortava o TikTok inteiro depois de Amazon e Shopee
   const take = Math.min(Math.max(1, params.limit ?? 2000), 3000);
@@ -36,11 +36,11 @@ export async function listProducts(params: {
     where: {
       // CATALOG_SHOW_DRAFTS=1 (só em preview) mostra também os produtos gravados
       // como rascunho por um provider em teste; produção segue só os ativos.
-      // Bank Offers (ofertas próprias) ignoram o `active`: quem pode vê-las
-      // (admin, ou todos com BANK_OFFERS_PUBLIC=1) vê também as em rascunho.
+      // Bank Offers em rascunho (active=false) só para admins, que as revisam
+      // antes de liberar; as ativas aparecem para todos.
       ...(process.env.CATALOG_SHOW_DRAFTS === '1'
         ? {}
-        : params.includeBankOffers
+        : params.includeDraftBankOffers
           ? { AND: [{ OR: [{ active: true }, { marketplace: 'bank_offers' }] }] }
           : { active: true }),
       // CATALOG_HIDDEN_PROVIDERS=apify esconde uma fonte sem desativar nada no
@@ -48,7 +48,6 @@ export async function listProducts(params: {
       ...(hiddenProviders().length ? { provider: { notIn: hiddenProviders() } } : {}),
       // produto sem foto não vai pra vitrine — card vazio parece bug
       image: { startsWith: 'http' },
-      ...(params.includeBankOffers ? {} : { marketplace: { not: 'bank_offers' } }),
       ...(params.region
         ? { OR: [{ marketplace: 'tiktok_shop', region: params.region }, { marketplace: { not: 'tiktok_shop' } }] }
         : {}),

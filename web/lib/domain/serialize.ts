@@ -21,7 +21,8 @@ export function serializeUser(user: UserWithStats) {
     isAdmin: user.isAdmin,
     /** Assinatura à parte da aba Creators (Stripe). A regra fica em lib/creators-access. */
     purchases: user.purchases,
-    purchaseTier: purchaseTier(user.purchases),
+    purchaseTier: purchaseTier(user.purchases, user.purchaseTierOverride),
+    purchaseTierOverride: user.purchaseTierOverride ?? undefined,
     creatorsAccess: user.creatorsAccess,
     creatorsAccessUntil: user.creatorsAccessUntil?.toISOString() ?? undefined,
     level: user.level,
@@ -49,6 +50,7 @@ export function serializeUser(user: UserWithStats) {
 export function serializeProduct(product: Product) {
   return {
     id: product.id,
+    active: product.active,
     externalId: product.externalId ?? undefined,
     name: product.name,
     image: product.image,

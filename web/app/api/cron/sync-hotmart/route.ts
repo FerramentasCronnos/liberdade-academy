@@ -1,22 +1,17 @@
 import { NextResponse } from 'next/server';
-import { grantAccess, revokeAccess } from '@/lib/access';
-import { deliverMvaAccess } from '@/lib/brain-access';
-import { listSales } from '@/lib/hotmart';
+import { SYNC_WINDOW_DAYS, syncHotmart } from '@/lib/hotmart-sync';
 
 /**
- * Sincroniza compras da Hotmart com os acessos.
+ * Sincroniza compras da Hotmart com os acessos (ver lib/hotmart-sync.ts).
  *
  * A Hotmart oferece webhook, mas ele depende de configurar o hottok no
  * painel. Consultar a API funciona só com as credenciais e cobre também o
- * que o webhook tiver perdido. No plano Hobby o cron é diário; para acesso
- * na hora, configure o webhook (hottok) ou chame esta rota de fora. Compra aprovada vira conta
- * (com e-mail); reembolso, chargeback e cancelamento bloqueiam o login.
+ * que o webhook tiver perdido. No plano Hobby o cron é diário.
  *
  * O Vercel envia o header Authorization com CRON_SECRET.
+ * ?days=365 refaz o histórico (ex.: registrar upsells antigos para o nível das Bank Offers).
  */
 export const maxDuration = 120;
-
-const WINDOW_DAYS = 45;
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -24,43 +19,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: 'No autorizado.' }, { status: 401 });
   }
 
-  const since = Date.now() - WINDOW_DAYS * 86_400_000;
-  const report = { created: [] as string[], existing: 0, revoked: [] as string[], emailErrors: [] as string[] };
-
+  const days = Number(new URL(request.url).searchParams.get('days')) || SYNC_WINDOW_DAYS;
   try {
-    const approved = [...(await listSales('APPROVED', since)), ...(await listSales('COMPLETE', since))];
-    const seen = new Set<string>();
-    for (const sale of approved) {
-      if (seen.has(sale.buyerEmail)) continue;
-      seen.add(sale.buyerEmail);
-
-      const result = await grantAccess({ name: sale.buyerName, email: sale.buyerEmail, source: 'hotmart', product: sale.productName });
-      if (!result.created) {
-        report.existing += 1;
-        continue;
-      }
-      report.created.push(sale.buyerEmail);
-      const mail = await deliverMvaAccess({ ...result, source: 'hotmart' });
-      if (!mail.ok) report.emailErrors.push(`${sale.buyerEmail}: ${mail.error}`);
-    }
-
-    const lost = [
-      ...(await listSales('REFUNDED', since)),
-      ...(await listSales('CHARGEBACK', since)),
-      ...(await listSales('CANCELLED', since)),
-    ];
-    for (const sale of lost) {
-      // quem comprou de novo depois do reembolso continua com acesso
-      if (seen.has(sale.buyerEmail)) continue;
-      const result = await revokeAccess(sale.buyerEmail, 'hotmart');
-      if (result.revoked) report.revoked.push(sale.buyerEmail);
-    }
+    return NextResponse.json({ ok: true, ...(await syncHotmart(days)) });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, message: error instanceof Error ? error.message : 'erro', ...report },
+      { ok: false, message: error instanceof Error ? error.message : 'erro' },
       { status: 502 },
     );
   }
-
-  return NextResponse.json({ ok: true, ...report });
 }

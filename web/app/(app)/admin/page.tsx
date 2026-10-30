@@ -16,6 +16,8 @@ import { listRewards } from '@/lib/queries';
 import { getUserId, isAdmin } from '@/lib/session';
 
 export const metadata = { title: 'Administración · MVA' };
+// a sincronização manual da Hotmart (12 meses) percorre várias páginas da API
+export const maxDuration = 120;
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab } = await searchParams;
@@ -35,6 +37,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         isAdmin: true,
         plan: true,
         createdAt: true,
+        purchases: true,
+        purchaseTierOverride: true,
       },
     }),
     listRewards(userId),

@@ -44,6 +44,8 @@ model User {
   planUpdatedAt       DateTime?
   /// Nomes dos produtos comprados (Hotmart/Kiwify/Stripe): define o nível (principal, Franquia, Golden Ticket).
   purchases           String[]            @default([])
+  /// Nível fixado pelo admin (main | up1 | up2); null = calculado pelas compras.
+  purchaseTierOverride String?
   posts               Post[]
   likes               PostLike[]
   comments            Comment[]

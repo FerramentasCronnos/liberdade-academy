@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
+import { tierOfProduct } from '@/lib/purchase-tier';
 
 /**
  * Concessão e bloqueio de acesso de compradores.
@@ -51,6 +52,20 @@ export async function recordPurchase(userId: string, product: string) {
 export async function recordPurchaseByEmail(email: string, product: string) {
   const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() }, select: { id: true } });
   if (user) await recordPurchase(user.id, product);
+}
+
+/**
+ * Reembolso de um upsell (Franquia, Golden Ticket) tira só aquele produto da
+ * lista; o acesso à plataforma vem do produto principal e continua.
+ * Devolve false quando o produto não é upsell (aí o chamador revoga o acesso).
+ */
+export async function dropUpsellPurchaseByEmail(email: string, product: string | undefined) {
+  if (!product || !tierOfProduct(product)) return false;
+  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() }, select: { id: true, purchases: true } });
+  if (!user) return true;
+  const rest = user.purchases.filter((p) => p.toLowerCase() !== product.trim().toLowerCase());
+  if (rest.length !== user.purchases.length) await prisma.user.update({ where: { id: user.id }, data: { purchases: rest } });
+  return true;
 }
 
 /** Senha legível, sem caracteres que se confundem (0/O, 1/l/I). */

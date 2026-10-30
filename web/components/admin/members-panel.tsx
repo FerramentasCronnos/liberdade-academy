@@ -6,11 +6,14 @@ import {
   createMember,
   deleteMember,
   resetPassword,
+  setPurchaseTier,
+  syncHotmartPurchases,
   toggleAdmin,
   type AdminState,
 } from '@/app/(app)/admin/actions';
 import { avatarColor, initials } from '@/lib/community';
 import { IconCheck, IconX } from '../icons';
+import { purchaseTier, type PurchaseTier } from '@/lib/purchase-tier';
 
 export interface Member {
   id: string;
@@ -19,6 +22,41 @@ export interface Member {
   isAdmin: boolean;
   plan: string;
   createdAt: string;
+  /** Produtos comprados (Hotmart/Kiwify/Stripe), como chegaram. */
+  purchases: string[];
+  /** Nível fixado pelo admin; null = automático. */
+  purchaseTierOverride: string | null;
+}
+
+const TIER_LABEL: Record<PurchaseTier, string> = { main: 'Principal', up1: 'Franquicia', up2: 'Golden Ticket' };
+
+/** Nível nas Bank Offers: automático pelas compras ou fixado pelo admin. */
+function TierSelect({ member }: { member: Member }) {
+  const auto = purchaseTier(member.purchases);
+  const effective = purchaseTier(member.purchases, member.purchaseTierOverride);
+  return (
+    <form action={setPurchaseTier} className="flex shrink-0 items-center gap-1.5" title={member.purchases.length ? `Compras: ${member.purchases.join(' · ')}` : 'Sin compras registradas'}>
+      <input type="hidden" name="id" value={member.id} />
+      <span
+        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${effective === 'main' ? 'bg-[var(--bg-sunken)] text-[var(--text-muted)]' : 'bg-[var(--money)]/15 text-[var(--money)]'}`}
+      >
+        {TIER_LABEL[effective]}
+        {member.purchaseTierOverride ? ' · manual' : ''}
+      </span>
+      <select
+        name="tier"
+        defaultValue={member.purchaseTierOverride ?? 'auto'}
+        onChange={(event) => event.currentTarget.form?.requestSubmit()}
+        aria-label={`Nivel Bank Offers de ${member.email}`}
+        className="rounded-lg border border-[var(--border)] bg-[var(--bg-sunken)] px-2 py-1.5 text-[12px] text-[var(--text)] outline-none focus:border-[var(--brand)]"
+      >
+        <option value="auto">Automático ({TIER_LABEL[auto]})</option>
+        <option value="main">Principal</option>
+        <option value="up1">Franquicia</option>
+        <option value="up2">Golden Ticket</option>
+      </select>
+    </form>
+  );
 }
 
 const input =
@@ -83,6 +121,17 @@ function ResetForm({ member }: { member: Member }) {
   );
 }
 
+function SyncHotmartButton() {
+  const [state, action] = useActionState<AdminState, FormData>(syncHotmartPurchases, {});
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-2">
+      <Submit label="Sincronizar Hotmart (12 meses)" pendingLabel="Sincronizando…" />
+      {state.ok && <span className="text-[12px] text-[var(--money)]">{state.ok}</span>}
+      {state.error && <span className="text-[12px] text-red-600">{state.error}</span>}
+    </form>
+  );
+}
+
 export function MembersPanel({ members, meId }: { members: Member[]; meId: string }) {
   const [state, action] = useActionState<AdminState, FormData>(createMember, {});
 
@@ -133,9 +182,16 @@ export function MembersPanel({ members, meId }: { members: Member[]; meId: strin
         )}
       </form>
 
-      <h2 className="mt-6 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
-        Miembros ({members.length})
-      </h2>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">
+          Miembros ({members.length})
+        </h2>
+        <SyncHotmartButton />
+      </div>
+      <p className="mt-1 text-[12px] text-[var(--text-muted)]">
+        El nivel de Bank Offers (Principal, Franquicia, Golden Ticket) sale de las compras registradas; pasa el cursor por el
+        nivel para ver los productos. Si una compra no llegó, fíjalo a mano en el selector.
+      </p>
 
       <ul className="mt-3 divide-y divide-[var(--border)] rounded-[22px] bg-[var(--bg-elevated)] px-5 shadow-[var(--shadow-soft)]">
         {members.map((member) => {
@@ -163,6 +219,8 @@ export function MembersPanel({ members, meId }: { members: Member[]; meId: strin
                 </p>
                 <p className="truncate text-[12px] text-[var(--text-faint)]">{member.email}</p>
               </div>
+
+              {!member.isAdmin && <TierSelect member={member} />}
 
               <ResetForm member={member} />
 

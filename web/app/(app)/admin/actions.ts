@@ -5,6 +5,8 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 import { getUserId, isAdmin } from '@/lib/session';
 import { notifyAccessWebhook } from '@/lib/access';
+import { isPurchaseTier } from '@/lib/purchase-tier';
+import { syncHotmart } from '@/lib/hotmart-sync';
 
 /**
  * Ações da área administrativa.
@@ -85,6 +87,37 @@ export async function toggleAdmin(formData: FormData) {
 
   await prisma.user.update({ where: { id }, data: { isAdmin: !user.isAdmin } });
   revalidatePath('/admin');
+}
+
+/**
+ * Nível nas Bank Offers fixado à mão (quando a compra do upsell não chegou
+ * pelo webhook/sync). 'auto' volta a calcular pelas compras.
+ */
+export async function setPurchaseTier(formData: FormData) {
+  if (!(await requireAdmin())) return;
+  const id = String(formData.get('id') || '');
+  const tier = String(formData.get('tier') || 'auto');
+  if (!id) return;
+  await prisma.user.update({
+    where: { id },
+    data: { purchaseTierOverride: isPurchaseTier(tier) ? tier : null },
+  });
+  revalidatePath('/admin');
+  revalidatePath('/catalogo');
+}
+
+/** Refaz a sincronização da Hotmart dos últimos 12 meses (acessos e nível das Bank Offers). */
+export async function syncHotmartPurchases(_prev: AdminState, _formData: FormData): Promise<AdminState> {
+  if (!(await requireAdmin())) return { error: 'Acceso restringido.' };
+  try {
+    const r = await syncHotmart(365);
+    revalidatePath('/admin');
+    return {
+      ok: `Hotmart: ${r.created.length} accesos nuevos, ${r.existing} ya existentes, ${r.purchasesRecorded} compras adicionales registradas, ${r.revoked.length} bloqueados.`,
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Falló la sincronización.' };
+  }
 }
 
 export async function deleteMember(formData: FormData) {

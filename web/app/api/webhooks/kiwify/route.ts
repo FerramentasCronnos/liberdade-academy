@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { grantAccess, revokeAccess } from '@/lib/access';
+import { dropUpsellPurchaseByEmail, grantAccess, revokeAccess } from '@/lib/access';
 import { deliverMvaAccess } from '@/lib/brain-access';
 
 /**
@@ -58,6 +58,9 @@ export async function POST(request: Request) {
     ['refunded', 'chargedback'].includes(status);
 
   if (email && revoked) {
+    if (await dropUpsellPurchaseByEmail(email, payload.Product?.product_name)) {
+      return NextResponse.json({ ok: true, revoked: false, upsellDropped: true, email });
+    }
     const result = await revokeAccess(email);
     return NextResponse.json({ ok: true, revoked: result.revoked, email });
   }

@@ -7,6 +7,7 @@ import { CATEGORY_LABEL, MARKETPLACE_BY_ID } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { CopyLinkButton } from '@/components/copy-link-button';
 import { ProductVideos } from '@/components/product-videos';
+import { BankOfferResources } from '@/components/bank-offer-resources';
 import { ProductGallery } from '@/components/product-gallery';
 import { ProductMetrics } from '@/components/product-metrics';
 import {
@@ -100,6 +101,8 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </div>
               </div>
             </div>
+
+            {product.marketplace === 'bank_offers' && <BankOfferResources resources={product.resources} slug={product.externalId} />}
 
             {product.metrics && (
               <ProductMetrics

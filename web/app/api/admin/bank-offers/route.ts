@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 
 /**
@@ -30,6 +31,8 @@ type OfferInput = {
   commissionAmount?: number | null;
   supplier?: string;
   active?: boolean;
+  /** Recursos do afiliado: [{kind:'creatives'|'presell'|'link', label, url}]. */
+  resources?: Array<{ kind: string; label: string; url: string }> | null;
 };
 
 function authorized(request: Request) {
@@ -83,6 +86,7 @@ export async function POST(request: Request) {
         isViral: false,
         commission: offer.commission == null ? null : Math.round(Number(offer.commission)),
         ...(offer.commissionAmount !== undefined ? { commissionAmount: offer.commissionAmount == null ? null : Number(offer.commissionAmount) } : {}),
+        ...(offer.resources !== undefined ? { resources: offer.resources === null ? Prisma.DbNull : offer.resources } : {}),
         description: (offer.description || offer.name).slice(0, 2000),
         supplierShips: true,
         active: offer.active ?? true,

@@ -305,6 +305,8 @@ model Product {
   commission       Int?
   /// Comissão fixa por venda, na moeda do produto (Bank Offers). Tem prioridade sobre o percentual.
   commissionAmount Float?
+  /// Recursos do afiliado (Bank Offers): [{kind:"creatives"|"presell"|"link", label, url}].
+  resources        Json?
   description      String
   supplierShips    Boolean          @default(true)
   active           Boolean          @default(true)

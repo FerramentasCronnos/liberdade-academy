@@ -46,6 +46,7 @@ export function serializeUser(user: UserWithStats) {
 export function serializeProduct(product: Product) {
   return {
     id: product.id,
+    externalId: product.externalId ?? undefined,
     name: product.name,
     image: product.image,
     price: product.price,
@@ -61,6 +62,12 @@ export function serializeProduct(product: Product) {
     commission: product.commission ?? undefined,
     /** Comissão fixa por venda (Bank Offers); quando existe, vale no lugar do percentual. */
     commissionAmount: product.commissionAmount ?? undefined,
+    /** Recursos do afiliado (Bank Offers). */
+    resources: Array.isArray(product.resources)
+      ? (product.resources as Array<{ kind?: string; label?: string; url?: string }>)
+          .filter((r) => r && typeof r.url === 'string' && typeof r.label === 'string')
+          .map((r) => ({ kind: String(r.kind ?? 'link'), label: String(r.label), url: String(r.url) }))
+      : undefined,
     /** Taxa configurada por categoria. A UI precisa rotular como estimativa. */
     commissionEstimated:
       product.commission == null

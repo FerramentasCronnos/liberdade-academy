@@ -65,6 +65,8 @@ export const CATEGORIES: Category[] = [
 /** Produto como a API Fastify devolve hoje. */
 export interface ApiProduct {
   id: string;
+  /** Id na fonte (slug nas Bank Offers). */
+  externalId?: string;
   name: string;
   image: string;
   price: number;
@@ -82,6 +84,8 @@ export interface ApiProduct {
   commissionEstimated?: number;
   /** Comissão fixa por venda, na moeda do produto (Bank Offers). */
   commissionAmount?: number;
+  /** Recursos do afiliado (Bank Offers): criativos, presell, links. */
+  resources?: Array<{ kind: string; label: string; url: string }>;
   description: string;
   supplierShips: boolean;
   region?: string;

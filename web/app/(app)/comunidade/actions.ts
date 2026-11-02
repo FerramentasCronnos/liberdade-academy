@@ -9,6 +9,7 @@ import {
   createSpacePost,
   createTicket,
   deletePost,
+  holdPostForReview,
   replyTicket,
   runPostPublishSideEffects,
   setPinned,
@@ -170,6 +171,21 @@ export async function pinPost(postId: string, pinned: boolean) {
   if (!userId || !(await isAdmin(userId))) return;
   await setPinned(postId, pinned);
   revalidatePath('/comunidade', 'layout');
+}
+
+/** Admin: retira um post publicado do feed e o manda à aba Moderación. */
+export async function sendPostToReview(postId: string, backTo: string) {
+  const userId = await getUserId();
+  if (!userId || !(await isAdmin(userId))) return;
+  try {
+    await holdPostForReview(postId);
+  } catch {
+    return;
+  }
+  revalidatePath('/admin');
+  revalidatePath('/comunidade', 'layout');
+  revalidatePath(`/comunidade/post/${postId}`);
+  redirect(backTo);
 }
 
 export async function removePost(postId: string, backTo: string) {

@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
-import { pinPost, removePost, toggleLike } from '@/app/(app)/comunidade/actions';
+import { pinPost, removePost, sendPostToReview, toggleLike } from '@/app/(app)/comunidade/actions';
 import { avatarColor, initials, relativeTime, type CommunityPost } from '@/lib/community';
 import { Avatar } from './avatar';
 import { RichText } from './rich-text';
@@ -69,6 +69,20 @@ function Menu({
           {canPin && (
             <button type="button" className={itemCls} onClick={() => { setOpen(false); startTransition(() => pinPost(post.id, !post.pinned)); }}>
               {post.pinned ? 'Desfijar' : 'Fijar arriba'}
+            </button>
+          )}
+          {canPin && post.reviewStatus !== 'pending' && (
+            <button
+              type="button"
+              className={itemCls}
+              onClick={() => {
+                setOpen(false);
+                if (confirm('¿Retirar del feed y enviar a Moderación? Solo el autor y el equipo la verán.')) {
+                  startTransition(() => sendPostToReview(post.id, backTo));
+                }
+              }}
+            >
+              Enviar a revisión
             </button>
           )}
           {canDelete && (

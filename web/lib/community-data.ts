@@ -412,6 +412,17 @@ export async function approvePendingPost(postId: string) {
   return runPostPublishSideEffects(postId);
 }
 
+/** Admin tira do feed um post já publicado: volta à fila de moderação (visível só ao autor e à equipe). */
+export async function holdPostForReview(postId: string) {
+  const post = await prisma.post.findUnique({ where: { id: postId }, select: { reviewStatus: true } });
+  if (!post) throw new CommunityError('Publicación no encontrada.');
+  if (post.reviewStatus === 'pending') return;
+  await prisma.post.update({
+    where: { id: postId },
+    data: { reviewStatus: 'pending', reviewNote: 'retenida por el equipo', reviewedAt: null, pinned: false },
+  });
+}
+
 /** Recusa: o post fica visível só para o autor, com a nota da equipe. */
 export async function rejectPendingPost(postId: string, note?: string) {
   const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true, title: true, content: true, reviewStatus: true } });

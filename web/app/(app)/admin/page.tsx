@@ -63,6 +63,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       />
 
       <div className="mx-auto max-w-[900px] px-5 pb-12 pt-2 sm:px-8">
+        <p className="mb-3 text-right text-[12.5px]">
+          <a href="/api/admin/export-soporte" className="font-semibold text-[var(--brand)] hover:underline">
+            Exportar soporte (JSON)
+          </a>
+          <span className="text-[var(--text-faint)]"> · conversas de la IA, tickets y posts de soporte</span>
+        </p>
         <Tabs
           initial={tab}
           tabs={[

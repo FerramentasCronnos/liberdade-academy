@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { dropUpsellPurchaseByEmail, grantAccess, revokeAccess } from '@/lib/access';
+import { buyerPhone, dropUpsellPurchaseByEmail, grantAccess, revokeAccess } from '@/lib/access';
 import { deliverMvaAccess } from '@/lib/brain-access';
 
 /**
@@ -17,7 +17,7 @@ interface KiwifyPayload {
   order_id?: string;
   order_status?: string;
   webhook_event_type?: string;
-  Customer?: { full_name?: string; first_name?: string; email?: string };
+  Customer?: { full_name?: string; first_name?: string; email?: string; mobile?: string };
   Product?: { product_id?: string; product_name?: string };
 }
 
@@ -74,6 +74,7 @@ export async function POST(request: Request) {
     email,
     source: 'kiwify',
     product: payload.Product?.product_name,
+    phone: buyerPhone(payload.Customer?.mobile),
   });
 
   if (!result.created) {

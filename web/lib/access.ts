@@ -18,17 +18,17 @@ const REVOKED = 'kiwify_refunded';
 /**
  * Avisa a automação de boas-vindas da própria equipe (LeadConnector, env
  * ACCESS_WEBHOOK_URL) que um acesso foi criado, com e-mail e senha, para o
- * WhatsApp de boas-vindas. Só em criação, nunca em troca de senha. Uma
- * falha não bloqueia a criação: fica no log.
+ * WhatsApp de boas-vindas. Leva nome, e-mail, telefone (quando a loja manda)
+ * e senha. Uma falha não bloqueia a criação: fica no log.
  */
-export async function notifyAccessWebhook(input: { email: string; password: string; name?: string }) {
+export async function notifyAccessWebhook(input: { email: string; password: string; name?: string; phone?: string | null }) {
   const url = process.env.ACCESS_WEBHOOK_URL;
   if (!url) return { sent: false as const, reason: 'ACCESS_WEBHOOK_URL não configurada' };
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: input.email, senha: input.password, name: input.name ?? '', platform: 'MVA' }),
+      body: JSON.stringify({ name: input.name ?? '', email: input.email, phone: input.phone ?? '', senha: input.password, platform: 'MVA' }),
       signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) console.error(`[access-webhook] ${response.status} para ${input.email}`);
@@ -68,6 +68,18 @@ export async function dropUpsellPurchaseByEmail(email: string, product: string |
   return true;
 }
 
+/**
+ * Telefone no formato internacional (+5511987654321) para o WhatsApp da automação.
+ * A Hotmart manda o código do país separado; a Kiwify costuma mandar tudo junto.
+ */
+export function buyerPhone(phone?: string | null, countryCode?: string | null): string | null {
+  const digits = (phone ?? '').replace(/\D/g, '');
+  if (digits.length < 8) return null;
+  const code = (countryCode ?? '').replace(/\D/g, '');
+  if ((phone ?? '').trim().startsWith('+') || !code || digits.startsWith(code)) return `+${digits}`;
+  return `+${code}${digits}`;
+}
+
 /** Senha legível, sem caracteres que se confundem (0/O, 1/l/I). */
 export function generatePassword(length = 10) {
   const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -88,6 +100,8 @@ export async function grantAccess(input: {
   resetPassword?: boolean;
   /** Nome do produto comprado (define o nível: principal, Franquia, Golden Ticket). */
   product?: string;
+  /** Telefone do comprador (só vai para o webhook da automação). */
+  phone?: string | null;
 }): Promise<GrantResult> {
   const email = input.email.trim().toLowerCase();
   const name = input.name?.trim() || email.split('@')[0];
@@ -113,14 +127,14 @@ export async function grantAccess(input: {
   if (existing) {
     // voltou depois de um reembolso ou solicitou redefinição de senha: grava e avisa webhook
     await prisma.user.update({ where: { id: existing.id }, data: { passwordHash, ...stamp } });
-    await notifyAccessWebhook({ email, password, name: existing.name });
+    await notifyAccessWebhook({ email, password, name: existing.name, phone: input.phone });
     return { created: true, userId: existing.id, name: existing.name, email, password };
   }
 
   const user = await prisma.user.create({
     data: { name, email, passwordHash, onboardingCompleted: true, ...stamp, purchases: input.product ? [input.product.trim()] : [] },
   });
-  await notifyAccessWebhook({ email, password, name });
+  await notifyAccessWebhook({ email, password, name, phone: input.phone });
   return { created: true, userId: user.id, name, email, password };
 }
 

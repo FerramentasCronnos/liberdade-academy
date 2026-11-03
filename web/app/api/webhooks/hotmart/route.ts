@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { dropUpsellPurchaseByEmail, grantAccess, revokeAccess } from '@/lib/access';
+import { buyerPhone, dropUpsellPurchaseByEmail, grantAccess, revokeAccess } from '@/lib/access';
 import { deliverMvaAccess } from '@/lib/brain-access';
 import { hottoks } from '@/lib/hotmart';
 
@@ -17,7 +17,7 @@ interface HotmartEvent {
   resetPassword?: boolean;
   data?: {
     product?: { name?: string };
-    buyer?: { email?: string; name?: string };
+    buyer?: { email?: string; name?: string; checkout_phone?: string; checkout_phone_code?: string; phone?: string };
     purchase?: { status?: string; transaction?: string };
   };
 }
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
     password: payload.password,
     resetPassword: payload.resetPassword,
     product: payload.data?.product?.name,
+    phone: buyerPhone(payload.data?.buyer?.checkout_phone || payload.data?.buyer?.phone, payload.data?.buyer?.checkout_phone_code),
   });
   if (!result.created) return NextResponse.json({ ok: true, created: false, email });
 

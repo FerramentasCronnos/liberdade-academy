@@ -33,13 +33,22 @@ export async function syncBrainAccess(input: { email: string; name: string; pass
   }
 }
 
-/** Entrega o acesso de uma compra: senha igual na BRAIN e um e-mail só do MVA. */
+/**
+ * Lojas cujo comprador ainda recebe o e-mail de acesso do catálogo. Desde 03/11/2026 quem compra pela Hotmart ou pela
+ * Brain Academy recebe só o e-mail de boas-vindas da área de membros (academy.s4accelerator.com): cria a senha lá e
+ * abre o catálogo e a BRAIN pela Central de ferramentas, já logado. A Kiwify não manda vendas para a área de membros,
+ * então quem compra por ela continua recebendo este e-mail.
+ */
+const MAIL_SOURCES = new Set(['kiwify']);
+
+/** Entrega o acesso de uma compra: senha igual na BRAIN e, só para as lojas de MAIL_SOURCES, o e-mail do MVA. */
 export async function deliverMvaAccess(input: {
   name: string;
   email: string;
   password: string;
   source?: string;
-}) {
+}): Promise<{ ok: boolean; error?: string }> {
   const brain = await syncBrainAccess(input);
+  if (!MAIL_SOURCES.has((input.source ?? '').toLowerCase())) return { ok: true };
   return sendMvaAccessEmail({ ...input, brain, source: input.source });
 }

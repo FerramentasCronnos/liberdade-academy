@@ -17,9 +17,9 @@ const REVOKED = 'kiwify_refunded';
 
 /**
  * Avisa a automação de boas-vindas da própria equipe (LeadConnector, env
- * ACCESS_WEBHOOK_URL) que um acesso foi criado, com e-mail e senha, para o
- * WhatsApp de boas-vindas. Leva nome, e-mail, telefone (quando a loja manda)
- * e senha. Uma falha não bloqueia a criação: fica no log.
+ * ACCESS_WEBHOOK_URL) de um acesso criado pela administração, com e-mail e
+ * senha. Compras não passam mais por aqui: a área de membros manda o link de
+ * criar a senha (ver notifyAccessLink). Uma falha não bloqueia a criação.
  */
 export async function notifyAccessWebhook(input: { email: string; password: string; name?: string; phone?: string | null }) {
   const url = process.env.ACCESS_WEBHOOK_URL;
@@ -35,6 +35,29 @@ export async function notifyAccessWebhook(input: { email: string; password: stri
     return { sent: response.ok, status: response.status };
   } catch (error) {
     console.error('[access-webhook] falhou', input.email, error);
+    return { sent: false as const, reason: error instanceof Error ? error.message : 'erro' };
+  }
+}
+
+/**
+ * Link de criar a senha na área de membros (academy.s4accelerator.com), mandado por ela logo depois de uma compra:
+ * vai para a mesma automação (ACCESS_WEBHOOK_URL) no lugar da senha, para o WhatsApp de boas-vindas. Com a senha da
+ * área de membros a pessoa abre o catálogo e a BRAIN pela Central de ferramentas.
+ */
+export async function notifyAccessLink(input: { email: string; link: string; name?: string; phone?: string | null }) {
+  const url = process.env.ACCESS_WEBHOOK_URL;
+  if (!url) return { sent: false as const, reason: 'ACCESS_WEBHOOK_URL não configurada' };
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: input.name ?? '', email: input.email, phone: input.phone ?? '', link: input.link, platform: 'MVA' }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) console.error(`[access-link] ${response.status} para ${input.email}`);
+    return { sent: response.ok, status: response.status };
+  } catch (error) {
+    console.error('[access-link] falhou', input.email, error);
     return { sent: false as const, reason: error instanceof Error ? error.message : 'erro' };
   }
 }
@@ -127,14 +150,12 @@ export async function grantAccess(input: {
   if (existing) {
     // voltou depois de um reembolso ou solicitou redefinição de senha: grava e avisa webhook
     await prisma.user.update({ where: { id: existing.id }, data: { passwordHash, ...stamp } });
-    await notifyAccessWebhook({ email, password, name: existing.name, phone: input.phone });
     return { created: true, userId: existing.id, name: existing.name, email, password };
   }
 
   const user = await prisma.user.create({
     data: { name, email, passwordHash, onboardingCompleted: true, ...stamp, purchases: input.product ? [input.product.trim()] : [] },
   });
-  await notifyAccessWebhook({ email, password, name, phone: input.phone });
   return { created: true, userId: user.id, name, email, password };
 }
 

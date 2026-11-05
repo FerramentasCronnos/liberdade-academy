@@ -40,16 +40,13 @@ export async function GET(request: Request) {
 
   try {
     if ([...params.keys()].length === 0) {
-      // cron a cada 2 dias (ver vercel.json) pra economizar créditos da
-      // Kalodata. Amazon (US) e Shopee (BR) uma vez por semana: como o cron cai
-      // em dias alternados, segunda OU terça garante uma execução semanal.
-      const weekday = new Date().getUTCDay();
-      const monday = weekday === 1 || weekday === 2;
-      const skipped = { skipped: 'solo una vez por semana (lunes o martes)' };
+      // cron 2x por mês, dias 1 e 15 (ver vercel.json), pra economizar
+      // créditos da Kalodata. Como roda pouco, cada execução atualiza as três
+      // lojas: TikTok Shop, Amazon (US) e Shopee (BR).
       const all = await Promise.all([
         syncCatalog({}),
-        monday ? syncCatalog({ marketplace: 'amazon', regions: ['US'] }).catch((e: Error) => ({ error: e.message })) : skipped,
-        monday ? syncCatalog({ marketplace: 'shopee', regions: ['BR'] }).catch((e: Error) => ({ error: e.message })) : skipped,
+        syncCatalog({ marketplace: 'amazon', regions: ['US'] }).catch((e: Error) => ({ error: e.message })),
+        syncCatalog({ marketplace: 'shopee', regions: ['BR'] }).catch((e: Error) => ({ error: e.message })),
       ]);
       return NextResponse.json({ tiktok_shop: all[0], amazon: all[1], shopee: all[2] });
     }

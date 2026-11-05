@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/sync-creators",
-      "schedule": "0 10 */2 * *"
+      "schedule": "0 10 1,15 * *"
     }
   ]
 }

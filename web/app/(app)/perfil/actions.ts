@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { put } from '@vercel/blob';
+import { mediaConfigured, putPublic } from '@/lib/media';
 import { updateProfile } from '@/lib/mutations';
 import { getUserId } from '@/lib/session';
 
@@ -54,16 +54,13 @@ export async function uploadAvatar(formData: FormData): Promise<{ url?: string; 
     return { error: 'Formato no soportado. Usa JPG, PNG, WEBP o GIF.' };
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return { error: 'Almacenamiento de imágenes no configurado (BLOB_READ_WRITE_TOKEN).' };
+  if (!mediaConfigured()) {
+    return { error: 'Almacenamiento de imágenes no configurado.' };
   }
 
   try {
     const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
-    const blob = await put(`uploads/${crypto.randomUUID()}.${ext}`, file, {
-      access: 'public',
-      contentType: file.type,
-    });
+    const blob = await putPublic(`uploads/${crypto.randomUUID()}.${ext}`, file, { contentType: file.type });
     return { url: blob.url };
   } catch {
     return { error: 'No pude subir la imagen.' };

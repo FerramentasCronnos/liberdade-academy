@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { putPublic } from '@/lib/media';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 
@@ -47,11 +47,7 @@ async function persistImage(url: string, slug: string) {
   if (!response.ok) throw new Error(`imagem ${response.status}`);
   const type = response.headers.get('content-type') || 'image/png';
   const ext = type.includes('jpeg') || type.includes('jpg') ? 'jpg' : type.includes('webp') ? 'webp' : 'png';
-  const blob = await put(`catalog/bank-offers/${slug}.${ext}`, await response.blob(), {
-    access: 'public',
-    contentType: type,
-    allowOverwrite: true,
-  });
+  const blob = await putPublic(`catalog/bank-offers/${slug}.${ext}`, await response.blob(), { contentType: type, randomSuffix: true });
   return blob.url;
 }
 

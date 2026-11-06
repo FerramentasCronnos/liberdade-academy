@@ -5,7 +5,7 @@ import { RichText } from '@/components/rich-text';
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useRef, useState } from 'react';
-import { upload } from '@vercel/blob/client';
+import { uploadFile } from '@/lib/media-upload';
 import { IconImage, IconMessage, IconX } from './icons';
 
 /**
@@ -57,7 +57,7 @@ export function AssistantWidget() {
     setError(null);
     try {
       const name = (file.name && file.name !== 'image.png' ? file.name : `captura-${Date.now()}.png`).replace(/[^\w.-]+/g, '_');
-      const blob = await upload(`support/${name}`, file, { access: 'public', handleUploadUrl: '/api/upload', contentType: file.type });
+      const blob = await uploadFile(`support/${name}`, file);
       setPending((p) => [...p, blob.url].slice(0, 4));
     } catch (e) {
       setError(e instanceof Error ? `No pude subir la imagen: ${e.message}` : 'No pude subir la imagen.');

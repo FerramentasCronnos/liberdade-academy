@@ -1,4 +1,4 @@
-import { put } from '@vercel/blob';
+import { mediaConfigured, putPublic } from '@/lib/media';
 import { prisma } from '@/lib/db';
 
 /**
@@ -25,12 +25,8 @@ export async function fetchCreatorAvatar(handle: string): Promise<string | null>
     if (!type.startsWith('image/')) return null;
     const blob = await response.blob();
     if (blob.size < 500) return null; // placeholder minúsculo = não achou
-    if (!process.env.BLOB_READ_WRITE_TOKEN) return null;
-    const stored = await put(`creators/${clean}.${type.includes('png') ? 'png' : type.includes('webp') ? 'webp' : 'jpg'}`, blob, {
-      access: 'public',
-      contentType: type,
-      allowOverwrite: true,
-    });
+    if (!mediaConfigured()) return null;
+    const stored = await putPublic(`creators/${clean}.${type.includes('png') ? 'png' : type.includes('webp') ? 'webp' : 'jpg'}`, blob, { contentType: type });
     return stored.url;
   } catch (error) {
     console.warn('[creator-avatars] falhou', clean, error);

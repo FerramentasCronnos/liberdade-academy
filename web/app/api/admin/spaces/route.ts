@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { putPublic } from '@/lib/media';
 import { prisma } from '@/lib/db';
 
 /**
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   if (file.size > 3 * 1024 * 1024) return NextResponse.json({ message: 'Imagen mayor a 3 MB.' }, { status: 400 });
 
   const ext = (file.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-  const blob = await put(`spaces/${slug}.${ext}`, file, { access: 'public', contentType: file.type, allowOverwrite: true });
+  const blob = await putPublic(`spaces/${slug}.${ext}`, file, { contentType: file.type, randomSuffix: true });
   await prisma.space.update({ where: { slug }, data: { coverImage: blob.url } });
 
   return NextResponse.json({ ok: true, slug, coverImage: blob.url });

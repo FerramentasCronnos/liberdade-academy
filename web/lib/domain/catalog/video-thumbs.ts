@@ -1,4 +1,4 @@
-import { put } from '@vercel/blob';
+import { mediaConfigured, putPublic } from '@/lib/media';
 import { prisma } from '@/lib/db';
 
 /**
@@ -44,16 +44,12 @@ async function lookupThumbnail(videoUrl: string, videoId: string): Promise<Thumb
     } | null;
     const source = data?.thumbnail_url;
     if (!source || !/^https?:\/\//.test(source)) return { url: null, permanent: false };
-    if (!process.env.BLOB_READ_WRITE_TOKEN) return { url: source, permanent: false };
+    if (!mediaConfigured()) return { url: source, permanent: false };
 
     const image = await fetch(source, { signal: AbortSignal.timeout(15_000) });
     if (!image.ok) return { url: source, permanent: false };
     const type = image.headers.get('content-type') || 'image/jpeg';
-    const blob = await put(`catalog/videos/${videoId}.${type.includes('webp') ? 'webp' : 'jpg'}`, await image.blob(), {
-      access: 'public',
-      contentType: type,
-      allowOverwrite: true,
-    });
+    const blob = await putPublic(`catalog/videos/${videoId}.${type.includes('webp') ? 'webp' : 'jpg'}`, await image.blob(), { contentType: type });
     return { url: blob.url, permanent: false };
   } catch (error) {
     console.warn('[video-thumbs] capa não obtida', videoId, error);

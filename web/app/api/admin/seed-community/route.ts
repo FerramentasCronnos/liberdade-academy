@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { mediaConfigured, putPublic } from '@/lib/media';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
 
@@ -155,17 +155,13 @@ function authorized(request: Request) {
   return Boolean(secret) && request.headers.get('authorization') === `Bearer ${secret}`;
 }
 
-/** Copia o retrato para o Blob; se não der, usa a origem para não travar o seed. */
+/** Copia o retrato para o armazenamento (R2); se não der, usa a origem para não travar o seed. */
 async function storePhoto(slug: string, url: string) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return url;
+  if (!mediaConfigured()) return url;
   try {
     const response = await fetch(url);
     if (!response.ok) return url;
-    const blob = await put(`demo/avatars/${slug}.jpg`, await response.blob(), {
-      access: 'public',
-      contentType: 'image/jpeg',
-      allowOverwrite: true,
-    });
+    const blob = await putPublic(`demo/avatars/${slug}.jpg`, await response.blob(), { contentType: 'image/jpeg' });
     return blob.url;
   } catch {
     return url;

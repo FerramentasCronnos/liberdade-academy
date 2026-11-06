@@ -5,7 +5,7 @@
 import { useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { createPost } from '@/app/(app)/comunidade/actions';
-import { upload } from '@vercel/blob/client';
+import { uploadFile } from '@/lib/media-upload';
 import { COVER_PRESETS, ImageCropDialog, POST_PRESETS } from './image-crop-dialog';
 import { avatarColor, initials, normalizeTag, SUGGESTED_TAGS, type Space } from '@/lib/community';
 import { Avatar } from './avatar';
@@ -143,7 +143,7 @@ export function PostComposer({
     setTagDraft('');
   };
 
-  // Direto ao Blob, como os anexos: não passa pelo limite de corpo das actions.
+  // Direto ao armazenamento (R2), como os anexos: não passa pelo limite de corpo das actions.
   const onPickFile = async (file: File) => {
     setError(null);
     if (file.size > 40 * 1024 * 1024) {
@@ -152,11 +152,7 @@ export function PostComposer({
     }
     setUploading(true);
     try {
-      const blob = await upload(`posts/${file.name.replace(/[^\w.-]+/g, '_')}`, file, {
-        access: 'public',
-        handleUploadUrl: '/api/upload',
-        contentType: file.type || undefined,
-      });
+      const blob = await uploadFile(`posts/${file.name.replace(/[^\w.-]+/g, '_')}`, file);
       setImage(blob.url);
     } catch (e) {
       setError(e instanceof Error ? `No pude subir la imagen: ${e.message}` : 'No pude subir la imagen.');

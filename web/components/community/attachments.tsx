@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useRef, useState } from 'react';
-import { upload } from '@vercel/blob/client';
+import { uploadFile } from '@/lib/media-upload';
 import { attachmentKind } from '@/lib/community';
 import { IconImage, IconX } from '@/components/icons';
 
@@ -34,11 +34,7 @@ export function AttachmentsField({ name = 'attachments', resetKey, allowAudio = 
     setBusy(filename);
     setError(null);
     try {
-      const blob = await upload(`tickets/${filename}`, file, {
-        access: 'public',
-        handleUploadUrl: '/api/upload',
-        contentType: file.type || undefined,
-      });
+      const blob = await uploadFile(`tickets/${filename}`, file);
       setUrls((prev) => [...prev, blob.url]);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No pude subir el archivo.');

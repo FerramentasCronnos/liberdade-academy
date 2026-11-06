@@ -1,0 +1,14 @@
+# Recebe os envios de arquivos do catálogo e grava no R2 (bucket catalogo-media).
+# A leitura pública não passa por aqui: sai direto do bucket pelo domínio
+# catalogo-media.s4accelerator.com (cache da Cloudflare, sem custo por acesso).
+name = "catalogo-media-upload"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "catalogo-media"
+
+# Segredo: UPLOAD_SECRET (wrangler secret put UPLOAD_SECRET) — o mesmo valor de
+# MEDIA_UPLOAD_SECRET na Vercel.

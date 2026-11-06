@@ -19,6 +19,7 @@ import {
 } from '@/lib/community-data';
 import { normalizeTag, SPACE_CATEGORY, TICKET_CATEGORIES } from '@/lib/community';
 import { needsReview } from '@/lib/moderation';
+import { isOwnMediaUrl } from '@/lib/media';
 import { getUserId, isAdmin } from '@/lib/session';
 import { scheduleReplyToComment } from '@/lib/assistant-community';
 
@@ -26,14 +27,14 @@ import { scheduleReplyToComment } from '@/lib/assistant-community';
 export type ComposerState = { error?: string; ok?: boolean; review?: boolean; message?: string };
 export type FormState = { error?: string; ok?: boolean };
 
-/** Só aceita o que veio do nosso Blob: evita gravar link arbitrário. */
+/** Só aceita o que veio do nosso armazenamento: evita gravar link arbitrário. */
 function parseAttachments(raw: string) {
   try {
     const list = JSON.parse(raw || '[]') as unknown;
     if (!Array.isArray(list)) return [];
     return list
       .filter((u): u is string => typeof u === 'string')
-      .filter((u) => /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//.test(u))
+      .filter(isOwnMediaUrl)
       .slice(0, 10);
   } catch {
     return [];

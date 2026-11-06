@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { putPublic } from '@/lib/media';
 import { prisma } from '@/lib/db';
 
 /**
@@ -28,11 +28,7 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const blob = await put(`rewards/${slug}.jpg`, await response.blob(), {
-        access: 'public',
-        contentType: 'image/jpeg',
-        allowOverwrite: true,
-      });
+      const blob = await putPublic(`rewards/${slug}.jpg`, await response.blob(), { contentType: 'image/jpeg', randomSuffix: true });
 
       const updated = await prisma.reward.updateMany({
         where: { slug },

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { answer, isAssistant } from '@/lib/assistant';
+import { isOwnMediaUrl } from '@/lib/media';
 import { getUserId } from '@/lib/session';
 
 export const maxDuration = 60;
@@ -10,9 +11,9 @@ export async function POST(request: Request) {
   if (!userId) return NextResponse.json({ message: 'Sesión expirada.' }, { status: 401 });
 
   const body = (await request.json().catch(() => ({}))) as { assistant?: string; chatId?: string; message?: string; attachments?: unknown };
-  // só imagens do nosso Blob
+  // só imagens do nosso armazenamento
   const attachments = (Array.isArray(body.attachments) ? body.attachments : [])
-    .filter((u): u is string => typeof u === 'string' && /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//.test(u))
+    .filter((u): u is string => typeof u === 'string' && isOwnMediaUrl(u))
     .slice(0, 4);
   if (!body.assistant || !isAssistant(body.assistant)) {
     return NextResponse.json({ message: 'Elige un asistente.' }, { status: 400 });

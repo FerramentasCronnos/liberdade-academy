@@ -1,4 +1,4 @@
-import { put } from '@vercel/blob';
+import { mediaConfigured, putPublic } from '@/lib/media';
 import { INTERNAL_CATEGORIES, type InternalCategory } from '../normalize';
 import {
   CatalogConfigError,
@@ -307,26 +307,22 @@ function descriptionFromDetail(detail: ProductDetail): string | undefined {
 }
 
 /**
- * Copia a imagem para o Vercel Blob. O CDN do TikTok pode trocar ou expirar a
- * URL; no Blob a foto do card fica garantida. Sem token (ou com falha) usa a
+ * Copia a imagem para o armazenamento (R2). O CDN do TikTok pode trocar ou expirar a
+ * URL; no R2 a foto do card fica garantida. Sem token (ou com falha) usa a
  * URL original mesmo.
  */
 async function persistImage(url: string, productId: string): Promise<string> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return url;
+  if (!mediaConfigured()) return url;
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
     if (!response.ok) return url;
     const type = response.headers.get('content-type') || 'image/jpeg';
     if (!type.startsWith('image/')) return url;
     const ext = type.includes('png') ? 'png' : type.includes('webp') ? 'webp' : 'jpg';
-    const blob = await put(`catalog/tiktok/${productId}.${ext}`, await response.blob(), {
-      access: 'public',
-      contentType: type,
-      allowOverwrite: true,
-    });
+    const blob = await putPublic(`catalog/tiktok/${productId}.${ext}`, await response.blob(), { contentType: type });
     return blob.url;
   } catch (error) {
-    console.warn('[kalodata] imagem não copiada para o Blob', productId, error);
+    console.warn('[kalodata] imagem não copiada para o R2', productId, error);
     return url;
   }
 }

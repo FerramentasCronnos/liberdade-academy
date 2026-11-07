@@ -20,6 +20,8 @@ import {
   type SortId,
 } from '@/lib/types';
 
+const VERCEL_BLOB_URL = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//;
+
 /** true quando o valor cai na faixa; sem valor só passa na opção "todos". */
 function inRange(option: RangeOption, value: number | null | undefined) {
   if (option.min == null && option.max == null) return true;
@@ -124,10 +126,15 @@ export function CatalogView({ products }: { products: Product[] }) {
       default:
         sorted.sort((a, b) => b.salesCount - a.salesCount);
     }
-    // Bank Offers (ofertas próprias) sempre no topo, em qualquer ordenação
-    const own = sorted.filter((p) => p.marketplace === 'bank_offers');
-    const rest = sorted.filter((p) => p.marketplace !== 'bank_offers');
-    return [...own, ...rest];
+    // Bank Offers (ofertas próprias) sempre no topo, em qualquer ordenação.
+    // Produtos com foto no Vercel Blob (bloqueado desde 05/11) não carregam a
+    // imagem: vão todos para o fim, para a vitrine não abrir com card vazio.
+    const broken = (p: Product) => VERCEL_BLOB_URL.test(p.image ?? '');
+    const ok = sorted.filter((p) => !broken(p));
+    const bad = sorted.filter(broken);
+    const own = (l: Product[]) => l.filter((p) => p.marketplace === 'bank_offers');
+    const rest = (l: Product[]) => l.filter((p) => p.marketplace !== 'bank_offers');
+    return [...own(ok), ...rest(ok), ...own(bad), ...rest(bad)];
   }, [products, category, marketplace, sort, query, revenue, growth, sold, commission, price]);
   const hasBankOffers = useMemo(() => products.some((p) => p.marketplace === 'bank_offers'), [products]);
 

@@ -25,7 +25,8 @@ export async function BankOfferResources({
 }: {
   resources?: Array<{ kind: string; label: string; url: string }>;
 }) {
-  const items = resources;
+  // o link de afiliação (Hotmart) fica no card ao lado da comissão, não aqui
+  const items = resources.filter((r) => r.kind !== 'affiliate');
   const folderId = driveFolderId(resources);
   const files = folderId ? await listDriveFolder(folderId) : [];
   const folderUrl = resources.find((x) => x.kind === 'creatives')?.url ?? '';

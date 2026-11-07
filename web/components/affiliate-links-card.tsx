@@ -11,7 +11,16 @@ const TIER_LABEL: Record<PurchaseTier, string> = {
  * Pedido de afiliação por nível de compra, ao lado da comissão nas Bank
  * Offers: cada membro vê só o link do seu nível e o convite para o próximo.
  */
-export function AffiliateLinksCard({ tier, presellUrl }: { tier: PurchaseTier; presellUrl?: string }) {
+export function AffiliateLinksCard({
+  tier,
+  presellUrl,
+  affiliateUrl,
+}: {
+  tier: PurchaseTier;
+  presellUrl?: string;
+  /** Oferta com afiliação direta (ex.: Hotmart): o botão leva à página de recrutamento, não ao Telegram. */
+  affiliateUrl?: string;
+}) {
   const upgrade = upgradeFor(tier);
   return (
     <div className="flex flex-col gap-2.5 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
@@ -19,16 +28,18 @@ export function AffiliateLinksCard({ tier, presellUrl }: { tier: PurchaseTier; p
         Tu nivel: {TIER_LABEL[tier]}
       </p>
       <a
-        href={AFFILIATE_REQUEST_URL[tier]}
+        href={affiliateUrl ?? AFFILIATE_REQUEST_URL[tier]}
         target="_blank"
         rel="noreferrer noopener"
         className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand)] px-4 py-3 text-[14px] font-semibold text-white transition hover:bg-[var(--brand-hover)]"
       >
-        Solicita tus enlaces de afiliación
+        {affiliateUrl ? 'Afíliate en Hotmart' : 'Solicita tus enlaces de afiliación'}
         <IconExternal className="h-4 w-4" />
       </a>
       <p className="text-[12px] leading-relaxed text-[var(--text-muted)]">
-        Te lleva al grupo de Telegram de tu nivel, donde recibes tus enlaces de venta.
+        {affiliateUrl
+          ? 'Pide tu afiliación en Hotmart. Cuando te aprueben, Hotmart te da tu enlace de venta.'
+          : 'Te lleva al grupo de Telegram de tu nivel, donde recibes tus enlaces de venta.'}
       </p>
 
       {presellUrl && (

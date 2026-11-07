@@ -191,7 +191,13 @@ export default async function ProductPage({ params }: { params: Params }) {
               )}
             </div>
 
-            {product.marketplace === 'bank_offers' && <AffiliateLinksCard tier={viewer?.purchaseTier ?? 'main'} presellUrl={presellLink(product.externalId)} />}
+            {product.marketplace === 'bank_offers' && (
+              <AffiliateLinksCard
+                tier={viewer?.purchaseTier ?? 'main'}
+                presellUrl={presellLink(product.externalId)}
+                affiliateUrl={product.resources?.find((r) => r.kind === 'affiliate')?.url}
+              />
+            )}
 
             <div className="flex flex-col gap-2.5 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
               {product.productUrl ? (
@@ -215,8 +221,10 @@ export default async function ProductPage({ params }: { params: Params }) {
 
               {product.marketplace === 'bank_offers' ? (
                 <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--text-faint)]">
-                  Página solo demostrativa: este enlace no lleva tu ID de afiliado. Vende únicamente
-                  con el enlace que recibirás por Telegram al solicitar tus enlaces de afiliación.
+                  Página solo demostrativa: este enlace no lleva tu ID de afiliado.{' '}
+                  {product.resources?.some((r) => r.kind === 'affiliate')
+                    ? 'Vende únicamente con tu enlace de afiliado de Hotmart.'
+                    : 'Vende únicamente con el enlace que recibirás por Telegram al solicitar tus enlaces de afiliación.'}
                 </p>
               ) : (
                 <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--text-faint)]">

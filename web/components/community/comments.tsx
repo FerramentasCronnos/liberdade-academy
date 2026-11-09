@@ -5,7 +5,7 @@ import { RichText } from '@/components/rich-text';
 import Link from 'next/link';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { comment, type FormState } from '@/app/(app)/comunidade/actions';
+import { comment, type CommentState } from '@/app/(app)/comunidade/actions';
 import { avatarColor, initials, relativeTime, type CommunityComment } from '@/lib/community';
 import { Avatar } from '@/components/avatar';
 import { TeamBadge } from '@/components/post-card';
@@ -24,6 +24,30 @@ function Submit({ label }: { label: string }) {
   );
 }
 
+/**
+ * Selo do comentário em revisão ou recusado. Só autor e equipe recebem esses
+ * comentários do servidor, então quem não é admin está vendo o próprio.
+ */
+export function CommentReviewNotice({ c, viewerIsAdmin }: { c: CommunityComment; viewerIsAdmin: boolean }) {
+  if (c.reviewStatus === 'pending') {
+    return (
+      <p className="mb-1.5 flex flex-wrap items-center gap-2 text-[12px] text-[var(--text-muted)]">
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">En revisión</span>
+        {viewerIsAdmin ? 'Pendiente de aprobación del equipo.' : 'El equipo lo está revisando. Solo tú lo ves por ahora.'}
+      </p>
+    );
+  }
+  if (c.reviewStatus === 'rejected') {
+    return (
+      <p className="mb-1.5 flex flex-wrap items-center gap-2 text-[12px] text-[var(--text-muted)]">
+        <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-400/15 dark:text-red-300">No publicado</span>
+        {c.reviewNote ? <span>Nota del equipo: {c.reviewNote}</span> : <span>El equipo decidió no publicarlo. Solo tú lo ves.</span>}
+      </p>
+    );
+  }
+  return null;
+}
+
 function CommentForm({
   postId,
   parentId,
@@ -37,7 +61,7 @@ function CommentForm({
   autoFocus?: boolean;
   onDone?: () => void;
 }) {
-  const [state, action] = useActionState<FormState, FormData>(comment, {});
+  const [state, action] = useActionState<CommentState, FormData>(comment, {});
   const ref = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -69,11 +93,17 @@ function CommentForm({
         )}
         {state.error && <p role="alert" className="text-[12.5px] font-medium text-red-600 dark:text-red-400">{state.error}</p>}
       </div>
+      {/* foi para a fila da equipe: aviso informativo, não erro */}
+      {state.review && state.message && (
+        <p role="status" className="rounded-xl bg-amber-50 px-3 py-2 text-[12.5px] font-medium text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
+          {state.message}
+        </p>
+      )}
     </form>
   );
 }
 
-function CommentItem({ c, postId, depth = 0 }: { c: CommunityComment; postId: string; depth?: number }) {
+function CommentItem({ c, postId, viewerIsAdmin, depth = 0 }: { c: CommunityComment; postId: string; viewerIsAdmin: boolean; depth?: number }) {
   const [replying, setReplying] = useState(false);
 
   return (
@@ -84,6 +114,7 @@ function CommentItem({ c, postId, depth = 0 }: { c: CommunityComment; postId: st
         </Link>
         <div className="min-w-0 flex-1">
           <div className={`rounded-2xl px-4 py-3 ${c.author.isAdmin ? 'bg-[var(--accent-soft)]/60 ring-1 ring-[var(--accent)]/30' : 'bg-[var(--bg-sunken)]'}`}>
+            <CommentReviewNotice c={c} viewerIsAdmin={viewerIsAdmin} />
             <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-semibold text-[var(--text)]">
               <Link href={`/comunidade/membro/${c.author.id}`} className="transition hover:text-[var(--brand)]">{c.author.name}</Link>
               {c.author.isAdmin && <TeamBadge />}
@@ -106,7 +137,7 @@ function CommentItem({ c, postId, depth = 0 }: { c: CommunityComment; postId: st
       {c.replies.length > 0 && (
         <ul>
           {c.replies.map((r) => (
-            <CommentItem key={r.id} c={r} postId={postId} depth={1} />
+            <CommentItem key={r.id} c={r} postId={postId} viewerIsAdmin={viewerIsAdmin} depth={1} />
           ))}
         </ul>
       )}
@@ -114,8 +145,10 @@ function CommentItem({ c, postId, depth = 0 }: { c: CommunityComment; postId: st
   );
 }
 
-export function Comments({ postId, comments }: { postId: string; comments: CommunityComment[] }) {
-  const total = comments.reduce((n, c) => n + 1 + c.replies.length, 0);
+export function Comments({ postId, comments, viewerIsAdmin = false }: { postId: string; comments: CommunityComment[]; viewerIsAdmin?: boolean }) {
+  // o título conta só o que está publicado; os em revisão aparecem com selo
+  const published = (c: CommunityComment) => (c.reviewStatus ? 0 : 1);
+  const total = comments.reduce((n, c) => n + published(c) + c.replies.reduce((m, r) => m + published(r), 0), 0);
 
   return (
     <section id="comentarios" className="mt-4 rounded-[22px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
@@ -128,7 +161,7 @@ export function Comments({ postId, comments }: { postId: string; comments: Commu
       {comments.length > 0 && (
         <ul className="mt-5 flex flex-col gap-4">
           {comments.map((c) => (
-            <CommentItem key={c.id} c={c} postId={postId} />
+            <CommentItem key={c.id} c={c} postId={postId} viewerIsAdmin={viewerIsAdmin} />
           ))}
         </ul>
       )}

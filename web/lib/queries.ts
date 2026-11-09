@@ -155,12 +155,15 @@ export async function listProductVideos(productId: string): Promise<ProductVideo
 
 /* --------------------------------------------------------------- comunidade */
 
+/** Comentário que todo mundo vê: sem moderação ou aprovado. */
+const PUBLISHED_COMMENT = { OR: [{ reviewStatus: null }, { reviewStatus: 'approved' }] };
+
 export async function listPosts(currentUserId: string, category?: string) {
   const posts = await prisma.post.findMany({
     where: category && category !== 'todos' ? { category } : {},
     orderBy: { createdAt: 'desc' },
     take: 50,
-    include: { author: true, likes: true, comments: true },
+    include: { author: true, likes: true, comments: { where: PUBLISHED_COMMENT } },
   });
 
   return posts.map((post) => serializePost(post, currentUserId));
@@ -175,7 +178,8 @@ export async function getMemberProfile(id: string, currentUserId: string) {
         where: currentUserId === id ? {} : { OR: [{ reviewStatus: null }, { reviewStatus: 'approved' }] },
         orderBy: { createdAt: 'desc' },
         take: 20,
-        include: { author: true, likes: true, comments: true },
+        // contador só com comentários publicados
+        include: { author: true, likes: true, comments: { where: PUBLISHED_COMMENT } },
       },
     },
   });

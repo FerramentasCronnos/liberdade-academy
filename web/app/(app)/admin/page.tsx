@@ -10,7 +10,7 @@ import { listDocuments } from '@/lib/knowledge';
 import { assistantStats, listAssistantConversations, listAssistantTicketReplies } from '@/lib/assistant-history';
 import { listCreatorsAccessMembers } from '@/lib/creators-access';
 import { ModerationPanel } from '@/components/admin/moderation-panel';
-import { listPendingPosts } from '@/lib/community-data';
+import { listPendingComments, listPendingPosts } from '@/lib/community-data';
 import { prisma } from '@/lib/db';
 import { listRewards } from '@/lib/queries';
 import { getUserId, isAdmin } from '@/lib/session';
@@ -27,7 +27,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   if (!(await isAdmin(userId))) redirect('/catalogo');
 
   const assistantOn = process.env.ASSISTANT_ENABLED === '1';
-  const [users, rewards, docs, creatorsMembers, history, ticketReplies, stats, pending] = await Promise.all([
+  const [users, rewards, docs, creatorsMembers, history, ticketReplies, stats, pending, pendingComments] = await Promise.all([
     prisma.user.findMany({
       orderBy: [{ isAdmin: 'desc' }, { createdAt: 'asc' }],
       select: {
@@ -48,6 +48,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     assistantOn ? listAssistantTicketReplies({ take: 100 }) : Promise.resolve([]),
     assistantOn ? assistantStats() : Promise.resolve(null),
     listPendingPosts(),
+    listPendingComments(),
   ]);
 
   const members: Member[] = users.map((u) => ({
@@ -87,8 +88,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             {
               id: 'moderacion',
               label: 'Moderación',
-              count: pending.filter((p) => p.status === 'pending').length,
-              content: <ModerationPanel posts={pending} />,
+              count: pending.filter((p) => p.status === 'pending').length + pendingComments.filter((c) => c.status === 'pending').length,
+              content: <ModerationPanel posts={pending} comments={pendingComments} />,
             },
             {
               id: 'creators',

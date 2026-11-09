@@ -5,6 +5,8 @@
  * uma dependência. A chave vem de RESEND_API_KEY; sem ela, o envio é pulado
  * e devolve erro em vez de derrubar o fluxo que chamou.
  */
+import { AI_NOTE_PREFIX } from './moderation';
+
 const APP_URL = process.env.APP_URL || 'https://catalogo.s4accelerator.com';
 const FROM = process.env.EMAIL_FROM || 'Máquina de Ventas Automáticas <onboarding@resend.dev>';
 /** Caixa que recebe respostas e pedidos de descadastro: conta para a reputação. */
@@ -201,15 +203,21 @@ export function sendReplyEmail(input: {
 }
 
 /**
- * Aviso à equipe: um post ficou retido na moderação por falar de reembolso.
- * Vai para todos os admins (sem as contas bot) e para a caixa de respostas.
+ * Aviso à equipe: um post ou comentário ficou retido na moderação (termo da
+ * lista ou triagem da IA). Vai para todos os admins (sem as contas bot) e
+ * para a caixa de respostas.
  */
 export async function sendModerationEmail(input: {
   postId: string;
   authorName: string;
   title?: string;
   excerpt: string;
+  /** reviewNote: termo da lista ou "IA: <motivo>". */
   term: string;
+  /** Comentário: o e-mail diz isso e leva também ao post comentado. */
+  kind?: 'post' | 'comment';
+  /** Comentário: título (ou começo) do post onde foi escrito. */
+  postTitle?: string;
 }): Promise<{ sent: number; failed: string[] }> {
   const { prisma } = await import('./db');
   const admins = await prisma.user.findMany({
@@ -220,19 +228,31 @@ export async function sendModerationEmail(input: {
     new Set([...admins.map((a) => a.email.toLowerCase()), ...(process.env.EMAIL_REPLY_TO ? [process.env.EMAIL_REPLY_TO.toLowerCase()] : [])]),
   ).filter(isDeliverable);
 
+  const isComment = input.kind === 'comment';
+  const byAi = input.term.startsWith(AI_NOTE_PREFIX);
+  const reason = byAi ? input.term.slice(AI_NOTE_PREFIX.length) : input.term;
+  const what = isComment ? 'Un comentario' : 'Una publicación';
+  const heading = byAi ? `La IA retuvo ${what.toLowerCase()}: ${reason}` : `${what} menciona “${reason}”`;
+
   const url = `${APP_URL}/admin?tab=moderacion`;
+  const postUrl = `${APP_URL}/comunidade/post/${input.postId}`;
+  const context = isComment
+    ? `<p style="margin:0 0 6px;font-size:14px;color:#6b7d9c;">Comentario en: <a href="${postUrl}" style="color:#1b3a6b;font-weight:700;">${escape(input.postTitle || 'la publicación')}</a></p>`
+    : input.title
+      ? `<p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#0e1729;">${escape(input.title)}</p>`
+      : '';
   const body = `
     <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1b3a6b;">🛡️ Moderación</p>
-    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#0e1729;line-height:1.25;">Una publicación menciona “${escape(input.term)}”</h1>
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;color:#0e1729;line-height:1.25;">${escape(heading)}</h1>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#32425f;">
-      <strong>${escape(input.authorName)}</strong> escribió en la comunidad y la publicación quedó retenida hasta que el equipo la revise. Nadie más la ve todavía.
+      <strong>${escape(input.authorName)}</strong> ${isComment ? 'comentó' : 'escribió'} en la comunidad y ${isComment ? 'el comentario quedó retenido' : 'la publicación quedó retenida'} hasta que el equipo ${isComment ? 'lo' : 'la'} revise. Nadie más ${isComment ? 'lo' : 'la'} ve todavía.
     </p>
-    ${input.title ? `<p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#0e1729;">${escape(input.title)}</p>` : ''}
+    ${context}
     <blockquote style="margin:0 0 24px;padding:14px 18px;border-left:3px solid #1b3a6b;background:#e6edf7;border-radius:0 12px 12px 0;font-size:15px;line-height:1.6;color:#32425f;white-space:pre-line;">${escape(input.excerpt)}</blockquote>
     <a href="${url}" style="display:inline-block;background:#1b3a6b;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:12px;">Revisar en el panel</a>
     <p style="margin:16px 0 0;font-size:13.5px;color:#6b7d9c;">Si el botón no funciona, copia este enlace: <a href="${url}" style="color:#1b3a6b;">${url}</a></p>`;
-  const subject = `Post para revisar: menciona ${plainExcerpt(input.term, 60)}`;
-  const html = layout(body, plainExcerpt(input.excerpt) || 'Hay una publicación esperando revisión.');
+  const subject = `${isComment ? 'Comentario' : 'Post'} para revisar: ${byAi ? `IA, ${plainExcerpt(reason, 60)}` : `menciona ${plainExcerpt(reason, 60)}`}`;
+  const html = layout(body, plainExcerpt(input.excerpt) || `Hay ${isComment ? 'un comentario' : 'una publicación'} esperando revisión.`);
 
   let sent = 0;
   const failed: string[] = [];

@@ -556,19 +556,25 @@ model PostLike {
 }
 
 model Comment {
-  id          String    @id @default(cuid())
-  content     String
-  attachments String[]  @default([])
-  postId      String
-  authorId    String
-  parentId    String?
-  createdAt   DateTime  @default(now())
-  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies     Comment[] @relation("CommentReplies")
+  id           String    @id @default(cuid())
+  content      String
+  attachments  String[]  @default([])
+  postId       String
+  authorId     String
+  parentId     String?
+  /// Moderação, como em Post: null = publicado normalmente; pending = aguardando admin; approved | rejected.
+  /// reviewNote: enquanto pendente, o termo ou o motivo da IA; recusado, a nota da equipe.
+  reviewStatus String?
+  reviewNote   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  post         Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author       User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent       Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[] @relation("CommentReplies")
 
   @@index([postId, createdAt])
+  @@index([reviewStatus, createdAt])
 }
 
 /// Ticket de suporte: conversa privada entre o membro e a equipe.

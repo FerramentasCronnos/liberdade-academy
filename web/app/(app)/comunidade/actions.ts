@@ -18,7 +18,7 @@ import {
   CommunityError,
 } from '@/lib/community-data';
 import { normalizeTag, SPACE_CATEGORY, TICKET_CATEGORIES } from '@/lib/community';
-import { needsReview } from '@/lib/moderation';
+import { screenForReview } from '@/lib/moderation';
 import { isOwnMediaUrl } from '@/lib/media';
 import { getUserId, isAdmin } from '@/lib/session';
 import { scheduleReplyToComment } from '@/lib/assistant-community';
@@ -26,6 +26,37 @@ import { scheduleReplyToComment } from '@/lib/assistant-community';
 /** `review`: foi para a fila da equipe em vez de publicar; `message` explica isso ao membro. */
 export type ComposerState = { error?: string; ok?: boolean; review?: boolean; message?: string };
 export type FormState = { error?: string; ok?: boolean };
+/** Comentário: `review` quando foi para a fila da equipe; `message` explica isso ao membro. */
+export type CommentState = FormState & { review?: boolean; message?: string };
+
+/** Avisa a equipe por e-mail; nunca derruba a ação (o item já está na fila). */
+async function emailTeamAboutReview(input: {
+  userId: string;
+  postId: string;
+  term: string;
+  excerpt: string;
+  title?: string;
+  kind: 'post' | 'comment';
+  postTitle?: string;
+}) {
+  try {
+    const [{ sendModerationEmail }, author] = await Promise.all([
+      import('@/lib/email'),
+      prisma.user.findUnique({ where: { id: input.userId }, select: { name: true } }),
+    ]);
+    await sendModerationEmail({
+      postId: input.postId,
+      authorName: author?.name ?? 'Un miembro',
+      title: input.title,
+      excerpt: input.excerpt.slice(0, 600),
+      term: input.term,
+      kind: input.kind,
+      postTitle: input.postTitle,
+    });
+  } catch (e) {
+    console.error('[moderacion] e-mail à equipe falhou', e);
+  }
+}
 
 /** Só aceita o que veio do nosso armazenamento: evita gravar link arbitrário. */
 function parseAttachments(raw: string) {
@@ -74,36 +105,22 @@ export async function createPost(_prev: ComposerState, formData: FormData): Prom
   if (content.length < (image || attachments.length ? 0 : 3)) return { error: 'Escribe un poco más.' };
   if (content.length > 4000) return { error: 'Texto demasiado largo (máx. 4000).' };
 
-  // menção a reembolso: entra na fila da equipe em vez de ir ao feed (admins publicam direto)
-  const review = (await isAdmin(userId)) ? { flagged: false as const } : needsReview(`${title}\n${content}`);
+  // reembolso ou falar mal da comunidade (lista de termos, depois a IA): entra
+  // na fila da equipe em vez de ir ao feed. Admins publicam direto.
+  const review = (await isAdmin(userId)) ? { flagged: false as const } : await screenForReview(`${title}\n${content}`.trim());
 
   let created: Awaited<ReturnType<typeof createSpacePost>>;
   try {
     created = await createSpacePost({
       userId, spaceSlug, title, content, category, image: image || undefined, tags, attachments, link, pinned, scheduledAt, notifyEmail: notify,
-      review: review.flagged ? { term: review.term! } : undefined,
+      review: review.flagged ? { term: review.term } : undefined,
     });
   } catch (e) {
     return { error: message(e, 'No pude publicar ahora.') };
   }
 
-  if (created.pending) {
-    // o aviso à equipe não pode derrubar a criação: o post já está na fila
-    try {
-      const [{ sendModerationEmail }, author] = await Promise.all([
-        import('@/lib/email'),
-        prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
-      ]);
-      await sendModerationEmail({
-        postId: created.post.id,
-        authorName: author?.name ?? 'Un miembro',
-        title: title || undefined,
-        excerpt: content.slice(0, 600),
-        term: review.term!,
-      });
-    } catch (e) {
-      console.error('[moderacion] e-mail à equipe falhou', e);
-    }
+  if (created.pending && review.flagged) {
+    await emailTeamAboutReview({ userId, postId: created.post.id, term: review.term, excerpt: content, title: title || undefined, kind: 'post' });
     revalidatePath('/comunidade', 'layout');
     return { ok: true, review: true, message: 'Tu publicación fue enviada a revisión del equipo. Te avisamos cuando esté publicada.' };
   }
@@ -130,7 +147,7 @@ export async function toggleLike(postId: string) {
   }
 }
 
-export async function comment(_prev: FormState, formData: FormData): Promise<FormState> {
+export async function comment(_prev: CommentState, formData: FormData): Promise<CommentState> {
   const userId = await getUserId();
   if (!userId) return { error: 'Sesión expirada.' };
 
@@ -141,10 +158,29 @@ export async function comment(_prev: FormState, formData: FormData): Promise<For
   if (content.length < 2 && attachments.length === 0) return { error: 'Escribe un poco más.' };
   if (content.length > 2000) return { error: 'Comentario demasiado largo.' };
 
+  // mesma triagem dos posts: lista de termos e, se nada casar, a IA (admins pulam).
+  // O título do post vai de contexto para a IA entender ironia.
+  let review: Awaited<ReturnType<typeof screenForReview>> = { flagged: false };
+  let postTitle: string | undefined;
+  if (!(await isAdmin(userId)) && content) {
+    const post = await prisma.post.findUnique({ where: { id: postId }, select: { title: true, content: true } });
+    postTitle = post ? (post.title || post.content).slice(0, 120) : undefined;
+    review = await screenForReview(content, { context: postTitle });
+  }
+
+  let created: Awaited<ReturnType<typeof addComment>>;
   try {
-    await addComment({ userId, postId, content, parentId, attachments });
+    created = await addComment({ userId, postId, content, parentId, attachments, review: review.flagged ? { term: review.term } : undefined });
   } catch (e) {
     return { error: message(e, 'No pude comentar ahora.') };
+  }
+
+  if (review.flagged) {
+    // sem avisos nem IA de suporte até a aprovação (approvePendingComment roda tudo)
+    await emailTeamAboutReview({ userId, postId, term: review.term, excerpt: created.content, kind: 'comment', postTitle });
+    revalidatePath(`/comunidade/post/${postId}`);
+    revalidatePath('/comunidade', 'layout');
+    return { ok: true, review: true, message: 'Tu comentario fue enviado a revisión del equipo. Te avisamos cuando esté publicado.' };
   }
 
   // o membro seguiu a conversa com a IA na thread

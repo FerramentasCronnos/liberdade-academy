@@ -13,6 +13,7 @@ import { TeamBadge } from '@/components/post-card';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { IconX } from '@/components/icons';
 import { AttachmentList, AttachmentsField } from './attachments';
+import { CommentReviewNotice } from './comments';
 
 /**
  * Espaço em modo chat, como no Circle: linha do tempo contínua com
@@ -47,11 +48,12 @@ function Composer({
   placeholder,
   hidden,
 }: {
-  onSubmit: (fd: FormData) => Promise<{ ok?: boolean; error?: string }>;
+  onSubmit: (fd: FormData) => Promise<{ ok?: boolean; error?: string; review?: boolean; message?: string }>;
   placeholder: string;
   hidden: React.ReactNode;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const ref = useRef<HTMLFormElement>(null);
 
@@ -62,6 +64,8 @@ function Composer({
       return;
     }
     setError(null);
+    // foi para a fila da equipe: aviso informativo, não erro
+    setNotice(r.review ? r.message ?? 'Enviado a revisión del equipo.' : null);
     ref.current?.reset();
     setResetKey((k) => k + 1);
   };
@@ -87,11 +91,12 @@ function Composer({
         <Send />
       </div>
       {error && <p role="alert" className="mt-2 text-[12.5px] font-medium text-red-600 dark:text-red-400">{error}</p>}
+      {notice && <p role="status" className="mt-2 text-[12.5px] font-medium text-amber-700 dark:text-amber-300">{notice}</p>}
     </form>
   );
 }
 
-function Reply({ c }: { c: CommunityComment }) {
+function Reply({ c, viewerIsAdmin }: { c: CommunityComment; viewerIsAdmin: boolean }) {
   return (
     <li className="flex gap-3">
       <Avatar name={c.author.name} src={c.author.avatar} size={32} color={avatarColor(c.author.name)} fallback={initials(c.author.name)} />
@@ -101,6 +106,7 @@ function Reply({ c }: { c: CommunityComment }) {
           {c.author.isAdmin && <TeamBadge />}
           <span className="text-[12px] font-normal text-[var(--text-faint)]">{time(c.createdAt)}</span>
         </p>
+        <CommentReviewNotice c={c} viewerIsAdmin={viewerIsAdmin} />
         {c.content && <p className="mt-0.5 whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--text)]"><RichText text={c.content} /></p>}
         <AttachmentList urls={c.attachments} />
       </div>
@@ -323,7 +329,7 @@ export function ChatSpace({
             </p>
             <ul className="flex flex-col gap-4">
               {thread.replies.map((r) => (
-                <Reply key={r.id} c={r} />
+                <Reply key={r.id} c={r} viewerIsAdmin={viewerIsAdmin} />
               ))}
             </ul>
           </div>

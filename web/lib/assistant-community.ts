@@ -113,7 +113,12 @@ async function loadThread(postId: string): Promise<Thread | null> {
     include: {
       author: true,
       space: true,
-      comments: { orderBy: { createdAt: 'asc' }, include: { author: true } },
+      // comentário em revisão ou recusado não entra na conversa da IA
+      comments: {
+        where: { OR: [{ reviewStatus: null }, { reviewStatus: 'approved' }] },
+        orderBy: { createdAt: 'asc' },
+        include: { author: true },
+      },
     },
   });
   if (!post?.space) return null;

@@ -93,6 +93,10 @@ export interface CommunityComment {
   attachments: string[];
   createdAt: string;
   parentId?: string;
+  /** Só chega ao autor e à equipe: em revisão ou recusado. Publicado = undefined. */
+  reviewStatus?: 'pending' | 'rejected';
+  /** Recusado: nota da equipe para o autor. */
+  reviewNote?: string;
   replies: CommunityComment[];
 }
 

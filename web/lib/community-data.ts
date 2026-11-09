@@ -1,7 +1,8 @@
-import type { Post, PostLike, Space as SpaceRow, Ticket, TicketMessage as TicketMessageRow, User } from '@prisma/client';
+import type { Comment, Post, PostLike, Space as SpaceRow, Ticket, TicketMessage as TicketMessageRow, User } from '@prisma/client';
 import { prisma } from './db';
 import { scheduleTicketReply } from './assistant-tickets';
 import { AUTO_MISSIONS, tryCompleteAutoMission } from './domain/missions';
+import { HELD_BY_TEAM_NOTE } from './moderation';
 import type {
   CommunityComment,
   CommunityPost,
@@ -29,7 +30,8 @@ const publicReview = { OR: [{ reviewStatus: null }, { reviewStatus: 'approved' }
 
 /**
  * O que cada pessoa pode ver além do público: o autor acompanha os próprios
- * posts em revisão ou recusados; a equipe vê a fila de pendentes no feed.
+ * posts (e comentários) em revisão ou recusados; a equipe vê os pendentes.
+ * Serve para Post e Comment: os dois têm reviewStatus e authorId.
  */
 function reviewVisibleTo(viewerId: string, viewerIsAdmin: boolean) {
   return {
@@ -112,8 +114,10 @@ const postInclude = {
   author: true,
   likes: true,
   space: true,
-  _count: { select: { comments: true } },
+  // contador e avatares só com comentários publicados: pendentes não contam
+  _count: { select: { comments: { where: publicReview } } },
   comments: {
+    where: publicReview,
     orderBy: { createdAt: 'desc' as const },
     take: 8,
     select: { createdAt: true, author: { select: { id: true, name: true, avatar: true } } },
@@ -127,6 +131,21 @@ function author(user: User) {
     avatar: user.avatar ?? undefined,
     level: user.level,
     isAdmin: user.isAdmin,
+  };
+}
+
+/** Comentário para a tela; pendente ou recusado só chega ao autor e à equipe. */
+function serializeComment(c: Comment & { author: User }): CommunityComment {
+  return {
+    id: c.id,
+    author: author(c.author),
+    content: c.content,
+    attachments: c.attachments,
+    createdAt: c.createdAt.toISOString(),
+    parentId: c.parentId ?? undefined,
+    reviewStatus: c.reviewStatus === 'pending' || c.reviewStatus === 'rejected' ? c.reviewStatus : undefined,
+    reviewNote: c.reviewStatus === 'rejected' ? c.reviewNote ?? undefined : undefined,
+    replies: [],
   };
 }
 
@@ -201,20 +220,15 @@ export async function listChat(viewerId: string, spaceSlug: string, viewerIsAdmi
     where: { space: { slug: spaceSlug }, ...reviewVisibleTo(viewerId, viewerIsAdmin) },
     orderBy: { createdAt: 'desc' },
     take: 100,
-    include: { ...postInclude, comments: { orderBy: { createdAt: 'asc' }, include: { author: true } } },
+    include: {
+      ...postInclude,
+      comments: { where: reviewVisibleTo(viewerId, viewerIsAdmin), orderBy: { createdAt: 'asc' }, include: { author: true } },
+    },
   });
 
   return rows.reverse().map((p) => ({
     ...serializePost(p, viewerId),
-    replies: p.comments.map((c) => ({
-      id: c.id,
-      author: author(c.author),
-      content: c.content,
-      attachments: c.attachments,
-      createdAt: c.createdAt.toISOString(),
-      parentId: c.parentId ?? undefined,
-      replies: [],
-    })),
+    replies: p.comments.map(serializeComment),
   }));
 }
 
@@ -225,8 +239,9 @@ export async function getPost(id: string, viewerId: string, viewerIsAdmin = fals
   // em revisão ou recusado: só autor e equipe abrem a página
   if ((post.reviewStatus === 'pending' || post.reviewStatus === 'rejected') && !viewerIsAdmin && post.authorId !== viewerId) return null;
 
+  // comentário em revisão ou recusado: só o autor dele e a equipe veem
   const comments = await prisma.comment.findMany({
-    where: { postId: id },
+    where: { postId: id, ...reviewVisibleTo(viewerId, viewerIsAdmin) },
     orderBy: { createdAt: 'asc' },
     include: { author: true },
   });
@@ -234,17 +249,7 @@ export async function getPost(id: string, viewerId: string, viewerIsAdmin = fals
   // um nível de resposta, como no Circle
   const byId = new Map<string, CommunityComment>();
   const roots: CommunityComment[] = [];
-  for (const c of comments) {
-    byId.set(c.id, {
-      id: c.id,
-      author: author(c.author),
-      content: c.content,
-      attachments: c.attachments,
-      createdAt: c.createdAt.toISOString(),
-      parentId: c.parentId ?? undefined,
-      replies: [],
-    });
-  }
+  for (const c of comments) byId.set(c.id, serializeComment(c));
   for (const c of byId.values()) {
     const parent = c.parentId ? byId.get(c.parentId) : undefined;
     if (parent) parent.replies.push(c);
@@ -419,7 +424,7 @@ export async function holdPostForReview(postId: string) {
   if (post.reviewStatus === 'pending') return;
   await prisma.post.update({
     where: { id: postId },
-    data: { reviewStatus: 'pending', reviewNote: 'retenida por el equipo', reviewedAt: null, pinned: false },
+    data: { reviewStatus: 'pending', reviewNote: HELD_BY_TEAM_NOTE, reviewedAt: null, pinned: false },
   });
 }
 
@@ -443,6 +448,108 @@ export async function rejectPendingPost(postId: string, note?: string) {
       route: `/comunidade/post/${postId}`,
     },
   });
+}
+
+/* ------------------------------------------- fila de moderação: comentários */
+
+const pendingCommentInclude = {
+  author: { select: { id: true, name: true, avatar: true, email: true } },
+  post: { select: { id: true, title: true, content: true, space: true } },
+} as const;
+
+function serializePendingComment(
+  c: Comment & {
+    author: { id: string; name: string; avatar: string | null; email: string };
+    post: { id: string; title: string | null; content: string; space: SpaceRow | null };
+  },
+) {
+  return {
+    id: c.id,
+    content: c.content,
+    attachments: c.attachments,
+    createdAt: c.createdAt.toISOString(),
+    status: (c.reviewStatus ?? 'pending') as 'pending' | 'approved' | 'rejected',
+    /** Pendente: termo ou motivo da IA. Recusado: nota da equipe (se houver). */
+    note: c.reviewNote ?? undefined,
+    reviewedAt: c.reviewedAt?.toISOString(),
+    isReply: Boolean(c.parentId),
+    author: { id: c.author.id, name: c.author.name, avatar: c.author.avatar ?? undefined, email: c.author.email },
+    post: {
+      id: c.post.id,
+      title: c.post.title || c.post.content.slice(0, 90),
+      space: c.post.space ? { slug: c.post.space.slug, ...spaceLabel(c.post.space), kind: c.post.space.kind } : undefined,
+    },
+  };
+}
+
+export type PendingComment = ReturnType<typeof serializePendingComment>;
+
+/** Mesma fila dos posts: pendentes (mais antigos primeiro) e os 20 últimos revisados. */
+export async function listPendingComments(): Promise<PendingComment[]> {
+  const [pending, reviewed] = await Promise.all([
+    prisma.comment.findMany({ where: { reviewStatus: 'pending' }, orderBy: { createdAt: 'asc' }, include: pendingCommentInclude }),
+    prisma.comment.findMany({
+      where: { reviewStatus: { in: ['approved', 'rejected'] } },
+      orderBy: { reviewedAt: 'desc' },
+      take: 20,
+      include: pendingCommentInclude,
+    }),
+  ]);
+  return [...pending, ...reviewed].map(serializePendingComment);
+}
+
+/**
+ * Aprova: entra no ar agora (createdAt = agora, como os posts) e roda o que um
+ * comentário normal teria rodado: missão, aviso e e-mail ao autor do post e a
+ * resposta da IA de suporte. Devolve o postId para revalidar a página.
+ */
+export async function approvePendingComment(commentId: string) {
+  const comment = await prisma.comment.findUnique({
+    where: { id: commentId },
+    include: { author: true, post: { select: { id: true, authorId: true, title: true, content: true } } },
+  });
+  if (!comment) throw new CommunityError('Comentario no encontrado.');
+  if (comment.reviewStatus !== 'pending') throw new CommunityError('Este comentario ya fue revisado.');
+
+  const now = new Date();
+  await prisma.comment.update({ where: { id: commentId }, data: { reviewStatus: 'approved', reviewedAt: now, createdAt: now } });
+
+  await prisma.notification.create({
+    data: {
+      userId: comment.authorId,
+      title: 'Tu comentario ya está publicado',
+      body: comment.content.slice(0, 80),
+      route: `/comunidade/post/${comment.postId}`,
+    },
+  });
+
+  await runCommentPublishSideEffects(comment, comment.post);
+
+  // import dinâmico: assistant-community importa este módulo
+  const { scheduleReplyToComment } = await import('./assistant-community');
+  scheduleReplyToComment(comment.postId, comment.authorId);
+
+  return { postId: comment.postId };
+}
+
+/** Recusa: o comentário fica visível só para o autor, com a nota da equipe. */
+export async function rejectPendingComment(commentId: string, note?: string) {
+  const comment = await prisma.comment.findUnique({ where: { id: commentId }, select: { authorId: true, postId: true, reviewStatus: true } });
+  if (!comment) throw new CommunityError('Comentario no encontrado.');
+  if (comment.reviewStatus !== 'pending') throw new CommunityError('Este comentario ya fue revisado.');
+
+  const trimmed = note?.trim().slice(0, 500) || null;
+  await prisma.comment.update({ where: { id: commentId }, data: { reviewStatus: 'rejected', reviewedAt: new Date(), reviewNote: trimmed } });
+
+  await prisma.notification.create({
+    data: {
+      userId: comment.authorId,
+      title: 'Tu comentario no fue publicado',
+      body: trimmed ?? 'El equipo revisó tu comentario y decidió no publicarlo.',
+      route: `/comunidade/post/${comment.postId}`,
+    },
+  });
+  return { postId: comment.postId };
 }
 
 /**
@@ -552,13 +659,15 @@ export async function addComment(input: {
   content: string;
   parentId?: string;
   attachments?: string[];
+  /** Motivo que mandou o comentário para revisão: entra pendente, sem pontos nem avisos. */
+  review?: { term: string };
 }) {
   const post = await prisma.post.findUnique({
     where: { id: input.postId },
     select: {
       id: true, authorId: true, title: true, content: true, resolvedAt: true,
       space: { select: { kind: true } },
-      _count: { select: { comments: true } },
+      _count: { select: { comments: { where: publicReview } } },
     },
   });
   if (!post) throw new CommunityError('Publicación no encontrada.');
@@ -585,13 +694,35 @@ export async function addComment(input: {
   }
 
   const comment = await prisma.comment.create({
-    data: { content: input.content, attachments: input.attachments ?? [], postId: post.id, authorId: input.userId, parentId },
+    data: {
+      content: input.content,
+      attachments: input.attachments ?? [],
+      postId: post.id,
+      authorId: input.userId,
+      parentId,
+      // o motivo fica em reviewNote até a equipe decidir: a fila mostra o porquê
+      ...(input.review ? { reviewStatus: 'pending', reviewNote: input.review.term } : {}),
+    },
     include: { author: true },
   });
 
-  await tryCompleteAutoMission(input.userId, AUTO_MISSIONS.engageCommunity);
+  // em revisão: nada de missão, aviso ou e-mail até a aprovação
+  if (!input.review) await runCommentPublishSideEffects(comment, post);
+  return comment;
+}
 
-  if (post.authorId !== input.userId) {
+/**
+ * O que acontece quando um comentário entra no ar: missão de engajamento,
+ * aviso e e-mail ao autor do post. Usado ao comentar e na aprovação da fila.
+ * (A resposta da IA de suporte é agendada por quem chama: scheduleReplyToComment.)
+ */
+async function runCommentPublishSideEffects(
+  comment: { authorId: string; content: string; author: { name: string; isAdmin: boolean; email: string } },
+  post: { id: string; authorId: string; title: string | null; content: string },
+) {
+  await tryCompleteAutoMission(comment.authorId, AUTO_MISSIONS.engageCommunity);
+
+  if (post.authorId !== comment.authorId) {
     const excerpt = (post.title || post.content).slice(0, 60);
     await prisma.notification.create({
       data: {
@@ -607,8 +738,6 @@ export async function addComment(input: {
       console.error('[comentarios] e-mail de resposta falhou', e),
     );
   }
-
-  return comment;
 }
 
 /** Corta no fim de uma frase ou linha, para o e-mail não parar no meio. */
@@ -631,7 +760,7 @@ async function emailAuthorAboutReply(postId: string, authorId: string, commenter
     prisma.user.findUnique({ where: { id: authorId }, select: { email: true, name: true, planSource: true } }),
     prisma.post.findUnique({ where: { id: postId }, select: { space: { select: { name: true } } } }),
     prisma.comment.findFirst({
-      where: { postId, authorId: { not: authorId }, createdAt: { gte: new Date(Date.now() - 30 * 60_000) } },
+      where: { postId, authorId: { not: authorId }, createdAt: { gte: new Date(Date.now() - 30 * 60_000) }, ...publicReview },
       orderBy: { createdAt: 'asc' },
       select: { id: true },
     }),
@@ -641,7 +770,7 @@ async function emailAuthorAboutReply(postId: string, authorId: string, commenter
 
   // `recent` é a resposta mais antiga dos últimos 30 min; se não é esta, já avisamos
   if (!fromTeam) {
-    const latest = await prisma.comment.findFirst({ where: { postId, authorId: { not: authorId } }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+    const latest = await prisma.comment.findFirst({ where: { postId, authorId: { not: authorId }, ...publicReview }, orderBy: { createdAt: 'desc' }, select: { id: true } });
     if (recent && latest && recent.id !== latest.id) return;
   }
 
@@ -890,7 +1019,7 @@ export async function getCommunitySidebar(): Promise<CommunitySidebarData> {
     }),
     // só o que está publicado pontua: pendente ou recusado não entra no ranking
     prisma.post.groupBy({ by: ['authorId'], where: { createdAt: { gte: since }, ...publicReview }, _count: { _all: true } }),
-    prisma.comment.groupBy({ by: ['authorId'], where: { createdAt: { gte: since }, post: publicReview }, _count: { _all: true } }),
+    prisma.comment.groupBy({ by: ['authorId'], where: { createdAt: { gte: since }, post: publicReview, ...publicReview }, _count: { _all: true } }),
     prisma.postLike.findMany({
       where: { createdAt: { gte: since }, post: publicReview },
       select: { post: { select: { authorId: true } } },

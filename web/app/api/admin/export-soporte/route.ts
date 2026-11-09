@@ -89,6 +89,7 @@ export async function GET() {
         comments: p.comments.map((c) => ({
           from: c.author.isAdmin ? 'admin' : BOT.test(c.author.email) ? 'ia' : 'miembro',
           at: c.createdAt,
+          reviewStatus: c.reviewStatus,
           text: c.content,
         })),
       })),

@@ -8,8 +8,8 @@ import { PageHeader } from '@/components/page-header';
 import { CopyLinkButton } from '@/components/copy-link-button';
 import { ProductVideos } from '@/components/product-videos';
 import { BankOfferResources } from '@/components/bank-offer-resources';
-import { AffiliateLinksCard } from '@/components/affiliate-links-card';
-import { presellLink } from '@/lib/presell-link';
+import { AffiliateLinksCard, affiliatePlatform } from '@/components/affiliate-links-card';
+import { presellLinks } from '@/lib/presell-link';
 import { ProductGallery } from '@/components/product-gallery';
 import { ProductMetrics } from '@/components/product-metrics';
 import {
@@ -194,7 +194,7 @@ export default async function ProductPage({ params }: { params: Params }) {
             {product.marketplace === 'bank_offers' && (
               <AffiliateLinksCard
                 tier={viewer?.purchaseTier ?? 'main'}
-                presellUrl={presellLink(product.externalId)}
+                presells={presellLinks(product.externalId)}
                 affiliateUrl={product.resources?.find((r) => r.kind === 'affiliate')?.url}
               />
             )}
@@ -223,7 +223,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--text-faint)]">
                   Página solo demostrativa: este enlace no lleva tu ID de afiliado.{' '}
                   {product.resources?.some((r) => r.kind === 'affiliate')
-                    ? 'Vende únicamente con tu enlace de afiliado de Hotmart.'
+                    ? `Vende únicamente con tu enlace de afiliado de ${affiliatePlatform(product.resources.find((r) => r.kind === 'affiliate')!.url)}.`
                     : 'Vende únicamente con el enlace que recibirás por Telegram al solicitar tus enlaces de afiliación.'}
                 </p>
               ) : (

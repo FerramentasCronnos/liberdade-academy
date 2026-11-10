@@ -51,7 +51,8 @@ export async function listDriveFolder(folderId: string): Promise<DriveFile[]> {
       if (!id || !name) continue;
       const icon = entry.match(/flip-entry-list-icon"><img src="([^"]*)"/)?.[1] ?? '';
       const kind = kindFromIcon(icon);
-      if (kind === 'folder') continue;
+      // subpastas não têm miniatura: algumas vêm com ícone em sprite (sem <img>), então olhamos o link também
+      if (kind === 'folder' || entry.includes('/drive/folders/') || entry.includes('aria-label="Folder"')) continue;
       files.push({
         id,
         name: decodeEntities(name),

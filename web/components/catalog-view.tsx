@@ -23,6 +23,8 @@ import { dayKey, featuredForDay, shuffleForDay } from '@/lib/daily-order';
 
 const VERCEL_BLOB_URL = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//;
 const broken = (p: Product) => VERCEL_BLOB_URL.test(p.image ?? '');
+/** Bank Offers fixas sempre no topo do catálogo (externalId), antes das 2 do dia. */
+const ALWAYS_ON_TOP = ['mva'];
 
 /** true quando o valor cai na faixa; sem valor só passa na opção "todos". */
 function inRange(option: RangeOption, value: number | null | undefined) {
@@ -73,12 +75,15 @@ export function CatalogView({ products }: { products: Product[] }) {
   const hasMetrics = useMemo(() => products.some((p) => p.metrics), [products]);
   const filtersActive = [revenue, growth, sold, commission, price].some((v) => v !== 'todos');
 
-  // Bank Offers do dia: escolhidos na lista completa (com foto), para serem os mesmos em qualquer filtro.
+  // Topo: o MVA sempre primeiro e mais 2 Bank Offers do dia, escolhidos na lista completa (com foto),
+  // para serem os mesmos em qualquer filtro.
   const today = useMemo(() => dayKey(), []);
-  const featured = useMemo(
-    () => featuredForDay(products.filter((p) => p.marketplace === 'bank_offers' && !broken(p)), today),
-    [products, today],
-  );
+  const featured = useMemo(() => {
+    const own = products.filter((p) => p.marketplace === 'bank_offers' && !broken(p));
+    const pinned = own.filter((p) => ALWAYS_ON_TOP.includes(p.externalId ?? ''));
+    const rotating = own.filter((p) => !pinned.includes(p));
+    return [...pinned.map((p) => p.id), ...featuredForDay(rotating, today)];
+  }, [products, today]);
 
   const visible = useMemo(() => {
     let list = products;
@@ -134,7 +139,7 @@ export function CatalogView({ products }: { products: Product[] }) {
       default:
         sorted.sort((a, b) => b.salesCount - a.salesCount);
     }
-    // 2 Bank Offers do dia fixos no topo, em qualquer ordenação (rodízio diário);
+    // MVA + 2 Bank Offers do dia fixos no topo, em qualquer ordenação (rodízio diário);
     // os outros Bank Offers entram na lista junto com o resto.
     // Produtos com foto no Vercel Blob (bloqueado desde 05/11) não carregam a
     // imagem: vão todos para o fim, para a vitrine não abrir com card vazio.

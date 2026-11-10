@@ -19,8 +19,10 @@ import {
   type RangeOption,
   type SortId,
 } from '@/lib/types';
+import { dayKey, featuredForDay, shuffleForDay } from '@/lib/daily-order';
 
 const VERCEL_BLOB_URL = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//;
+const broken = (p: Product) => VERCEL_BLOB_URL.test(p.image ?? '');
 
 /** true quando o valor cai na faixa; sem valor só passa na opção "todos". */
 function inRange(option: RangeOption, value: number | null | undefined) {
@@ -71,6 +73,13 @@ export function CatalogView({ products }: { products: Product[] }) {
   const hasMetrics = useMemo(() => products.some((p) => p.metrics), [products]);
   const filtersActive = [revenue, growth, sold, commission, price].some((v) => v !== 'todos');
 
+  // Bank Offers do dia: escolhidos na lista completa (com foto), para serem os mesmos em qualquer filtro.
+  const today = useMemo(() => dayKey(), []);
+  const featured = useMemo(
+    () => featuredForDay(products.filter((p) => p.marketplace === 'bank_offers' && !broken(p)), today),
+    [products, today],
+  );
+
   const visible = useMemo(() => {
     let list = products;
 
@@ -115,27 +124,24 @@ export function CatalogView({ products }: { products: Product[] }) {
         // produtos sem comissão informada vão pro fim, não pro topo
         sorted.sort((a, b) => (b.commissionValue ?? -1) - (a.commissionValue ?? -1));
         break;
-      case 'novedades':
-        // recém-chegados no topo (mais novo primeiro); o resto por vendas
-        sorted.sort((a, b) => {
-          if (Boolean(a.isNew) !== Boolean(b.isNew)) return a.isNew ? -1 : 1;
-          if (a.isNew && b.isNew) return (b.createdAt ?? '').localeCompare(a.createdAt ?? '');
-          return b.salesCount - a.salesCount;
-        });
+      case 'novedades': {
+        // ordem padrão: muda todo dia (a mesma o dia inteiro), para a vitrine não ficar sempre igual
+        const shuffled = shuffleForDay(sorted, today);
+        sorted.length = 0;
+        sorted.push(...shuffled);
         break;
+      }
       default:
         sorted.sort((a, b) => b.salesCount - a.salesCount);
     }
-    // Bank Offers (ofertas próprias) sempre no topo, em qualquer ordenação.
+    // 2 Bank Offers do dia fixos no topo, em qualquer ordenação (rodízio diário);
+    // os outros Bank Offers entram na lista junto com o resto.
     // Produtos com foto no Vercel Blob (bloqueado desde 05/11) não carregam a
     // imagem: vão todos para o fim, para a vitrine não abrir com card vazio.
-    const broken = (p: Product) => VERCEL_BLOB_URL.test(p.image ?? '');
-    const ok = sorted.filter((p) => !broken(p));
-    const bad = sorted.filter(broken);
-    const own = (l: Product[]) => l.filter((p) => p.marketplace === 'bank_offers');
-    const rest = (l: Product[]) => l.filter((p) => p.marketplace !== 'bank_offers');
-    return [...own(ok), ...rest(ok), ...own(bad), ...rest(bad)];
-  }, [products, category, marketplace, sort, query, revenue, growth, sold, commission, price]);
+    const top = featured.map((id) => sorted.find((p) => p.id === id)).filter((p): p is Product => Boolean(p));
+    const others = sorted.filter((p) => !featured.includes(p.id));
+    return [...top, ...others.filter((p) => !broken(p)), ...others.filter(broken)];
+  }, [products, category, marketplace, sort, query, revenue, growth, sold, commission, price, featured, today]);
   const hasBankOffers = useMemo(() => products.some((p) => p.marketplace === 'bank_offers'), [products]);
 
   const sortLabel = SORTS.find((s) => s.id === sort)?.label ?? 'Ordenar';

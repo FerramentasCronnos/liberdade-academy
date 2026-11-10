@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import { prisma } from './db';
 import { serializeUser } from './domain/serialize';
+import { recordLogin } from './activity';
 
 /**
  * Sessão do membro.
@@ -23,6 +24,7 @@ function secret() {
 export type SessionUser = ReturnType<typeof serializeUser>;
 
 export async function createSession(userId: string) {
+  await recordLogin(userId);
   const token = await new SignJWT({ sub: userId })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

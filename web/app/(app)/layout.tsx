@@ -3,6 +3,7 @@ import { MobileNav } from '@/components/mobile-nav';
 import { AssistantWidget } from '@/components/assistant-widget';
 import { redirect } from 'next/navigation';
 import { getCurrentUser, getUserId } from '@/lib/session';
+import { touchPresence } from '@/lib/activity';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   // Segunda barreira depois do proxy. Checa só o cookie: com o banco fora do
@@ -10,6 +11,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // que o login vê o cookie válido e devolve para /catalogo.
   if (!(await getUserId())) redirect('/login');
   const user = await getCurrentUser();
+  // Uso da conta em qualquer tela (grava no máximo a cada 5 min): "online agora" e mapa de calor do Admin MVA.
+  if (user) await touchPresence(user.id).catch(() => undefined);
   // Chat de suporte com IA só onde ASSISTANT_ENABLED=1 (preview, por ora)
   const assistant = process.env.ASSISTANT_ENABLED === '1';
 

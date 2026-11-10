@@ -396,3 +396,50 @@ export function sendPasswordResetEmail(input: { name: string; email: string; url
     </p>`;
   return send(input.email, 'Cambia tu contraseña de MVA', layout(body, 'Enlace para crear una nueva contraseña. Vale por 1 hora.'));
 }
+
+/**
+ * Admin MVA: a equipe definiu uma senha nova, a mesma para o catálogo, a BRAIN e a área de membros (`systems` diz
+ * onde a pessoa tem conta).
+ */
+export function sendHubPasswordEmail(input: {
+  name: string;
+  email: string;
+  password: string;
+  systems: { catalogo: boolean; brain: boolean; academy: boolean };
+}) {
+  const first = escape(input.name.split(' ')[0] || input.name);
+  const brainUrl = (process.env.BRAIN_URL || 'https://s4.brainexperts.com.br').replace(/\/$/, '');
+  const cards = [
+    input.systems.academy &&
+      platformCard({ kicker: 'Clases del curso', title: 'Área de miembros', text: 'Todas las clases de MVA y la Central de herramientas.', url: `${ACADEMY_URL}/entrar`, button: 'Ir a las clases' }),
+    input.systems.catalogo &&
+      platformCard({ kicker: 'Catálogo y comunidad', title: 'Plataforma MVA', text: 'El catálogo de productos virales, las herramientas y la comunidad.', url: `${APP_URL}/login`, button: 'Entrar al catálogo' }),
+    input.systems.brain &&
+      platformCard({ kicker: 'Inteligencia artificial', title: 'BRAIN', text: 'Los agentes de IA del curso y el Chat Brain.', url: `${brainUrl}/login`, button: 'Entrar a la BRAIN' }),
+  ]
+    .filter(Boolean)
+    .join('');
+
+  const body = `
+    <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;color:#0e1729;line-height:1.2;">Hola, ${first}: tu nueva contraseña</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#32425f;">
+      El equipo de <strong>Máquina de Ventas Automáticas (MVA)</strong> creó una contraseña nueva para tu cuenta. Es <strong>la misma en todas las plataformas</strong> de abajo:
+    </p>
+
+    <div style="background:#e6edf7;border:1px solid #cbd6ea;border-radius:16px;padding:20px 22px;margin:0 0 24px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#1b3a6b;margin-bottom:12px;">Tus datos de acceso</div>
+      <table role="presentation" cellspacing="0" cellpadding="0" style="font-size:15px;line-height:1.8;color:#16223a;">
+        <tr><td style="color:#6b7d9c;padding-right:18px;">Correo</td><td><strong>${escape(input.email)}</strong></td></tr>
+        <tr><td style="color:#6b7d9c;padding-right:18px;">Contraseña</td><td><code style="font-family:Menlo,Consolas,monospace;font-size:15px;background:#ffffff;border:1px solid #cbd6ea;border-radius:6px;padding:2px 8px;">${escape(input.password)}</code></td></tr>
+      </table>
+    </div>
+
+    ${cards}
+
+    <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:#6b7d9c;">
+      Puedes cambiarla cuando quieras desde el perfil de cada plataforma.<br>
+      ¿No pediste este cambio? Responde a este correo.
+    </p>`;
+
+  return send(input.email, 'Tu nueva contraseña de MVA', layout(body, 'Una sola contraseña para las clases, el catálogo y la BRAIN.'));
+}

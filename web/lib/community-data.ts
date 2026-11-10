@@ -1055,14 +1055,3 @@ export async function getCommunitySidebar(): Promise<CommunitySidebarData> {
   };
 }
 
-/**
- * Marca presença. Só grava quando a última marca tem mais de 5 minutos, para
- * não virar um UPDATE por requisição.
- */
-export async function touchPresence(userId: string) {
-  const stale = new Date(Date.now() - 5 * 60 * 1000);
-  await prisma.user.updateMany({
-    where: { id: userId, OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: stale } }] },
-    data: { lastSeenAt: new Date() },
-  });
-}

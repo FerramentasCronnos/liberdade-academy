@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { CommunityShell } from '@/components/community/shell';
 import { prisma } from '@/lib/db';
 import { CommunityCard } from '@/components/community/community-card';
-import { getCommunitySidebar, listSpaces, publishDueAnnouncements, touchPresence } from '@/lib/community-data';
+import { getCommunitySidebar, listSpaces, publishDueAnnouncements } from '@/lib/community-data';
 import { getCurrentUser } from '@/lib/session';
 
 export default async function CommunityLayout({ children }: { children: React.ReactNode }) {
@@ -13,8 +13,7 @@ export default async function CommunityLayout({ children }: { children: React.Re
   // anúncios agendados que venceram (uma consulta indexada, barata)
   await publishDueAnnouncements().catch(() => undefined);
 
-  // presença para o "online agora" do card lateral (grava no máximo a cada 5 min)
-  await touchPresence(user.id).catch(() => undefined);
+  // a presença do "online agora" é marcada no layout do app (todas as telas)
 
   const [spaces, sidebar, openTickets] = await Promise.all([
     listSpaces(),

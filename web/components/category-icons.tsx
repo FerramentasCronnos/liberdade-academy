@@ -92,6 +92,15 @@ const Digital = (p: P) => (
   </svg>
 );
 
+// celular com apps
+const InfoApp = (p: P) => (
+  <svg {...base} {...p}>
+    <rect x="6.5" y="2.5" width="11" height="19" rx="2.2" />
+    <path d="M10.5 18.5h3" />
+    <path d="M9.5 7h2v2h-2zM12.5 7h2v2h-2zM9.5 11h2v2h-2zM12.5 11h2v2h-2z" />
+  </svg>
+);
+
 export const CATEGORY_ICONS: Record<CategoryId, (p: P) => React.ReactElement> = {
   todos: Sparkle,
   beleza: Beauty,
@@ -102,4 +111,5 @@ export const CATEGORY_ICONS: Record<CategoryId, (p: P) => React.ReactElement> = 
   tech: Tech,
   fisico: Other,
   digital: Digital,
+  infoapp: InfoApp,
 };

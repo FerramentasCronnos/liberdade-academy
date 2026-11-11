@@ -28,6 +28,7 @@ export type CategoryId =
   | 'saude'
   | 'fisico'
   | 'digital'
+  | 'infoapp'
   | 'moda'
   | 'casa'
   | 'tech'
@@ -47,6 +48,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
   casa: 'Casa',
   tech: 'Electrónicos',
   digital: 'Digital',
+  infoapp: 'InfoApp',
   fisico: 'Otros',
 };
 
@@ -60,6 +62,7 @@ export const CATEGORIES: Category[] = [
   { id: 'tech', label: 'Electrónicos' },
   { id: 'fisico', label: 'Otros' },
   { id: 'digital', label: 'Digital' },
+  { id: 'infoapp', label: 'InfoApp' },
 ];
 
 /** Produto como a API Fastify devolve hoje. */

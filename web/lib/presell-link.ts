@@ -1,11 +1,12 @@
 /**
  * Links de resgate da presell (Wix) são praticamente senhas: ficam na env, nunca no código nem no banco.
  *
- * BANK_OFFERS_PRESELL_LINKS e BANK_OFFERS_PRESELL_LINKS_2 são JSON {slug: valor}. O valor é:
+ * BANK_OFFERS_PRESELL_LINKS, BANK_OFFERS_PRESELL_LINKS_2 e BANK_OFFERS_PRESELL_LINKS_3 são JSON {slug: valor}. O valor é:
  * - uma URL (uma presell só), ou
  * - um objeto {rótulo: URL} quando a oferta tem várias presells (ex.: {"DR": "...", "X1": "..."}).
- * A segunda env soma com a primeira e, no mesmo slug, vale a dela (as envs secretas da Vercel não
- * podem ser lidas de volta, então presells novas entram na segunda sem reescrever a primeira).
+ * Cada env soma com as anteriores e, no mesmo slug, vale a mais nova (_3, depois _2, depois a primeira).
+ * As envs secretas da Vercel não podem ser lidas de volta, então presells novas entram numa env nova
+ * sem reescrever as outras.
  */
 export interface PresellLink {
   /** Tipo de tráfego (DR, X1, Orgánico); vazio quando a oferta tem uma presell só. */
@@ -32,7 +33,9 @@ function toLinks(value: unknown): PresellLink[] {
 
 export function presellLinks(slug?: string | null): PresellLink[] {
   if (!slug) return [];
-  const extra = readMap(process.env.BANK_OFFERS_PRESELL_LINKS_2);
-  if (slug in extra) return toLinks(extra[slug]);
+  for (const raw of [process.env.BANK_OFFERS_PRESELL_LINKS_3, process.env.BANK_OFFERS_PRESELL_LINKS_2]) {
+    const map = readMap(raw);
+    if (slug in map) return toLinks(map[slug]);
+  }
   return toLinks(readMap(process.env.BANK_OFFERS_PRESELL_LINKS)[slug]);
 }

@@ -11,6 +11,16 @@ test('uma presell (formato antigo) e várias por tipo de tráfego (env nova)', (
   assert.deepEqual(presellLinks('nada'), []);
 });
 
+test('terceira env soma e vence as anteriores', () => {
+  process.env.BANK_OFFERS_PRESELL_LINKS = JSON.stringify({ sodapeak: 'https://a' });
+  process.env.BANK_OFFERS_PRESELL_LINKS_2 = JSON.stringify({ mva: { DR: 'https://dr' }, sodapeak: 'https://b' });
+  process.env.BANK_OFFERS_PRESELL_LINKS_3 = JSON.stringify({ horosfy: 'https://h', sodapeak: 'https://c' });
+  assert.deepEqual(presellLinks('horosfy'), [{ label: '', url: 'https://h' }]);
+  assert.deepEqual(presellLinks('sodapeak'), [{ label: '', url: 'https://c' }]);
+  assert.deepEqual(presellLinks('mva'), [{ label: 'DR', url: 'https://dr' }]);
+  delete process.env.BANK_OFFERS_PRESELL_LINKS_3;
+});
+
 test('env inválida não derruba a página', () => {
   process.env.BANK_OFFERS_PRESELL_LINKS = '{quebrado';
   process.env.BANK_OFFERS_PRESELL_LINKS_2 = '';

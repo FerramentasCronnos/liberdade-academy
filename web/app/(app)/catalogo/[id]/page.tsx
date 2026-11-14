@@ -12,6 +12,8 @@ import { AffiliateLinksCard, affiliatePlatform } from '@/components/affiliate-li
 import { presellLinks } from '@/lib/presell-link';
 import { ProductGallery } from '@/components/product-gallery';
 import { ProductMetrics } from '@/components/product-metrics';
+import { ProductTimeline, ProductTimelineTeaser } from '@/components/product-timeline';
+import { productTimeline } from '@/lib/product-timeline';
 import {
   IconArrowLeft,
   IconExternal,
@@ -22,6 +24,7 @@ import {
 
 // Next 16: params é uma Promise e precisa de await.
 type Params = Promise<{ id: string }>;
+type SearchParams = Promise<{ tab?: string | string[] }>;
 
 export async function generateMetadata({ params }: { params: Params }) {
   const { id } = await params;
@@ -29,7 +32,7 @@ export async function generateMetadata({ params }: { params: Params }) {
   return { title: product ? `${product.name} · MVA` : 'Producto' };
 }
 
-export default async function ProductPage({ params }: { params: Params }) {
+export default async function ProductPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
   if (!(await getUserId())) redirect('/login');
   const viewer = await getCurrentUser();
 
@@ -44,6 +47,11 @@ export default async function ProductPage({ params }: { params: Params }) {
   const marketplace = MARKETPLACE_BY_ID[product.marketplace];
   const rate = product.commission ?? product.commissionEstimated;
   const isEstimate = product.commission == null && product.commissionEstimated != null;
+
+  // Aba "Historia y resultados" (só produtos com linha do tempo; rascunho só para o admin)
+  const timeline = productTimeline(product.externalId, Boolean(viewer?.isAdmin));
+  const tab = timeline && (await searchParams).tab === 'historia' ? 'historia' : 'oferta';
+  const baseHref = `/catalogo/${encodeURIComponent(id)}`;
 
   return (
     <>
@@ -61,95 +69,128 @@ export default async function ProductPage({ params }: { params: Params }) {
         <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* Coluna principal */}
           <div className="flex flex-col gap-5">
-            <div className="grid gap-5 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)] sm:grid-cols-[280px_minmax(0,1fr)]">
-              <ProductGallery images={product.images ?? [product.image]} name={product.name} isViral={product.isViral} />
-
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className="rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
-                    style={{ backgroundColor: marketplace.color }}
+            {timeline && (
+              <nav aria-label="Secciones del producto" className="flex gap-1 self-start rounded-2xl bg-[var(--bg-elevated)] p-1 shadow-[var(--shadow-soft)]">
+                {(
+                  [
+                    ['oferta', 'Oferta', baseHref],
+                    ['historia', 'Historia y resultados', `${baseHref}?tab=historia`],
+                  ] as const
+                ).map(([key, label, href]) => (
+                  <Link
+                    key={key}
+                    href={href}
+                    scroll={false}
+                    aria-current={tab === key ? 'page' : undefined}
+                    className={`rounded-xl px-4 py-2 text-[13.5px] font-semibold transition ${
+                      tab === key
+                        ? 'bg-[var(--brand)] text-white'
+                        : 'text-[var(--text-muted)] hover:bg-[var(--bg-sunken)] hover:text-[var(--text)]'
+                    }`}
                   >
-                    {marketplace.label}
-                  </span>
-                  <span className="rounded-md bg-[var(--violet-soft)] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--brand)]">
-                    {CATEGORY_LABEL[product.category] ?? product.category}
-                  </span>
-                </div>
-
-                <h2 className="font-display text-[22px] font-semibold leading-tight text-[var(--text)]">
-                  {product.name}
-                </h2>
-
-                <div className="flex flex-wrap items-center gap-4 text-[13px] text-[var(--text-muted)]">
-                  {product.rating > 0 && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <IconStar className="h-4 w-4 text-[var(--color-gold-400)]" />
-                      <strong className="font-semibold text-[var(--text)]">
-                        {product.rating.toFixed(1).replace('.', ',')}
-                      </strong>
-                    </span>
-                  )}
-                  {product.salesCount > 0 && (
-                    <span>{formatCompact(product.salesCount)} vendidos</span>
-                  )}
-                  {product.tiktokViews != null && (
-                    <span>{formatCompact(product.tiktokViews)} views</span>
-                  )}
-                </div>
-
-                <div className="mt-auto">
-                  <p className="text-[12.5px] text-[var(--text-faint)]">Precio en el marketplace</p>
-                  <p className="font-display text-[30px] font-bold leading-tight tracking-tight text-[var(--text)]">
-                    {formatPriceRange(product.price, product.priceMax, product.currency)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {product.marketplace === 'bank_offers' && <BankOfferResources resources={product.resources} />}
-
-            {product.metrics && (
-              <ProductMetrics
-                metrics={product.metrics}
-                currency={product.currency ?? 'USD'}
-                salesCount={product.salesCount}
-                commission={rate ?? undefined}
-              />
+                    {label}
+                  </Link>
+                ))}
+              </nav>
             )}
 
-            <ProductVideos videos={videos} currency={product.currency ?? 'USD'} productImage={product.image} />
+            {tab === 'historia' && timeline ? (
+              <ProductTimeline timeline={timeline} />
+            ) : (
+              <>
+                <div className="grid gap-5 rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)] sm:grid-cols-[280px_minmax(0,1fr)]">
+                  <ProductGallery images={product.images ?? [product.image]} name={product.name} isViral={product.isViral} />
 
-            <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
-              <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">
-                Descripción
-              </h3>
-              <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-muted)]">
-                {product.description}
-              </p>
-            </section>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className="rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+                        style={{ backgroundColor: marketplace.color }}
+                      >
+                        {marketplace.label}
+                      </span>
+                      <span className="rounded-md bg-[var(--violet-soft)] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--brand)]">
+                        {CATEGORY_LABEL[product.category] ?? product.category}
+                      </span>
+                    </div>
 
-            <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
-              <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">
-                Proveedor
-              </h3>
-              <div className="mt-3 flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--violet-soft)] text-[var(--brand)]">
-                  <IconStore className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-[14.5px] font-semibold text-[var(--text)]">
-                    {product.supplier}
-                  </p>
-                  <p className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--text-muted)]">
-                    <IconTruck className="h-3.5 w-3.5" />
-                    {product.supplierShips
-                      ? 'Envío directo al cliente — sin stock'
-                      : 'Entrega digital'}
-                  </p>
+                    <h2 className="font-display text-[22px] font-semibold leading-tight text-[var(--text)]">
+                      {product.name}
+                    </h2>
+
+                    <div className="flex flex-wrap items-center gap-4 text-[13px] text-[var(--text-muted)]">
+                      {product.rating > 0 && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <IconStar className="h-4 w-4 text-[var(--color-gold-400)]" />
+                          <strong className="font-semibold text-[var(--text)]">
+                            {product.rating.toFixed(1).replace('.', ',')}
+                          </strong>
+                        </span>
+                      )}
+                      {product.salesCount > 0 && (
+                        <span>{formatCompact(product.salesCount)} vendidos</span>
+                      )}
+                      {product.tiktokViews != null && (
+                        <span>{formatCompact(product.tiktokViews)} views</span>
+                      )}
+                    </div>
+
+                    <div className="mt-auto">
+                      <p className="text-[12.5px] text-[var(--text-faint)]">Precio en el marketplace</p>
+                      <p className="font-display text-[30px] font-bold leading-tight tracking-tight text-[var(--text)]">
+                        {formatPriceRange(product.price, product.priceMax, product.currency)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </section>
+
+                {timeline && <ProductTimelineTeaser timeline={timeline} href={`${baseHref}?tab=historia`} />}
+
+                {product.marketplace === 'bank_offers' && <BankOfferResources resources={product.resources} />}
+
+                {product.metrics && (
+                  <ProductMetrics
+                    metrics={product.metrics}
+                    currency={product.currency ?? 'USD'}
+                    salesCount={product.salesCount}
+                    commission={rate ?? undefined}
+                  />
+                )}
+
+                <ProductVideos videos={videos} currency={product.currency ?? 'USD'} productImage={product.image} />
+
+                <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
+                  <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">
+                    Descripción
+                  </h3>
+                  <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-muted)]">
+                    {product.description}
+                  </p>
+                </section>
+
+                <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
+                  <h3 className="font-display text-[16px] font-semibold text-[var(--text)]">
+                    Proveedor
+                  </h3>
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--violet-soft)] text-[var(--brand)]">
+                      <IconStore className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-[14.5px] font-semibold text-[var(--text)]">
+                        {product.supplier}
+                      </p>
+                      <p className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--text-muted)]">
+                        <IconTruck className="h-3.5 w-3.5" />
+                        {product.supplierShips
+                          ? 'Envío directo al cliente — sin stock'
+                          : 'Entrega digital'}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </>
+            )}
           </div>
 
           {/* Coluna de ação */}

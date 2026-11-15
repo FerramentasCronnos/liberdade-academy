@@ -8,8 +8,23 @@ import { IconDownload, IconExternal, IconX } from './icons';
  * Galeria dos criativos: miniatura de cada arquivo do Drive; o clique abre o
  * preview do próprio Drive numa janela sobre o catálogo, com botão de baixar.
  */
-export function DriveCreatives({ files, folderUrl }: { files: DriveFile[]; folderUrl: string }) {
+/** Quantos criativos aparecem antes do "Ver todos" (pastas grandes deixariam a página enorme). */
+const INITIAL = 12;
+
+export function DriveCreatives({
+  files,
+  folderUrl,
+  title = '🎬 Creativos de esta oferta',
+  linkLabel = 'Abrir carpeta en Drive',
+}: {
+  files: DriveFile[];
+  folderUrl: string;
+  title?: string;
+  linkLabel?: string;
+}) {
   const [current, setCurrent] = useState<number | null>(null);
+  const [all, setAll] = useState(false);
+  const visible = all ? files : files.slice(0, INITIAL);
   const file = current == null ? null : files[current];
 
   const close = useCallback(() => setCurrent(null), []);
@@ -38,7 +53,7 @@ export function DriveCreatives({ files, folderUrl }: { files: DriveFile[]; folde
     <div className="mt-4 rounded-[18px] border border-[var(--border)] bg-[var(--bg)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-[13.5px] font-semibold text-[var(--text)]">🎬 Creativos de esta oferta</p>
+          <p className="text-[13.5px] font-semibold text-[var(--text)]">{title}</p>
           <p className="text-[11.5px] text-[var(--text-faint)]">
             {files.length} {files.length === 1 ? 'archivo' : 'archivos'} · haz clic para ver y descargar
           </p>
@@ -49,13 +64,13 @@ export function DriveCreatives({ files, folderUrl }: { files: DriveFile[]; folde
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[var(--brand)] hover:underline"
         >
-          Abrir carpeta en Drive
+          {linkLabel}
           <IconExternal className="h-3.5 w-3.5" />
         </a>
       </div>
 
       <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {files.map((item, index) => (
+        {visible.map((item, index) => (
           <li key={item.id}>
             <button
               type="button"
@@ -87,6 +102,16 @@ export function DriveCreatives({ files, folderUrl }: { files: DriveFile[]; folde
           </li>
         ))}
       </ul>
+
+      {files.length > INITIAL && (
+        <button
+          type="button"
+          onClick={() => setAll((v) => !v)}
+          className="mt-3 w-full rounded-xl border border-[var(--border)] py-2 text-[12.5px] font-semibold text-[var(--text-muted)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
+        >
+          {all ? 'Ver menos' : `Ver todos (${files.length})`}
+        </button>
+      )}
 
       {file && (
         <div

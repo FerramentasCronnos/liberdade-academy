@@ -1,6 +1,6 @@
 import { IconExternal } from './icons';
 import { DriveCreatives } from './drive-creatives';
-import { listDriveFolder } from '@/lib/drive-folder';
+import { listDriveFolderGroups } from '@/lib/drive-folder';
 
 /**
  * Recursos do afiliado nas Bank Offers: criativos (pasta do Drive, para ver e
@@ -28,7 +28,7 @@ export async function BankOfferResources({
   // o link de afiliação (Hotmart) fica no card ao lado da comissão, não aqui
   const items = resources.filter((r) => r.kind !== 'affiliate');
   const folderId = driveFolderId(resources);
-  const files = folderId ? await listDriveFolder(folderId) : [];
+  const groups = folderId ? await listDriveFolderGroups(folderId) : [];
   const folderUrl = resources.find((x) => x.kind === 'creatives')?.url ?? '';
   return (
     <section className="rounded-[24px] bg-[var(--bg-elevated)] p-5 shadow-[var(--shadow-soft)]">
@@ -37,9 +37,17 @@ export async function BankOfferResources({
         Creativos listos para descargar. Tu página de presell y tus enlaces están al lado, junto a la comisión.
       </p>
 
-      {folderId && files.length > 0 && <DriveCreatives files={files} folderUrl={folderUrl} />}
+      {groups.map((group) => (
+        <DriveCreatives
+          key={group.folderUrl}
+          files={group.files}
+          folderUrl={group.name ? group.folderUrl : folderUrl}
+          title={group.name ? `🎬 ${group.name}` : undefined}
+          linkLabel={group.name ? 'Abrir en Drive' : undefined}
+        />
+      ))}
 
-      {folderId && files.length === 0 && (
+      {folderId && groups.length === 0 && (
         // Se a listagem falhar, cai no visualizador do próprio Drive.
         <div className="mt-4 overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--bg)]">
           <div className="flex items-center justify-between gap-2 px-4 py-2.5">

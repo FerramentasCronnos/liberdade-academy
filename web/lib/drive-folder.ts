@@ -35,16 +35,24 @@ function decodeEntities(text: string) {
     .replace(/&#39;/g, "'");
 }
 
-export async function listDriveFolder(folderId: string): Promise<DriveFile[]> {
+export interface DriveFolderGroup {
+  /** Nome da subpasta; null para os arquivos soltos na pasta principal. */
+  name: string | null;
+  folderUrl: string;
+  files: DriveFile[];
+}
+
+async function readFolder(folderId: string): Promise<{ files: DriveFile[]; folders: Array<{ id: string; name: string }> }> {
+  const files: DriveFile[] = [];
+  const folders: Array<{ id: string; name: string }> = [];
   try {
     const response = await fetch(`https://drive.google.com/embeddedfolderview?id=${folderId}`, {
       next: { revalidate: 1800 },
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; MVA catalog)' },
     });
-    if (!response.ok) return [];
+    if (!response.ok) return { files, folders };
     const html = await response.text();
     const entries = html.split('<div class="flip-entry" id="entry-').slice(1);
-    const files: DriveFile[] = [];
     for (const entry of entries) {
       const id = entry.match(/^([A-Za-z0-9_-]+)"/)?.[1];
       const name = entry.match(/flip-entry-title">([^<]*)</)?.[1];
@@ -52,7 +60,10 @@ export async function listDriveFolder(folderId: string): Promise<DriveFile[]> {
       const icon = entry.match(/flip-entry-list-icon"><img src="([^"]*)"/)?.[1] ?? '';
       const kind = kindFromIcon(icon);
       // subpastas não têm miniatura: algumas vêm com ícone em sprite (sem <img>), então olhamos o link também
-      if (kind === 'folder' || entry.includes('/drive/folders/') || entry.includes('aria-label="Folder"')) continue;
+      if (kind === 'folder' || entry.includes('/drive/folders/') || entry.includes('aria-label="Folder"')) {
+        folders.push({ id, name: decodeEntities(name) });
+        continue;
+      }
       files.push({
         id,
         name: decodeEntities(name),
@@ -63,8 +74,32 @@ export async function listDriveFolder(folderId: string): Promise<DriveFile[]> {
         openUrl: `https://drive.google.com/file/d/${id}/view`,
       });
     }
-    return files;
   } catch {
-    return [];
+    // pasta fora do ar ou HTML diferente: a página cai no visualizador do Drive
   }
+  return { files, folders };
+}
+
+export async function listDriveFolder(folderId: string): Promise<DriveFile[]> {
+  return (await readFolder(folderId)).files;
+}
+
+/**
+ * Arquivos da pasta e de cada subpasta (um nível), em grupos. Pastas que só
+ * têm subpastas (ex.: "Love Chart", "Prosperidade") viram uma seção por subpasta.
+ */
+export async function listDriveFolderGroups(folderId: string): Promise<DriveFolderGroup[]> {
+  const root = await readFolder(folderId);
+  const subfolders = await Promise.all(
+    root.folders.slice(0, 12).map(async (folder) => ({
+      name: folder.name,
+      folderUrl: `https://drive.google.com/drive/folders/${folder.id}`,
+      files: await listDriveFolder(folder.id),
+    })),
+  );
+  const groups: DriveFolderGroup[] = [];
+  if (root.files.length > 0) {
+    groups.push({ name: null, folderUrl: `https://drive.google.com/drive/folders/${folderId}`, files: root.files });
+  }
+  return [...groups, ...subfolders.filter((g) => g.files.length > 0)];
 }
